@@ -1,4 +1,5 @@
 import Counter from "./components/Counter";
+import Link from "./components/Link";
 
 export default function Home() {
   return (
@@ -10,6 +11,7 @@ export default function Home() {
         </p>
       </div>
       <Counter />
+      <Link href="/aboutt">Go to About</Link>
     </main>
   );
 }

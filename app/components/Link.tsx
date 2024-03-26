@@ -7,7 +7,7 @@ export default function Link(props: LinkProps) {
       {...props}
       href="/about"
       color="blue.400"
-      _hover={{ color: "blue.500" }}
+      _hover={{ color: "blue.800" }}
     />
   );
 }

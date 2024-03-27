@@ -1,3 +1,4 @@
+import API from "./components/API";
 import Counter from "./components/Counter";
 import Drawer from "./components/Drawer";
 import Link from "./components/Link";
@@ -12,6 +13,7 @@ export default function Home() {
       <ToastExample />
       <Modal />
       <Drawer />
+      <API />
     </main>
   );
 }

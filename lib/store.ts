@@ -1,7 +1,8 @@
 import { configureStore } from "@reduxjs/toolkit";
 import counterReducer from "./features/counter/counterSlice";
-import { setupListeners } from "@reduxjs/toolkit/query";
+// import { setupListeners } from "@reduxjs/toolkit/query";
 import { pokemonApi } from "./apis/pokemonApi";
+import logger from "redux-logger";
 
 export const makeStore = () => {
   return configureStore({
@@ -10,7 +11,7 @@ export const makeStore = () => {
       [pokemonApi.reducerPath]: pokemonApi.reducer,
     },
     middleware: (getDefaultMiddleware) =>
-      getDefaultMiddleware().concat(pokemonApi.middleware),
+      getDefaultMiddleware().concat(pokemonApi.middleware, logger),
   });
 };
 

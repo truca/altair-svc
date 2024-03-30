@@ -11,7 +11,7 @@ const API = () => {
 
   useEffect(() => {
     const getData = setTimeout(() => {
-      getPokemonByName(pokemonName);
+      if (pokemonName) getPokemonByName(pokemonName, true);
     }, 2000);
 
     return () => clearTimeout(getData);

@@ -23,7 +23,7 @@ const Wrapper = (Story: any) => (
   </ChakraProvider>
 );
 
-export const FormWithAllTypes: Story = {
+export const SimpleDebugForm: Story = {
   args: {
     debug: true,
     direction: Direction.COLUMN,
@@ -39,7 +39,25 @@ export const FormWithAllTypes: Story = {
         validation: {
           type: ["string", "should be a string"],
           required: [true, "this is required"],
-          matches: ["^[a-zA-Z0-9]{3}$", "should be 3 characters"],
+          format: ["email", "should be an email"],
+        },
+      },
+      {
+        id: "matches",
+        label: "Matches",
+        type: FieldType.TEXT,
+        validation: {
+          type: ["string", "should be a string"],
+          matches: ["/^[a-zA-Z]+$/", "should be only letters"],
+        },
+      },
+      {
+        id: "enum",
+        label: "Enum",
+        type: FieldType.TEXT,
+        validation: {
+          type: ["string", "should be a string"],
+          enum: [["perro", "gato"], "should be perro or gato"],
         },
       },
     ],

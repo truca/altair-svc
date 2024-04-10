@@ -39,14 +39,10 @@ export enum Direction {
 export interface Field {
   id: string;
   type: FieldType;
-  // first element on the array is the type, second is the error message
   validation?: {
-    // title?: string;
-    // description?: string;
-    // propertyOrder?: number;
     type: ["string" | "number", string];
     required?: [boolean, string];
-    format?: ["email", string];
+    format?: ["email" | "url", string];
     matches?: [string, string];
     enum?: [string[], string];
     enum_titles?: [string[], string];

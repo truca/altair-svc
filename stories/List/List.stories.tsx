@@ -27,7 +27,9 @@ export const ListWithItems: Story = {
     ],
     // @ts-ignore
     ItemComponent: (item: { id: string; name: string }) => (
-      <Card key={item.id}>{item.name}</Card>
+      <Card key={item.id} p={2}>
+        {item.name}
+      </Card>
     ),
   },
   decorators: [Wrapper],

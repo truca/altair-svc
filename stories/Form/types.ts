@@ -40,35 +40,64 @@ export interface Field {
   id: string;
   type: FieldType;
   validation?: {
-    type: ["string" | "number", string];
-    required?: [boolean, string];
+    type: ["string" | "number" | "mixed" | "date", string];
     format?: ["email" | "url", string];
-    matches?: [string, string];
+    matches?: [string | RegExp, string];
     enum?: [string[], string];
     enum_titles?: [string[], string];
     exclusiveMinimum?: [number, string];
+
+    // Common
+    // strict
+    // default
+    // nullable
+    // const?: [string | number, string];
+    required?: [boolean, string];
+    notRequired?: [boolean, string];
+    // oneOf (enum, anyOf)
+    // notOneOf
+    // refValueFor for confirm password scenario
+    // typeError custom type error message (in config)
+    // when
+    // isType
+    nullable?: [boolean, string];
+
+    // Number
+    // integer?: []; => use step property instead
+    // moreThan (exclusiveMinimum)
+    // lessThan (exclusiveMaximum)
+    positive?: [string];
+    negative?: [string];
+    min?: [string, string];
+    max?: [string, string];
+    // truncate?: [];
+    // round?: []; // will force user to input an integer
+
+    // Date
+    maxDate?: [Date, string];
+    minDate?: [Date, string];
+
+    // String
+    minLength?: [number, string];
+    maxLength?: [number, string];
+    pattern?: [RegExp, string];
+    //
+    lowercase?: [];
+    uppercase?: [];
+    trim?: [];
   };
   label: string;
+  hasTitle?: boolean; // specific for radio button
   placeholder?: string;
   defaultValue?: string | number | boolean;
-  options?: { value: string; label: string }[];
+  options?: { value: string; label: string; defaultChecked?: boolean }[];
   direction?: Direction;
+  spacing?: number; // radio
   isRequired?: boolean;
+  step?: number;
   sx?: StackProps;
   optionSx?: StackProps;
   inputProps?: any;
-}
-
-export interface FieldWithValidation extends Field {
-  validation: {
-    type: ["string" | "number", string];
-    required?: [boolean, string];
-    format?: ["email", string];
-    matches?: [string, string];
-    enum?: [string[], string];
-    enum_titles?: [string[], string];
-    exclusiveMinimum?: [number, string];
-  };
 }
 
 export interface InternalField extends Field {

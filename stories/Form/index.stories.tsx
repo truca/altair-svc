@@ -32,34 +32,95 @@ export const SimpleDebugForm: Story = {
     },
     fields: [
       {
-        id: "username",
-        label: "Username",
-        type: FieldType.TEXT,
-        defaultValue: "test",
-        validation: {
-          type: ["string", "should be a string"],
-          required: [true, "this is required"],
-          format: ["email", "should be an email"],
-        },
+        id: "radio",
+        label: "Radio",
+        type: FieldType.RADIO,
+        hasTitle: true,
+        direction: Direction.ROW,
+        options: [
+          { value: "1", label: "Option 1" },
+          { value: "2", label: "Option 2" },
+          { value: "3", label: "Option 3" },
+        ],
       },
-      {
-        id: "matches",
-        label: "Matches",
-        type: FieldType.TEXT,
-        validation: {
-          type: ["string", "should be a string"],
-          matches: ["/^[a-zA-Z]+$/", "should be only letters"],
-        },
-      },
-      {
-        id: "enum",
-        label: "Enum",
-        type: FieldType.TEXT,
-        validation: {
-          type: ["string", "should be a string"],
-          enum: [["perro", "gato"], "should be perro or gato"],
-        },
-      },
+      // {
+      //   id: "username",
+      //   label: "Username",
+      //   type: FieldType.TEXT,
+      //   defaultValue: "test@com",
+      //   validation: {
+      //     type: ["string", "should be a string"],
+      //     required: [true, "this is required"],
+      //     format: ["email", "should be an email"],
+      //     trim: [],
+      //     uppercase: [],
+      //   },
+      // },
+      // {
+      //   id: "matches",
+      //   label: "Matches",
+      //   type: FieldType.TEXT,
+      //   validation: {
+      //     type: ["string", "should be a string"],
+      //     matches: [/^[a-zA-Z]+$/, "should be only letters"],
+      //     minLength: [3, "should be at least 3 characters"],
+      //   },
+      // },
+      // {
+      //   id: "not required",
+      //   label: "Not Required",
+      //   type: FieldType.TEXT,
+      //   validation: {
+      //     type: ["string", "should be a string"],
+      //     notRequired: [true, "this is not required"],
+      //   },
+      // },
+      // {
+      //   id: "enum",
+      //   label: "Enum",
+      //   type: FieldType.TEXT,
+      //   validation: {
+      //     type: ["string", "should be a string"],
+      //     enum: [["perro", "gato"], "should be perro or gato"],
+      //   },
+      // },
+      // {
+      //   id: "minGrade",
+      //   label: "Min Grade",
+      //   type: FieldType.NUMBER,
+      //   validation: {
+      //     type: ["number", "should be a number"],
+      //     required: [true, "this is required"],
+      //     negative: ["should be negative"],
+      //   },
+      // },
+      // {
+      //   id: "maxGrade",
+      //   label: "Max Grade",
+      //   type: FieldType.NUMBER,
+      //   validation: {
+      //     type: ["number", "should be a number"],
+      //     min: ["startDate", "should be greater than start date"],
+      //     positive: ["should be positive"],
+      //   },
+      // },
+      // {
+      //   id: "date",
+      //   label: "Date",
+      //   type: FieldType.DATE,
+      //   validation: {
+      //     type: ["date", "should be a number"],
+      //     minDate: [new Date(), "should be greater than today"],
+      //     maxDate: [
+      //       (() => {
+      //         const date = new Date();
+      //         date.setDate(date.getDate() + 7);
+      //         return date;
+      //       })(),
+      //       "should be less than today",
+      //     ],
+      //   },
+      // },
     ],
     onSubmit: (data) => {
       alert(`Values: ${JSON.stringify(data)}`);

@@ -6,8 +6,43 @@ import {
   Stack,
   Checkbox,
   Select,
+  FormLabel,
+  FormErrorMessage,
+  FormControl,
 } from "@chakra-ui/react";
 import { FieldType, InternalField } from "./types";
+
+export const createSyntheticEvent = <T extends Element, E extends Event>(
+  event: E
+): React.SyntheticEvent<T, E> => {
+  let isDefaultPrevented = false;
+  let isPropagationStopped = false;
+  const preventDefault = () => {
+    isDefaultPrevented = true;
+    event.preventDefault();
+  };
+  const stopPropagation = () => {
+    isPropagationStopped = true;
+    event.stopPropagation();
+  };
+  return {
+    nativeEvent: event,
+    currentTarget: event.currentTarget as EventTarget & T,
+    target: event.target as EventTarget & T,
+    bubbles: event.bubbles,
+    cancelable: event.cancelable,
+    defaultPrevented: event.defaultPrevented,
+    eventPhase: event.eventPhase,
+    isTrusted: event.isTrusted,
+    preventDefault,
+    isDefaultPrevented: () => isDefaultPrevented,
+    stopPropagation,
+    isPropagationStopped: () => isPropagationStopped,
+    persist: () => {},
+    timeStamp: event.timeStamp,
+    type: event.type,
+  };
+};
 
 interface FieldComponentProps {
   field: InternalField;
@@ -16,8 +51,12 @@ export const FieldComponentsHash: {
   [key in FieldType]: React.FunctionComponent<FieldComponentProps>;
 } = {
   [FieldType.TEXT]: ({ field }: FieldComponentProps) => (
-    <VStack sx={field.sx} alignItems="flex-start">
-      <label htmlFor={field.id}>{field.label}</label>
+    <FormControl
+      isInvalid={Boolean(field.error?.message)}
+      sx={field.sx}
+      alignItems="flex-start"
+    >
+      <FormLabel htmlFor={field.id}>{field.label}</FormLabel>
       <Input
         id={field.id}
         type="text"
@@ -25,25 +64,38 @@ export const FieldComponentsHash: {
         placeholder={field.placeholder}
         {...field.inputProps}
       />
-      {field.error && <span>{field.error.message}</span>}
-    </VStack>
+      {field.error && (
+        <FormErrorMessage>{field.error.message}</FormErrorMessage>
+      )}
+    </FormControl>
   ),
   [FieldType.NUMBER]: ({ field }: FieldComponentProps) => (
-    <VStack sx={field.sx} alignItems="flex-start">
-      <label htmlFor={field.id}>{field.label}</label>
+    <FormControl
+      isInvalid={Boolean(field.error?.message)}
+      sx={field.sx}
+      alignItems="flex-start"
+    >
+      <FormLabel htmlFor={field.id}>{field.label}</FormLabel>
       <Input
         id={field.id}
         type="number"
         {...field.register(field.id)}
         placeholder={field.placeholder}
+        step={field.step ?? "any"}
         {...field.inputProps}
       />
-      {field.error && <span>{field.error.message}</span>}
-    </VStack>
+      {field.error && (
+        <FormErrorMessage>{field.error.message}</FormErrorMessage>
+      )}
+    </FormControl>
   ),
   [FieldType.DATE]: ({ field }: FieldComponentProps) => (
-    <VStack sx={field.sx} alignItems="flex-start">
-      <label htmlFor={field.id}>{field.label}</label>
+    <FormControl
+      isInvalid={Boolean(field.error?.message)}
+      sx={field.sx}
+      alignItems="flex-start"
+    >
+      <FormLabel htmlFor={field.id}>{field.label}</FormLabel>
       <Input
         id={field.id}
         type="date"
@@ -51,12 +103,18 @@ export const FieldComponentsHash: {
         placeholder={field.placeholder}
         {...field.inputProps}
       />
-      {field.error && <span>{field.error.message}</span>}
-    </VStack>
+      {field.error && (
+        <FormErrorMessage>{field.error.message}</FormErrorMessage>
+      )}
+    </FormControl>
   ),
   [FieldType.EMAIL]: ({ field }: FieldComponentProps) => (
-    <VStack sx={field.sx} alignItems="flex-start">
-      <label htmlFor={field.id}>{field.label}</label>
+    <FormControl
+      isInvalid={Boolean(field.error?.message)}
+      sx={field.sx}
+      alignItems="flex-start"
+    >
+      <FormLabel htmlFor={field.id}>{field.label}</FormLabel>
       <Input
         id={field.id}
         type="email"
@@ -64,12 +122,18 @@ export const FieldComponentsHash: {
         placeholder={field.placeholder}
         {...field.inputProps}
       />
-      {field.error && <span>{field.error.message}</span>}
-    </VStack>
+      {field.error && (
+        <FormErrorMessage>{field.error.message}</FormErrorMessage>
+      )}
+    </FormControl>
   ),
   [FieldType.PASSWORD]: ({ field }: FieldComponentProps) => (
-    <VStack sx={field.sx} alignItems="flex-start">
-      <label htmlFor={field.id}>{field.label}</label>
+    <FormControl
+      isInvalid={Boolean(field.error?.message)}
+      sx={field.sx}
+      alignItems="flex-start"
+    >
+      <FormLabel htmlFor={field.id}>{field.label}</FormLabel>
       <Input
         id={field.id}
         type="password"
@@ -77,12 +141,18 @@ export const FieldComponentsHash: {
         placeholder={field.placeholder}
         {...field.inputProps}
       />
-      {field.error && <span>{field.error.message}</span>}
-    </VStack>
+      {field.error && (
+        <FormErrorMessage>{field.error.message}</FormErrorMessage>
+      )}
+    </FormControl>
   ),
   [FieldType.TEXTAREA]: ({ field }: FieldComponentProps) => (
-    <VStack sx={field.sx} alignItems="flex-start">
-      <label htmlFor={field.id}>{field.label}</label>
+    <FormControl
+      isInvalid={Boolean(field.error?.message)}
+      sx={field.sx}
+      alignItems="flex-start"
+    >
+      <FormLabel htmlFor={field.id}>{field.label}</FormLabel>
       <Input
         id={field.id}
         as="textarea"
@@ -90,12 +160,18 @@ export const FieldComponentsHash: {
         placeholder={field.placeholder}
         {...field.inputProps}
       />
-      {field.error && <span>{field.error.message}</span>}
-    </VStack>
+      {field.error && (
+        <FormErrorMessage>{field.error.message}</FormErrorMessage>
+      )}
+    </FormControl>
   ),
   [FieldType.SELECT]: ({ field }: FieldComponentProps) => (
-    <VStack sx={field.sx} alignItems="flex-start">
-      <label htmlFor={field.id}>{field.label}</label>
+    <FormControl
+      isInvalid={Boolean(field.error?.message)}
+      sx={field.sx}
+      alignItems="flex-start"
+    >
+      <FormLabel htmlFor={field.id}>{field.label}</FormLabel>
       <Select
         id={field.id}
         {...field.register(field.id)}
@@ -108,31 +184,73 @@ export const FieldComponentsHash: {
           </option>
         ))}
       </Select>
-      {field.error && <span>{field.error.message}</span>}
-    </VStack>
+      {field.error && (
+        <FormErrorMessage>{field.error.message}</FormErrorMessage>
+      )}
+    </FormControl>
   ),
   [FieldType.CHECKBOX]: ({ field }: FieldComponentProps) => (
-    <VStack sx={field.sx} alignItems="flex-start">
+    <FormControl
+      isInvalid={Boolean(field.error?.message)}
+      sx={field.sx}
+      alignItems="flex-start"
+    >
       <Checkbox {...field.inputProps} {...field.register(field.id)}>
         {field.label}
       </Checkbox>
-      {field.error && <span>{field.error.message}</span>}
-    </VStack>
+      {field.error && (
+        <FormErrorMessage>{field.error.message}</FormErrorMessage>
+      )}
+    </FormControl>
   ),
-  [FieldType.RADIO]: ({ field }: FieldComponentProps) => (
-    <RadioGroup {...field.inputProps} {...field.register(field.id)}>
-      <Stack direction={field.direction}>
-        {field.options?.map((option) => (
-          <Radio key={option.value} value={option.value}>
-            {option.label}
-          </Radio>
-        ))}
-      </Stack>
-      {field.error && <span>{field.error.message}</span>}
-    </RadioGroup>
-  ),
+  [FieldType.RADIO]: ({ field }: FieldComponentProps) => {
+    const fieldRegister = field.register(field.id);
+    return (
+      <RadioGroup
+        id={field.id}
+        {...field.inputProps}
+        {...fieldRegister}
+        onChange={(value) => {
+          const target = document.getElementById(field.id) as HTMLInputElement;
+          target.value = value;
+          const event = new Event("change", { bubbles: true });
+          Object.defineProperty(event, "target", {
+            writable: false,
+            value: target,
+          });
+          const syntheticEvent = createSyntheticEvent(
+            event
+          ) as React.ChangeEvent<typeof target>;
+          fieldRegister.onChange(syntheticEvent);
+        }}
+      >
+        {field.hasTitle ? (
+          <FormLabel htmlFor={field.id}>{field.label}</FormLabel>
+        ) : null}
+        <Stack direction={field.direction} spacing={field.spacing}>
+          {field.options?.map((option) => (
+            <Radio
+              key={option.value}
+              value={option.value}
+              // name={field.id}
+              defaultChecked={option.defaultChecked}
+            >
+              {option.label}
+            </Radio>
+          ))}
+        </Stack>
+        {field.error && (
+          <FormErrorMessage>{field.error.message}</FormErrorMessage>
+        )}
+      </RadioGroup>
+    );
+  },
   [FieldType.SUBMIT]: ({ field }: FieldComponentProps) => (
-    <VStack sx={field.sx} alignItems="flex-start">
+    <FormControl
+      isInvalid={Boolean(field.error?.message)}
+      sx={field.sx}
+      alignItems="flex-start"
+    >
       <Input
         id={field.id}
         type="submit"
@@ -140,130 +258,196 @@ export const FieldComponentsHash: {
         value={field.label}
         {...field.inputProps}
       />
-      {field.error && <span>{field.error.message}</span>}
-    </VStack>
+      {field.error && (
+        <FormErrorMessage>{field.error.message}</FormErrorMessage>
+      )}
+    </FormControl>
   ),
   [FieldType.FILE]: ({ field }: FieldComponentProps) => (
-    <VStack sx={field.sx} alignItems="flex-start">
-      <label htmlFor={field.id}>{field.label}</label>
+    <FormControl
+      isInvalid={Boolean(field.error?.message)}
+      sx={field.sx}
+      alignItems="flex-start"
+    >
+      <FormLabel htmlFor={field.id}>{field.label}</FormLabel>
       <Input
         id={field.id}
         type="file"
         {...field.register(field.id)}
         {...field.inputProps}
       />
-      {field.error && <span>{field.error.message}</span>}
-    </VStack>
+      {field.error && (
+        <FormErrorMessage>{field.error.message}</FormErrorMessage>
+      )}
+    </FormControl>
   ),
   [FieldType.TELEPHONE]: ({ field }: FieldComponentProps) => (
-    <VStack sx={field.sx} alignItems="flex-start">
-      <label htmlFor={field.id}>{field.label}</label>
+    <FormControl
+      isInvalid={Boolean(field.error?.message)}
+      sx={field.sx}
+      alignItems="flex-start"
+    >
+      <FormLabel htmlFor={field.id}>{field.label}</FormLabel>
       <Input
         id={field.id}
         type="tel"
         {...field.register(field.id)}
         {...field.inputProps}
       />
-      {field.error && <span>{field.error.message}</span>}
-    </VStack>
+      {field.error && (
+        <FormErrorMessage>{field.error.message}</FormErrorMessage>
+      )}
+    </FormControl>
   ),
   [FieldType.MONTH]: ({ field }: FieldComponentProps) => (
-    <VStack sx={field.sx} alignItems="flex-start">
-      <label htmlFor={field.id}>{field.label}</label>
+    <FormControl
+      isInvalid={Boolean(field.error?.message)}
+      sx={field.sx}
+      alignItems="flex-start"
+    >
+      <FormLabel htmlFor={field.id}>{field.label}</FormLabel>
       <Input
         id={field.id}
         type="month"
         {...field.register(field.id)}
         {...field.inputProps}
       />
-      {field.error && <span>{field.error.message}</span>}
-    </VStack>
+      {field.error && (
+        <FormErrorMessage>{field.error.message}</FormErrorMessage>
+      )}
+    </FormControl>
   ),
   [FieldType.WEEK]: ({ field }: FieldComponentProps) => (
-    <VStack sx={field.sx} alignItems="flex-start">
-      <label htmlFor={field.id}>{field.label}</label>
+    <FormControl
+      isInvalid={Boolean(field.error?.message)}
+      sx={field.sx}
+      alignItems="flex-start"
+    >
+      <FormLabel htmlFor={field.id}>{field.label}</FormLabel>
       <Input
         id={field.id}
         type="week"
         {...field.register(field.id)}
         {...field.inputProps}
       />
-      {field.error && <span>{field.error.message}</span>}
-    </VStack>
+      {field.error && (
+        <FormErrorMessage>{field.error.message}</FormErrorMessage>
+      )}
+    </FormControl>
   ),
   [FieldType.TIME]: ({ field }: FieldComponentProps) => (
-    <VStack sx={field.sx} alignItems="flex-start">
-      <label htmlFor={field.id}>{field.label}</label>
+    <FormControl
+      isInvalid={Boolean(field.error?.message)}
+      sx={field.sx}
+      alignItems="flex-start"
+    >
+      <FormLabel htmlFor={field.id}>{field.label}</FormLabel>
       <Input
         id={field.id}
         type="time"
         {...field.register(field.id)}
         {...field.inputProps}
       />
-      {field.error && <span>{field.error.message}</span>}
-    </VStack>
+      {field.error && (
+        <FormErrorMessage>{field.error.message}</FormErrorMessage>
+      )}
+    </FormControl>
   ),
   [FieldType.URL]: ({ field }: FieldComponentProps) => (
-    <VStack sx={field.sx} alignItems="flex-start">
-      <label htmlFor={field.id}>{field.label}</label>
+    <FormControl
+      isInvalid={Boolean(field.error?.message)}
+      sx={field.sx}
+      alignItems="flex-start"
+    >
+      <FormLabel htmlFor={field.id}>{field.label}</FormLabel>
       <Input
         id={field.id}
         type="url"
         {...field.register(field.id)}
         {...field.inputProps}
       />
-      {field.error && <span>{field.error.message}</span>}
-    </VStack>
+      {field.error && (
+        <FormErrorMessage>{field.error.message}</FormErrorMessage>
+      )}
+    </FormControl>
   ),
   [FieldType.COLOR]: ({ field }: FieldComponentProps) => (
-    <VStack sx={field.sx} alignItems="flex-start">
-      <label htmlFor={field.id}>{field.label}</label>
+    <FormControl
+      isInvalid={Boolean(field.error?.message)}
+      sx={field.sx}
+      alignItems="flex-start"
+    >
+      <FormLabel htmlFor={field.id}>{field.label}</FormLabel>
       <Input
         id={field.id}
         type="color"
         {...field.register(field.id)}
         {...field.inputProps}
       />
-      {field.error && <span>{field.error.message}</span>}
-    </VStack>
+      {field.error && (
+        <FormErrorMessage>{field.error.message}</FormErrorMessage>
+      )}
+    </FormControl>
   ),
   [FieldType.DATETIME_LOCAL]: ({ field }: FieldComponentProps) => (
-    <VStack sx={field.sx} alignItems="flex-start">
-      <label htmlFor={field.id}>{field.label}</label>
+    <FormControl
+      isInvalid={Boolean(field.error?.message)}
+      sx={field.sx}
+      alignItems="flex-start"
+    >
+      <FormLabel htmlFor={field.id}>{field.label}</FormLabel>
       <Input
         id={field.id}
         type="datetime-local"
         {...field.register(field.id)}
         {...field.inputProps}
       />
-      {field.error && <span>{field.error.message}</span>}
-    </VStack>
+      {field.error && (
+        <FormErrorMessage>{field.error.message}</FormErrorMessage>
+      )}
+    </FormControl>
   ),
   [FieldType.SEARCH]: ({ field }: FieldComponentProps) => (
-    <VStack sx={field.sx} alignItems="flex-start">
-      <label htmlFor={field.id}>{field.label}</label>
+    <FormControl
+      isInvalid={Boolean(field.error?.message)}
+      sx={field.sx}
+      alignItems="flex-start"
+    >
+      <FormLabel htmlFor={field.id}>{field.label}</FormLabel>
       <Input
         id={field.id}
         type="search"
         {...field.register(field.id)}
         {...field.inputProps}
       />
-      {field.error && <span>{field.error.message}</span>}
-    </VStack>
+      {field.error && (
+        <FormErrorMessage>{field.error.message}</FormErrorMessage>
+      )}
+    </FormControl>
   ),
   [FieldType.HIDDEN]: ({ field }: FieldComponentProps) => (
-    <VStack sx={field.sx} alignItems="flex-start">
+    <FormControl
+      isInvalid={Boolean(field.error?.message)}
+      sx={field.sx}
+      alignItems="flex-start"
+    >
       <Input
         id={field.id}
         type="hidden"
         {...field.register(field.id)}
         {...field.inputProps}
       />
-      {field.error && <span>{field.error.message}</span>}
-    </VStack>
+      {field.error && (
+        <FormErrorMessage>{field.error.message}</FormErrorMessage>
+      )}
+    </FormControl>
   ),
   [FieldType.RESET]: ({ field }: FieldComponentProps) => (
-    <VStack sx={field.sx} alignItems="flex-start">
+    <FormControl
+      isInvalid={Boolean(field.error?.message)}
+      sx={field.sx}
+      alignItems="flex-start"
+    >
       <Input
         id={field.id}
         type="reset"
@@ -271,7 +455,9 @@ export const FieldComponentsHash: {
         value={field.label}
         {...field.inputProps}
       />
-      {field.error && <span>{field.error.message}</span>}
-    </VStack>
+      {field.error && (
+        <FormErrorMessage>{field.error.message}</FormErrorMessage>
+      )}
+    </FormControl>
   ),
 };

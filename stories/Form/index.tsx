@@ -1,5 +1,5 @@
-import { StackProps, Stack, Button } from "@chakra-ui/react";
-import { Direction, Field, FieldWithValidation } from "./types";
+import { StackProps, Button, ButtonProps } from "@chakra-ui/react";
+import { Direction, Field } from "./types";
 import { FieldComponentsHash } from "./FieldComponentsHash";
 import { FieldValues, useForm } from "react-hook-form";
 import { buildYup } from "schema-to-yup";
@@ -13,6 +13,8 @@ export interface FormProps {
   fields: Field[];
   commonFieldProps?: Partial<Field>;
   onSubmit: (data: FieldValues) => void;
+  submitText?: string;
+  submitProps?: Omit<ButtonProps, "onClick">;
 }
 
 const BASE_SCHEMA = {
@@ -21,12 +23,13 @@ const BASE_SCHEMA = {
   title: "Person",
   description: "A person",
   type: "object",
+  required: ["username"],
 };
 
 function getValidationsFromFields(fields: Field[]) {
   const fieldValidationConfigs = fields
-    .filter((f): f is FieldWithValidation => Boolean(f.validation))
-    .map((f: FieldWithValidation) => {
+    .filter((f): f is Field => Boolean(f.validation))
+    .map((f: Field) => {
       const fieldValidations: any = f.validation;
       const validationKeys = Object.keys(fieldValidations);
       const validationValues = validationKeys.reduce(
@@ -113,57 +116,67 @@ export function Form({
   direction,
   commonFieldProps,
   debug,
+  submitProps,
+  submitText,
   ...extraProps
 }: FormProps) {
   const { validationValues, validationMessages } =
     getValidationsFromFields(fields);
   const resolver = useYupValidationResolver(
-    buildYup(validationValues, { errMessages: validationMessages }) as any
+    buildYup(validationValues, {
+      errMessages: {
+        ...validationMessages,
+        startDate: { negative: "Start date should be negative" },
+      },
+      mode: { notRequired: true },
+    }) as any
   );
   const defaultValues = getFieldsDefaultValues(fields);
   const {
     register,
     handleSubmit,
     getValues,
-    formState: { errors },
+    formState: { errors, touchedFields },
   } = useForm({ defaultValues, mode: "onSubmit", resolver });
 
   return (
-    <Stack
-      w="100%"
-      direction={direction}
-      gap={2}
-      alignItems="flex-start"
+    <form
+      style={{
+        width: "100%",
+        display: "flex",
+        flexDirection: direction,
+        gap: 16,
+        alignItems: "flex-start",
+      }}
+      onSubmit={handleSubmit(
+        !debug ? onSubmit : (data) => alert(JSON.stringify(data))
+      )}
       {...extraProps}
     >
-      <form
-        onSubmit={handleSubmit(
-          !debug ? onSubmit : (data) => alert(JSON.stringify(data))
-        )}
+      {fields.map((field: Field) => {
+        const FieldComponent = FieldComponentsHash[field.type];
+        return (
+          <FieldComponent
+            key={field.id}
+            field={{
+              register,
+              error: (errors as any)[field.id],
+              ...commonFieldProps,
+              ...field,
+            }}
+          />
+        );
+      })}
+      {debug && errors && <p>Errors: {JSON.stringify(errors)}</p>}
+      {debug && <p>Values: {JSON.stringify(getValues())}</p>}
+      {debug && <p>Touched: {JSON.stringify(touchedFields)}</p>}
+      <Button
+        type="submit"
+        onClick={() => handleSubmit((data) => console.log({ data }))}
+        {...submitProps}
       >
-        {fields.map((field: Field) => {
-          const FieldComponent = FieldComponentsHash[field.type];
-          return (
-            <FieldComponent
-              key={field.id}
-              field={{
-                register,
-                error: (errors as any)[field.id],
-                ...commonFieldProps,
-                ...field,
-              }}
-            />
-          );
-        })}
-        {debug && errors && <p>Errors: {JSON.stringify(errors)}</p>}
-        {debug && <p>Values: {JSON.stringify(getValues())}</p>}
-        <Button
-          type="submit"
-          onClick={() => handleSubmit((data) => console.log({ data }))}
-        >
-          Submit
-        </Button>
-      </form>
-    </Stack>
+        {submitText ?? "Submit"}
+      </Button>
+    </form>
   );
 }

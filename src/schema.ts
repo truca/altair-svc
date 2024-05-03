@@ -2,8 +2,10 @@ import { createSchema } from "graphql-yoga";
 import { makeExecutableSchema } from "@graphql-tools/schema";
 import { ModelDirective } from "./ModelDirective/ModelDirective";
 import MongoStore from "graphql-crud-mongo";
+import { GraphQLID } from "graphql";
 
 const typeDefinitions = /* GraphQL */ `
+  scalar ID
   directive @model on OBJECT
 
   type Author @model {
@@ -27,6 +29,7 @@ const typeDefinitions = /* GraphQL */ `
 `;
 
 const resolvers = {
+  ID: GraphQLID,
   Query: {},
 };
 

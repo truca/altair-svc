@@ -33,11 +33,6 @@ const resolvers = {
   Query: {},
 };
 
-// export const schema = createSchema({
-//   resolvers: [resolvers],
-//   typeDefs: [typeDefinitions],
-// });
-
 export const context = {
   directives: {
     model: {

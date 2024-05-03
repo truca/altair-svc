@@ -1,13 +1,5 @@
 // @ts-nocheck
 import * as pluralize from "pluralize";
-import pascalCase from "pascal-case";
-import camelCase from "camel-case";
-// const pascalCase = require("pascal-case"); // tslint:disable-line no-var-requires
-// const pascalCase = (...args) =>
-//   import("pascal-case").then(({ default: pascalCase }) => pascalCase(...args));
-// const camelCase = require("camel-case"); // tslint:disable-line no-var-requires
-// const camelCase = (...args) =>
-//   import("camel-case").then(({ default: camelCase }) => camelCase(...args));
 
 const pascalCase = (name: string) => {
   return name.replace(

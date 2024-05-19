@@ -3,7 +3,9 @@ import { makeExecutableSchema } from "@graphql-tools/schema";
 import { ModelDirective } from "./ModelDirective/ModelDirective";
 import MongoStore from "graphql-crud-mongo";
 import { GraphQLID } from "graphql";
+import { config } from "dotenv";
 
+config();
 const typeDefinitions = /* GraphQL */ `
   scalar ID
   directive @model on OBJECT
@@ -36,7 +38,9 @@ const resolvers = {
 export const context = {
   directives: {
     model: {
-      store: new MongoStore({ connection: "mongodb://localhost/my-database" }),
+      store: new MongoStore({
+        connection: `${process.env.DB_URI}/${process.env.DATABASE}`,
+      }),
     },
   },
 };

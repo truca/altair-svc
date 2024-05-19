@@ -1,5 +1,6 @@
 // @ts-nocheck
 import {
+  __Field,
   defaultFieldResolver,
   getNamedType,
   getNullableType,
@@ -9,13 +10,14 @@ import {
   GraphQLObjectType,
 } from "graphql";
 import { SchemaDirectiveVisitor } from "@graphql-tools/utils";
-import { isPlainObject, merge } from "lodash";
+import _, { isPlainObject, merge } from "lodash";
 import * as pluralize from "pluralize";
 import { generateFieldNames } from "./generateFieldNames";
 import { getInputType, hasDirective } from "./util";
 import { validateInputData } from "./validateInputData";
 import { addInputTypesForObjectType } from "./addInputTypesForObjectType";
 import { Store } from "./Store";
+import mongoose from "mongoose";
 
 export interface ResolverContext {
   directives: {
@@ -91,6 +93,8 @@ export class ModelDirective extends SchemaDirectiveVisitor {
     const res = {};
 
     for (const key of Object.keys(data)) {
+      if (key === "_id") continue;
+
       const value = data[key];
       const field = getNamedType(type.getFields()[key]) as any;
 
@@ -203,7 +207,7 @@ export class ModelDirective extends SchemaDirectiveVisitor {
     };
   }
 
-  private createMutationResolver(type) {
+  private createMutationResolver(type, parentIdsParam = {}) {
     return async (root, args: CreateResolverArgs, context: ResolverContext) => {
       validateInputData({
         data: args.data,
@@ -211,23 +215,48 @@ export class ModelDirective extends SchemaDirectiveVisitor {
         schema: this.schema,
       });
 
+      // add _id to the object if it doesn't exist
+      if (!args.data._id) {
+        args.data._id = new mongoose.Types.ObjectId();
+      }
+
       const relatedObjects = await this.visitNestedModels({
         type,
         data: args.data,
-        modelFunction: async (type: any, value: any) => {
+        modelFunction: async (localType: any, value: any, x: any, y: any) => {
+          const parentType = getNamedType(type) as any;
+          const parentTypeName = parentType.name.toLowerCase();
+          const fields = localType._fields;
+
+          const parentFieldName = Object.keys(fields).find((fieldName) => {
+            return fieldName.startsWith(parentTypeName);
+          });
+          const hasParentType = Boolean(parentFieldName);
+          const isSingular = parentFieldName === parentTypeName;
+
           if (value.id) {
-            const found = await this.findOneQueryResolver(type)(
+            const found = await this.findOneQueryResolver(localType)(
               root,
               { where: { id: value.id } },
               context
             );
             return found;
           }
-          const createdObject = await this.createMutationResolver(type)(
-            root,
-            { ...args, data: value },
-            context
-          );
+
+          const parentData = args.data;
+          const parentIds = {};
+          // This is to add the references to the parent node
+          if (hasParentType && isSingular) {
+            parentIds[parentFieldName] = { _id: parentData._id };
+          }
+          if (hasParentType && !isSingular) {
+            parentIds[parentFieldName] = [{ _id: parentData._id }];
+          }
+
+          const createdObject = await this.createMutationResolver(
+            localType,
+            parentIds
+          )(root, { ...args, data: value }, context);
           return createdObject;
         },
       });
@@ -238,6 +267,7 @@ export class ModelDirective extends SchemaDirectiveVisitor {
         data: {
           ...args.data,
           ...objectIds,
+          ...parentIdsParam,
         },
         type,
       });

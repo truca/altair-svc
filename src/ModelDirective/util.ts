@@ -52,6 +52,5 @@ export const cleanNestedObjects = (nestedObjects) => {
     }
   });
 
-  console.log({ nestedObjects, result });
   return result;
 };

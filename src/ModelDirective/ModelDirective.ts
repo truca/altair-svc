@@ -90,7 +90,6 @@ export class ModelDirective extends SchemaDirectiveVisitor {
   }
 
   private async visitNestedModels({ data, type, modelFunction, info }) {
-    // console.log({ data, type, modelFunction, info });
     const res = {};
 
     // move into its own function
@@ -211,7 +210,6 @@ export class ModelDirective extends SchemaDirectiveVisitor {
       context: ResolverContext,
       info: any
     ) => {
-      console.log("findOneQueryResolver", args.where, type.name.toString());
       const rootObject = await context.directives.model.store.findOne({
         where: args.where,
         type,

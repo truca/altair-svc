@@ -10,10 +10,10 @@ import {
   GraphQLObjectType,
 } from "graphql";
 import { SchemaDirectiveVisitor } from "@graphql-tools/utils";
-import _, { isPlainObject, merge } from "lodash";
+import _, { isArray, isPlainObject, merge, mergeWith, pickBy } from "lodash";
 import * as pluralize from "pluralize";
 import { generateFieldNames } from "./generateFieldNames";
-import { getInputType, hasDirective } from "./util";
+import { cleanNestedObjects, getInputType, hasDirective } from "./util";
 import { validateInputData } from "./validateInputData";
 import { addInputTypesForObjectType } from "./addInputTypesForObjectType";
 import { Store } from "./Store";
@@ -89,11 +89,23 @@ export class ModelDirective extends SchemaDirectiveVisitor {
     });
   }
 
-  private async visitNestedModels({ data, type, modelFunction }) {
+  private async visitNestedModels({ data, type, modelFunction, info }) {
+    // console.log({ data, type, modelFunction, info });
     const res = {};
 
+    // move into its own function
+    const selectedFields =
+      info?.fieldNodes?.[0].selectionSet.selections ||
+      info?.selectionSet.selections ||
+      [];
+    const selectedFieldsHash = selectedFields.reduce((res, selection) => {
+      res[selection.name.value] = selection;
+      return res;
+    }, {});
+    // end move
     for (const key of Object.keys(data)) {
       if (key === "_id") continue;
+      if (!selectedFieldsHash[key]) continue;
 
       const value = data[key];
       const field = getNamedType(type.getFields()[key]) as any;
@@ -101,7 +113,8 @@ export class ModelDirective extends SchemaDirectiveVisitor {
       const fieldType = getNamedType(field.type);
 
       if (isPlainObject(value) && hasDirective("model", fieldType)) {
-        const foundObject = await modelFunction(fieldType, value);
+        const info = selectedFieldsHash[key];
+        const foundObject = await modelFunction(fieldType, value, info);
         res[key] = foundObject;
       }
 
@@ -109,7 +122,8 @@ export class ModelDirective extends SchemaDirectiveVisitor {
         const createdObjects: any[] = [];
 
         for (const v of value) {
-          const foundObject = await modelFunction(fieldType, v);
+          const info = selectedFieldsHash[key];
+          const foundObject = await modelFunction(fieldType, v, info);
           createdObjects.push(foundObject);
         }
 
@@ -125,19 +139,25 @@ export class ModelDirective extends SchemaDirectiveVisitor {
       if (key === "id") {
         return {
           ...res,
-          [key]: data[key],
+          _id: data[key],
         };
       }
       if (isPlainObject(data[key])) {
+        const value = this.pluckModelObjectIds(data[key]);
         return {
           ...res,
-          [key]: this.pluckModelObjectIds(data[key]),
+          ...(Object.keys(value).length ? { [key]: value } : {}),
         };
       }
       if (Array.isArray(data[key])) {
+        const value = data[key]
+          .map((value) => this.pluckModelObjectIds(value))
+          .filter((v) =>
+            v && typeof v === "object" ? Object.keys(v).length : Boolean(v)
+          );
         return {
           ...res,
-          [key]: data[key].map((value) => this.pluckModelObjectIds(value)),
+          ...(value.length ? { [key]: value } : {}),
         };
       }
       return res;
@@ -145,7 +165,12 @@ export class ModelDirective extends SchemaDirectiveVisitor {
   }
 
   private findQueryResolver(type) {
-    return async (root, args: FindResolverArgs, context: ResolverContext) => {
+    return async (
+      root,
+      args: FindResolverArgs,
+      context: ResolverContext,
+      info: any
+    ) => {
       const initialData: object[] = await context.directives.model.store.find({
         where: args.where,
         type,
@@ -157,19 +182,21 @@ export class ModelDirective extends SchemaDirectiveVisitor {
 
       const results = await Promise.all(
         initialData.map(async (data) => {
-          const nestedData = await this.visitNestedModels({
+          const nestedObjects = await this.visitNestedModels({
             type,
             data,
-            modelFunction: async (type, value) => {
-              const found = await this.findOneQueryResolver(type)(
+            info,
+            modelFunction: async (localType, value, newInfo = null) => {
+              const found = await this.findOneQueryResolver(localType)(
                 root,
                 { ...args, where: value },
-                context
+                context,
+                newInfo ? newInfo : info
               );
               return found;
             },
           });
-          return merge({}, data, nestedData);
+          return { ...data, ...cleanNestedObjects(nestedObjects) };
         })
       );
 
@@ -181,8 +208,10 @@ export class ModelDirective extends SchemaDirectiveVisitor {
     return async (
       root,
       args: FindOneResolverArgs,
-      context: ResolverContext
+      context: ResolverContext,
+      info: any
     ) => {
+      console.log("findOneQueryResolver", args.where, type.name.toString());
       const rootObject = await context.directives.model.store.findOne({
         where: args.where,
         type,
@@ -195,20 +224,27 @@ export class ModelDirective extends SchemaDirectiveVisitor {
       const nestedObjects = await this.visitNestedModels({
         type,
         data: rootObject,
-        modelFunction: (type: any, value: any) =>
-          this.findOneQueryResolver(type)(
+        info,
+        modelFunction: (localType: any, value: any, infoParam: any = {}) =>
+          this.findOneQueryResolver(localType)(
             root,
             { ...args, where: value },
-            context
+            context,
+            infoParam
           ),
       });
 
-      return merge({}, rootObject, nestedObjects);
+      return { ...rootObject, ...cleanNestedObjects(nestedObjects) };
     };
   }
 
   private createMutationResolver(type, parentIdsParam = {}) {
-    return async (root, args: CreateResolverArgs, context: ResolverContext) => {
+    return async (
+      root,
+      args: CreateResolverArgs,
+      context: ResolverContext,
+      info: any
+    ) => {
       validateInputData({
         data: args.data,
         type,
@@ -223,7 +259,8 @@ export class ModelDirective extends SchemaDirectiveVisitor {
       const relatedObjects = await this.visitNestedModels({
         type,
         data: args.data,
-        modelFunction: async (localType: any, value: any, x: any, y: any) => {
+        info,
+        modelFunction: async (localType: any, value: any) => {
           const parentType = getNamedType(type) as any;
           const parentTypeName = parentType.name.toLowerCase();
           const fields = localType._fields;
@@ -238,7 +275,8 @@ export class ModelDirective extends SchemaDirectiveVisitor {
             const found = await this.findOneQueryResolver(localType)(
               root,
               { where: { id: value.id } },
-              context
+              context,
+              info
             );
             return found;
           }
@@ -256,7 +294,7 @@ export class ModelDirective extends SchemaDirectiveVisitor {
           const createdObject = await this.createMutationResolver(
             localType,
             parentIds
-          )(root, { ...args, data: value }, context);
+          )(root, { ...args, data: value }, context, info);
           return createdObject;
         },
       });
@@ -274,7 +312,7 @@ export class ModelDirective extends SchemaDirectiveVisitor {
 
       const mergedObjects = {
         ...rootObject,
-        ...relatedObjects,
+        ...cleanNestedObjects(relatedObjects),
       };
 
       return mergedObjects;
@@ -282,19 +320,35 @@ export class ModelDirective extends SchemaDirectiveVisitor {
   }
 
   private updateResolver(type) {
-    return async (root, args: UpdateResolverArgs, context: ResolverContext) => {
+    return async (
+      root,
+      args: UpdateResolverArgs,
+      context: ResolverContext,
+      info: any
+    ) => {
       validateInputData({
         data: args.data,
         type,
         schema: this.schema,
       });
 
+      const currentRootObject = await context.directives.model.store.findOne({
+        where: args.where,
+        type,
+      });
+
+      if (!args.data._id) {
+        args.data._id = currentRootObject.id;
+      }
+
       const relatedObjects = await this.visitNestedModels({
         type,
         data: args.data,
-        modelFunction: async (type: any, value: any) => {
+        info,
+        modelFunction: async (localType: any, value: any) => {
+          // update
           if (value.id) {
-            const updated = await this.updateResolver(type)(
+            const updated = await this.updateResolver(localType)(
               root,
               {
                 data: value,
@@ -303,32 +357,76 @@ export class ModelDirective extends SchemaDirectiveVisitor {
                 },
                 upsert: false,
               },
-              context
+              context,
+              info
             );
             if (updated) {
-              const foundObject = await this.findOneQueryResolver(type)(
+              const foundObject = await this.findOneQueryResolver(localType)(
                 root,
                 {
                   where: {
                     id: value.id,
                   },
                 },
-                context
+                context,
+                info
               );
 
               return foundObject;
             }
           }
-          return value;
+
+          // Create
+          // TODO: instead of copying the create modelFunction, we should just call it
+          // TODO: move to a function
+          const parentType = getNamedType(type) as any;
+          const parentTypeName = parentType.name.toLowerCase();
+          const fields = localType._fields;
+
+          const parentFieldName = Object.keys(fields).find((fieldName) => {
+            return fieldName.startsWith(parentTypeName);
+          });
+          const hasParentType = Boolean(parentFieldName);
+          const isSingular = parentFieldName === parentTypeName;
+          const parentData = args.data;
+          const parentIds = {};
+          // This is to add the references to the parent node
+          if (hasParentType && isSingular) {
+            parentIds[parentFieldName] = { _id: parentData._id };
+          }
+          if (hasParentType && !isSingular) {
+            parentIds[parentFieldName] = [{ _id: parentData._id }];
+          }
+          // end move
+
+          const createdObject = await this.createMutationResolver(
+            localType,
+            parentIds
+          )(root, { ...args, data: value }, context, info);
+          return createdObject;
         },
       });
 
-      const objectIds = this.pluckModelObjectIds(relatedObjects);
+      const newObjectIds = this.pluckModelObjectIds(relatedObjects);
+      const filteredRootObject = pickBy(currentRootObject, (_, key) => {
+        return newObjectIds[key];
+      });
+
+      const filteredData = pickBy(args.data, (_, key) => {
+        return !relatedObjects[key] && key !== "_id";
+      });
+
+      function customizer(objValue, srcValue) {
+        if (isArray(objValue)) {
+          return objValue.concat(srcValue);
+        }
+      }
+      const objectIds = mergeWith(filteredRootObject, newObjectIds, customizer);
 
       const updated = await context.directives.model.store.update({
         where: args.where,
         data: {
-          ...args.data,
+          ...filteredData,
           ...objectIds,
         },
         upsert: args.upsert,
@@ -344,9 +442,23 @@ export class ModelDirective extends SchemaDirectiveVisitor {
         type,
       });
 
+      const nestedObjects = await this.visitNestedModels({
+        type,
+        data: rootObject,
+        info,
+        modelFunction: (localType: any, value: any, infoParam: any = {}) =>
+          this.findOneQueryResolver(localType)(
+            root,
+            { ...args, where: value },
+            context,
+            infoParam
+          ),
+      });
+
+      // TODO: concat arrays
       const mergedObjects = {
         ...rootObject,
-        ...relatedObjects,
+        ...cleanNestedObjects(nestedObjects),
       };
 
       return mergedObjects;

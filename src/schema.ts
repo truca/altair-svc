@@ -1,7 +1,7 @@
 import { createSchema } from "graphql-yoga";
 import { makeExecutableSchema } from "@graphql-tools/schema";
-import { ModelDirective } from "./ModelDirective/ModelDirective";
-import MongoStore from "graphql-crud-mongo";
+import { ModelDirective } from "./ModelDirective";
+import { MongoStore } from "./MongoStore";
 import { GraphQLID } from "graphql";
 import { config } from "dotenv";
 

@@ -6,6 +6,7 @@ import {
   getNullableType,
   GraphQLBoolean,
   GraphQLID,
+  GraphQLInt,
   GraphQLList,
   GraphQLObjectType,
 } from "graphql";
@@ -171,7 +172,12 @@ export class ModelDirective extends SchemaDirectiveVisitor {
       info: any
     ) => {
       const initialData: object[] = await context.directives.model.store.find({
-        where: args.where,
+        where: {
+          ...(args.where || {}),
+          ...(args.last_id
+            ? { _id: { $gt: new mongoose.Types.ObjectId(args.last_id) } }
+            : {}),
+        },
         type,
       });
 
@@ -570,6 +576,7 @@ export class ModelDirective extends SchemaDirectiveVisitor {
     });
 
     // find many query
+    this.schema.getTypeMap()["GraphQLInt"] = GraphQLInt;
 
     this.addQuery({
       name: names.query.many,
@@ -580,6 +587,14 @@ export class ModelDirective extends SchemaDirectiveVisitor {
           name: "where",
           type: this.schema.getType(names.input.type),
         } as any,
+        {
+          name: "limit",
+          type: GraphQLInt,
+        },
+        {
+          name: "last_id",
+          type: GraphQLID,
+        },
       ],
       resolve: this.findQueryResolver(type),
       isDeprecated: false,

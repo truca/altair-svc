@@ -39,6 +39,8 @@ export interface FindOneResolverArgs {
 
 export interface FindResolverArgs {
   where: any;
+  last_id: string;
+  limit: number;
 }
 
 export interface UpdateResolverArgs {
@@ -178,6 +180,7 @@ export class ModelDirective extends SchemaDirectiveVisitor {
             ? { _id: { $gt: new mongoose.Types.ObjectId(args.last_id) } }
             : {}),
         },
+        limit: args.limit,
         type,
       });
 

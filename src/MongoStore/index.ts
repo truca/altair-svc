@@ -39,14 +39,13 @@ export class MongoStore implements Store {
 
   public async find(props: any /*StoreFindProps*/): Promise<[StoreFindReturn]> {
     const model = this.getModel(props.type.name);
-    if (props.limit) {
-      const res = await model
-        .find(this.formatInput(props.where))
-        .limit(props.limit);
-      return this.formatOutput(res);
-    }
+    const page = props.page || 1;
+    const pageSize = props.pageSize || 10;
 
-    const res = await model.find(this.formatInput(props.where));
+    const res = await model
+      .find(this.formatInput(props.where))
+      .skip((page - 1) * pageSize)
+      .limit(pageSize);
     return this.formatOutput(res);
   }
   public async create(props: StoreCreateProps): Promise<StoreCreateReturn> {

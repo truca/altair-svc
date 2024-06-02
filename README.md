@@ -13,7 +13,6 @@
 
 ## Pending
 
-- list pagination with cursor
 - attributes on mutations to match form specs
 - handle removal of n:m relations without removing one of the objects
 - separar los Inputs de create y update

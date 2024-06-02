@@ -39,8 +39,8 @@ export interface FindOneResolverArgs {
 
 export interface FindResolverArgs {
   where: any;
-  last_id: string;
-  limit: number;
+  page: number;
+  pageSize: number;
 }
 
 export interface UpdateResolverArgs {
@@ -174,13 +174,9 @@ export class ModelDirective extends SchemaDirectiveVisitor {
       info: any
     ) => {
       const initialData: object[] = await context.directives.model.store.find({
-        where: {
-          ...(args.where || {}),
-          ...(args.last_id
-            ? { _id: { $gt: new mongoose.Types.ObjectId(args.last_id) } }
-            : {}),
-        },
-        limit: args.limit,
+        where: args.where,
+        page: args.page,
+        pageSize: args.pageSize,
         type,
       });
 
@@ -591,12 +587,12 @@ export class ModelDirective extends SchemaDirectiveVisitor {
           type: this.schema.getType(names.input.type),
         } as any,
         {
-          name: "limit",
+          name: "page",
           type: GraphQLInt,
         },
         {
-          name: "last_id",
-          type: GraphQLID,
+          name: "pageSize",
+          type: GraphQLInt,
         },
       ],
       resolve: this.findQueryResolver(type),

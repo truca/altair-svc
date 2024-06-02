@@ -73,6 +73,6 @@ export const getQueryForType = async (type: string) => {
       return 0;
     });
 
-  const query = gql`query ${type} { ${type}(limit: 5) { ${fieldNames?.join(" ")} } }`;
+  const query = gql`query ${type}($page: Int, $pageSize: Int) { ${type}(page: $page, pageSize: $pageSize) { ${fieldNames?.join(" ")} } }`;
   return { query, fieldNames };
 };

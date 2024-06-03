@@ -76,3 +76,13 @@ export const getQueryForType = async (type: string) => {
   const query = gql`query ${type}($page: Int, $pageSize: Int) { ${type}(page: $page, pageSize: $pageSize) { ${fieldNames?.join(" ")} } }`;
   return { query, fieldNames };
 };
+
+function capitalizeFirstLetter(text: string) {
+  return text.replace(/^\w/, (c: string) => c.toUpperCase());
+}
+
+export const getRemoveMutationForType = (type: string) => {
+  const capitalizedType = capitalizeFirstLetter(type);
+  const removeMutation = gql`mutation Remove${capitalizedType}($id: ID!) { remove${capitalizedType}(where: {id: $id}) }`;
+  return { removeMutation };
+};

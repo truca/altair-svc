@@ -5,8 +5,9 @@ import {
   ApolloProvider,
   useQuery,
   DocumentNode,
+  useMutation,
 } from "@apollo/client";
-import { getQueryForType } from "./getQueryForType";
+import { getQueryForType, getRemoveMutationForType } from "./getQueriesForType";
 import {
   ButtonGroup,
   Button as ChakraButton,
@@ -37,24 +38,28 @@ export enum ControlType {
 
 export interface DisplayListProps {
   query: DocumentNode;
-  type: string;
+  removeMutation: DocumentNode;
+  pluralType: string;
   fieldNames: string[];
   controls?: ControlType[];
 }
 
 function DisplayList({
   query,
-  type,
+  removeMutation,
+  pluralType,
   fieldNames,
   controls = [ControlType.Page, ControlType.PageSize],
 }: DisplayListProps) {
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(5);
   const maxPages = 5;
-  const { loading, error, data } = useQuery<
+  const { loading, error, data, refetch } = useQuery<
     any,
     { page: number; pageSize: number }
   >(query, { variables: { page, pageSize } });
+  const [removeElement, { data: removeData }] = useMutation(removeMutation); // , { data, loading, error }
+  console.log({ removeData });
 
   if (loading) return <p>Loading...</p>;
   if (error && !data) return <p>Error : {error.message}</p>;
@@ -80,13 +85,20 @@ function DisplayList({
             </Tr>
           </Thead>
           <Tbody>
-            {data[type].map((elem: any) => (
+            {data[pluralType].map((elem: any) => (
               <Tr key={elem.id}>
                 {fieldNames.map((fieldName) => (
                   <Td key={fieldName}>{elem[fieldName]}</Td>
                 ))}
                 <Td>
-                  <Button primary label="Remove" />
+                  <Button
+                    primary
+                    label="Remove"
+                    onClick={async () => {
+                      await removeElement({ variables: { id: elem.id } });
+                      refetch();
+                    }}
+                  />
                 </Td>
               </Tr>
             ))}
@@ -154,28 +166,40 @@ function DisplayList({
 }
 
 export interface SmartListProps
-  extends Omit<DisplayListProps, "query" | "fieldNames"> {
-  type: string;
+  extends Omit<DisplayListProps, "query" | "removeMutation" | "fieldNames"> {
+  singularType: string;
 }
 
 export function SmartList(props: SmartListProps) {
-  const { type } = props;
+  const { pluralType, singularType } = props;
   const [query, setQuery] = useState<DocumentNode | null>(null);
+  const [removeMutation, setRemoveMutation] = useState<DocumentNode | null>(
+    null
+  );
   const [fieldNames, setFieldNames] = useState<string[]>([]);
 
   useEffect(() => {
     (async () => {
-      const { query, fieldNames } = await getQueryForType(type);
-      setQuery(query);
+      const { query: tempQuery, fieldNames } =
+        await getQueryForType(pluralType);
+      setQuery(tempQuery);
       setFieldNames(fieldNames ?? []);
+      const { removeMutation: tempRemoveMutation } =
+        getRemoveMutationForType(singularType);
+      setRemoveMutation(tempRemoveMutation);
     })();
-  }, [type]);
+  }, [pluralType, singularType]);
 
-  if (!query) return <p>Query Loading...</p>;
+  if (!query || !removeMutation) return <p>Query Loading...</p>;
 
   return (
     <ApolloProvider client={client}>
-      <DisplayList query={query} fieldNames={fieldNames} {...props} />
+      <DisplayList
+        query={query}
+        removeMutation={removeMutation}
+        fieldNames={fieldNames}
+        {...props}
+      />
     </ApolloProvider>
   );
 }

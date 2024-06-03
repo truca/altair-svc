@@ -20,14 +20,16 @@ const Wrapper = (Story: any) => {
 
 export const BaseSmartList: Story = {
   args: {
-    type: "books",
+    pluralType: "books",
+    singularType: "book",
   },
   decorators: [Wrapper],
 };
 
 export const SmartListWithControls: Story = {
   args: {
-    type: "books",
+    pluralType: "books",
+    singularType: "book",
     controls: [ControlType.Page],
   },
   decorators: [Wrapper],

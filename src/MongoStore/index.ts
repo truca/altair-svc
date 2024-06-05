@@ -10,7 +10,7 @@ import {
   StoreRemoveReturn,
   StoreUpdateProps,
   StoreUpdateReturn,
-} from "graphql-crud";
+} from "./types";
 import { cloneDeep } from "lodash";
 import mongoose, { Schema } from "mongoose";
 
@@ -33,24 +33,26 @@ export class MongoStore implements Store {
 
   public async findOne(props: StoreFindOneProps): Promise<StoreFindOneReturn> {
     const model = this.getModel(props.type.name);
-    const res = await model.findOne(this.formatInput(props.where));
+    const findOneParams = this.formatInput(props.where);
+    const res = await model.findOne({ ...findOneParams, deletedAt: null });
     return this.formatOutput(res);
   }
 
-  public async find(props: any /*StoreFindProps*/): Promise<[StoreFindReturn]> {
+  public async find(props: StoreFindProps): Promise<[StoreFindReturn]> {
     const model = this.getModel(props.type.name);
     const page = props.page || 1;
     const pageSize = props.pageSize || 10;
+    const findOneParams = this.formatInput(props.where);
 
     const res = await model
-      .find(this.formatInput(props.where))
+      .find({ ...findOneParams, deletedAt: null })
       .skip((page - 1) * pageSize)
       .limit(pageSize);
     return this.formatOutput(res);
   }
   public async create(props: StoreCreateProps): Promise<StoreCreateReturn> {
     const model = this.getModel(props.type.name);
-    const res = await model.create(props.data);
+    const res = await model.create({ ...props.data, createdAt: new Date() });
     // console.log({ res: this.formatOutput(res) });
     return this.formatOutput(res);
   }
@@ -67,9 +69,31 @@ export class MongoStore implements Store {
     );
     return res.n > 0;
   }
-  public async remove(props: StoreRemoveProps): Promise<StoreRemoveReturn> {
+  public async remove(
+    props: StoreRemoveProps & { hardDelete: boolean }
+  ): Promise<StoreRemoveReturn> {
+    const isHardDelete = props.hardDelete || false;
+    if (isHardDelete) {
+      return this.hardDelete(props);
+    }
+    return this.softDelete(props);
+  }
+  private async hardDelete(
+    props: StoreRemoveProps
+  ): Promise<StoreRemoveReturn> {
     const model = this.getModel(props.type.name);
-    const res = await model.remove(this.formatInput(props.where));
+    const res = await model.deleteOne(this.formatInput(props.where));
+    return res.n > 0;
+  }
+  private async softDelete(
+    props: StoreRemoveProps
+  ): Promise<StoreRemoveReturn> {
+    const model = this.getModel(props.type.name);
+    const res = await model.update(this.formatInput(props.where), {
+      $set: {
+        deletedAt: new Date(),
+      },
+    });
     return res.n > 0;
   }
   // Adds an `id` field to the output

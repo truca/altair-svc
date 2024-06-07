@@ -58,16 +58,25 @@ export class MongoStore implements Store {
   }
   public async update(props: StoreUpdateProps): Promise<StoreUpdateReturn> {
     const model = this.getModel(props.type.name);
-    const res = await model.update(
+    // const res = await model.updateOne(
+    //   this.formatInput(props.where),
+    //   {
+    //     $set: props.data,
+    //   },
+    //   {
+    //     upsert: props.upsert,
+    //   }
+    // );
+    const res = await model.findOneAndUpdate(
       this.formatInput(props.where),
       {
         $set: props.data,
       },
-      {
-        upsert: props.upsert,
-      }
+      { new: true }
     );
-    return res.n > 0;
+
+    console.log({ res });
+    return res;
   }
   public async remove(
     props: StoreRemoveProps & { hardDelete: boolean }

@@ -53,9 +53,6 @@ export async function getCreateMutationForType(
     )
     .join(", ");
 
-  console.log(
-    `mutation Create${capitalizedType}(${mutationParamTypesString}) { create${capitalizedType}(data: {${mutationParamsString}}) { ${fieldNames?.join(" ")} } }`
-  );
   const createMutation = gql`mutation Create${capitalizedType}(${mutationParamTypesString}) { create${capitalizedType}(data: {${mutationParamsString}}) { ${fieldNames?.join(" ")} } }`;
   return createMutation;
 }
@@ -75,9 +72,6 @@ export async function getUpdateMutationForType(
     )
     .join(", ");
 
-  console.log(
-    `mutation Update${capitalizedType}(${mutationParamTypesString}) { update${capitalizedType}(where: {id: $id}, data: {${mutationParamsString}}) { ${fieldNames?.join(" ")} } }`
-  );
   const updateMutation = gql`mutation Update${capitalizedType}(${mutationParamTypesString}) { update${capitalizedType}(where: {id: $id}, data: {${mutationParamsString}}) { ${fieldNames?.join(" ")} } }`;
   return updateMutation;
 }

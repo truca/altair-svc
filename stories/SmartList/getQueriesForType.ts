@@ -49,12 +49,19 @@ export const getFieldnamesForType = async (type: any) => {
   const queries = getTypeFromSchemaTypes(schema.types, schema.queryType.name);
   // get query
   // @ts-ignore
-  const listType = getTypeFromSchemaTypes(queries?.fields, type);
+  const manyType = getTypeFromSchemaTypes(queries?.fields, type);
 
+  const listType = getTypeFromSchemaTypes(
+    schema.types,
+    // @ts-ignore
+    manyType?.type?.ofType ? manyType?.type.ofType.name : manyType?.type.name
+  );
+
+  const listField = listType?.fields.find((field) => field.name === "list");
   const entityType = getTypeFromSchemaTypes(
     schema.types,
     // @ts-ignore
-    listType?.type?.ofType ? listType?.type.ofType.name : listType?.type.name
+    listField?.type?.ofType ? listField?.type.ofType.name : listField?.type.name
   );
 
   const fieldNames = entityType?.fields
@@ -78,7 +85,7 @@ export const getFieldnamesForType = async (type: any) => {
 
 export const getQueryForType = async (type: string) => {
   const { fieldNames } = await getFieldnamesForType(type);
-  const query = gql`query ${type}($page: Int, $pageSize: Int) { ${type}(page: $page, pageSize: $pageSize) { ${fieldNames?.join(" ")} } }`;
+  const query = gql`query ${type}($page: Int, $pageSize: Int, $includeMaxPages: Boolean!) { ${type}(page: $page, pageSize: $pageSize, includeMaxPages: $includeMaxPages) { list { ${fieldNames?.join(" ")} } maxPages @include(if: $includeMaxPages) } }`;
   return { query, fieldNames };
 };
 

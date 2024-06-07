@@ -62,12 +62,20 @@ function DisplayList({
 }: DisplayListProps) {
   const [page, setPage] = useState(initialPage);
   const [pageSize, setPageSize] = useState(initialPageSize);
-  const maxPages = 5;
+  const [maxPages, setMaxPages] = useState(5);
+  const [hasSetMaxPages, setHasSetMaxPages] = useState(false);
   const { loading, error, data, refetch } = useQuery<
     any,
-    { page: number; pageSize: number }
-  >(query, { variables: { page, pageSize } });
+    { page: number; pageSize: number; includeMaxPages: boolean }
+  >(query, { variables: { page, pageSize, includeMaxPages: !hasSetMaxPages } });
   const [removeElement, { data: removeData }] = useMutation(removeMutation); // , { data, loading, error }
+
+  useEffect(() => {
+    if (!hasSetMaxPages && data?.[pluralType]) {
+      setHasSetMaxPages(true);
+      setMaxPages(data?.[pluralType]?.maxPages || 10);
+    }
+  }, [data, hasSetMaxPages, pluralType]);
 
   if (loading) return <p>Loading...</p>;
   if (error && !data) return <p>Error : {error.message}</p>;
@@ -80,6 +88,7 @@ function DisplayList({
   const hasControls = Boolean(controls.length);
   const hasPageControl = controls.includes(ControlType.Page);
   const hasPageSizeControl = controls.includes(ControlType.PageSize);
+  console.log({ maxPages, page, pageSize, data, isLastPage, isFirstPage });
   return (
     <VStack>
       <TableContainer w="100%">
@@ -93,7 +102,7 @@ function DisplayList({
             </Tr>
           </Thead>
           <Tbody>
-            {data[pluralType].map((elem: any) => (
+            {data[pluralType].list.map((elem: any) => (
               <Tr key={elem.id}>
                 {fieldNames.map((fieldName) => (
                   <Td key={fieldName}>{elem[fieldName]}</Td>
@@ -135,9 +144,11 @@ function DisplayList({
             <Select
               size="sm"
               value={pageSize}
-              onChange={(e) =>
-                setPageSize(Number((e.target as HTMLSelectElement).value))
-              }
+              onChange={(e) => {
+                setPageSize(Number((e.target as HTMLSelectElement).value));
+                setPage(1);
+                setHasSetMaxPages(false);
+              }}
               borderRadius={5}
             >
               <option value="5">5</option>
@@ -157,7 +168,7 @@ function DisplayList({
                 aria-label="Previous page"
                 icon={<ChevronLeftIcon />}
                 disabled={isFirstPage}
-                onClick={() => setPage(page - 1)}
+                onClick={isFirstPage ? undefined : () => setPage(page - 1)}
               />
               {!isSecondOrFirstPage && (
                 <ChakraButton onClick={() => setPage(page - 2)}>
@@ -186,7 +197,7 @@ function DisplayList({
                 aria-label="Next page"
                 icon={<ChevronRightIcon />}
                 disabled={isLastPage}
-                onClick={() => setPage(page + 1)}
+                onClick={isLastPage ? undefined : () => setPage(page + 1)}
               />
             </ButtonGroup>
           )}

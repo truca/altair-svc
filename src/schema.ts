@@ -4,7 +4,7 @@ import { ModelDirective } from "./ModelDirective";
 import { MongoStore } from "./MongoStore";
 import { GraphQLID } from "graphql";
 import { config } from "dotenv";
-import { AUTHOR_FORM } from "./form/author";
+import { FORMS } from "./form";
 
 config();
 const typeDefinitions = /* GraphQL */ `
@@ -81,7 +81,7 @@ const typeDefinitions = /* GraphQL */ `
 
   type Query {
     _: Boolean
-    form(id: ID, type: FormType): Form
+    form(type: FormType): Form
   }
 
   type Mutation {
@@ -96,33 +96,12 @@ const resolvers = {
     BOOK: "book",
   },
   Query: {
-    form: async (_: any, { id, type }: { id: string; type: string }) => {
-      if (type === "author") {
-        if (id) return { fields: Object.values(AUTHOR_FORM) };
-        return { fields: Object.values(AUTHOR_FORM) };
+    form: async (_: any, { type }: { id: string; type: string }) => {
+      if (FORMS[type]) {
+        return { fields: FORMS[type] };
       }
       return {
-        fields: [
-          {
-            label: "nombre",
-            type: "TEXT",
-            defaultValue: "John Doe",
-            validation: [
-              {
-                label: "type",
-                value: "string",
-                valueType: "STRING",
-                errorMessage: "Name should be a string",
-              },
-              {
-                label: "required",
-                value: "true",
-                valueType: "BOOLEAN",
-                errorMessage: "Name is required",
-              },
-            ],
-          },
-        ],
+        fields: [],
       };
     },
   },

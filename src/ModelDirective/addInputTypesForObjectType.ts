@@ -14,13 +14,6 @@ import {
   toInputObjectTypeName,
 } from "./util";
 import { omitResolvers } from "./omitResolvers";
-// import {
-//   getInputType,
-//   isNonNullable,
-//   isValidInputFieldType,
-//   omitResolvers,
-//   toInputObjectTypeName,
-// } from "./";
 
 export interface AddInputTypesForObjectTypeProps {
   objectType: GraphQLObjectType;

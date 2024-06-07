@@ -41,6 +41,7 @@ export interface FindResolverArgs {
   where: any;
   page: number;
   pageSize: number;
+  includeMaxPages: boolean;
 }
 
 export interface UpdateResolverArgs {
@@ -177,6 +178,7 @@ export class ModelDirective extends SchemaDirectiveVisitor {
         where: args.where,
         page: args.page,
         pageSize: args.pageSize,
+        includeMaxPages: args.includeMaxPages,
         type,
       });
 
@@ -184,26 +186,30 @@ export class ModelDirective extends SchemaDirectiveVisitor {
         return null;
       }
 
-      const results = await Promise.all(
-        initialData.map(async (data) => {
-          const nestedObjects = await this.visitNestedModels({
-            type,
-            data,
-            info,
-            modelFunction: async (localType, value, newInfo = null) => {
-              const found = await this.findOneQueryResolver(localType)(
-                root,
-                { ...args, where: value },
-                context,
-                newInfo ? newInfo : info
-              );
-              return found;
-            },
-          });
-          return { ...data, ...cleanNestedObjects(nestedObjects) };
-        })
-      );
+      const results = {
+        maxPages: initialData.maxPages,
+        list: await Promise.all(
+          initialData.list.map(async (data) => {
+            const nestedObjects = await this.visitNestedModels({
+              type,
+              data,
+              info,
+              modelFunction: async (localType, value, newInfo = null) => {
+                const found = await this.findOneQueryResolver(localType)(
+                  root,
+                  { ...args, where: value },
+                  context,
+                  newInfo ? newInfo : info
+                );
+                return found;
+              },
+            });
+            return { ...data, ...cleanNestedObjects(nestedObjects) };
+          })
+        ),
+      };
 
+      console.log({ results });
       return results;
     };
   }
@@ -577,9 +583,23 @@ export class ModelDirective extends SchemaDirectiveVisitor {
     // find many query
     this.schema.getTypeMap()["GraphQLInt"] = GraphQLInt;
 
+    const listTypeName = `${names.query.one}List`;
+    const listType = new GraphQLObjectType({
+      name: listTypeName,
+      fields: () => ({
+        list: {
+          type: new GraphQLList(type),
+        },
+        maxPages: {
+          type: GraphQLInt,
+        },
+      }),
+    });
+    this.schema.getTypeMap()[listTypeName] = listType;
+
     this.addQuery({
       name: names.query.many,
-      type: new GraphQLList(type),
+      type: listType,
       description: `Find multiple ${pluralize.plural(type.name)}`,
       args: [
         {
@@ -593,6 +613,10 @@ export class ModelDirective extends SchemaDirectiveVisitor {
         {
           name: "pageSize",
           type: GraphQLInt,
+        },
+        {
+          name: "includeMaxPages",
+          type: GraphQLBoolean,
         },
       ],
       resolve: this.findQueryResolver(type),

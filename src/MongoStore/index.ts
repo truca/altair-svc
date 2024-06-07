@@ -38,35 +38,43 @@ export class MongoStore implements Store {
     return this.formatOutput(res);
   }
 
-  public async find(props: StoreFindProps): Promise<[StoreFindReturn]> {
+  public async find(
+    props: StoreFindProps
+  ): Promise<{ list: [StoreFindReturn]; maxPages: number | null }> {
     const model = this.getModel(props.type.name);
     const page = props.page || 1;
     const pageSize = props.pageSize || 10;
+    const includeMaxPages = props.includeMaxPages || false;
     const findOneParams = this.formatInput(props.where);
+
+    let maxPages: number | null = null;
+    if (includeMaxPages) {
+      const count = await model.aggregate([
+        {
+          $match: { ...findOneParams, deletedAt: null },
+        },
+        {
+          $count: "count",
+        },
+      ]);
+      const results = count[0].count;
+      maxPages = Math.ceil(results / pageSize);
+      console.log({ count: results, pageSize, maxPages });
+    }
 
     const res = await model
       .find({ ...findOneParams, deletedAt: null })
       .skip((page - 1) * pageSize)
       .limit(pageSize);
-    return this.formatOutput(res);
+    return { list: this.formatOutput(res), maxPages };
   }
   public async create(props: StoreCreateProps): Promise<StoreCreateReturn> {
     const model = this.getModel(props.type.name);
     const res = await model.create({ ...props.data, createdAt: new Date() });
-    // console.log({ res: this.formatOutput(res) });
     return this.formatOutput(res);
   }
   public async update(props: StoreUpdateProps): Promise<StoreUpdateReturn> {
     const model = this.getModel(props.type.name);
-    // const res = await model.updateOne(
-    //   this.formatInput(props.where),
-    //   {
-    //     $set: props.data,
-    //   },
-    //   {
-    //     upsert: props.upsert,
-    //   }
-    // );
     const res = await model.findOneAndUpdate(
       this.formatInput(props.where),
       {

@@ -4,6 +4,7 @@ export interface StoreFindProps {
   type: GraphQLNamedType;
   page?: number;
   pageSize?: number;
+  includeMaxPages?: boolean;
 }
 export interface StoreFindReturn {
   id: string;
@@ -38,7 +39,9 @@ export interface StoreRemoveProps {
 }
 export declare type StoreRemoveReturn = boolean;
 export interface Store {
-  find(props: StoreFindProps): Promise<[StoreFindReturn]>;
+  find(
+    props: StoreFindProps
+  ): Promise<{ list: [StoreFindReturn]; maxPages: number | null }>;
   findOne(props: StoreFindOneProps): Promise<StoreFindOneReturn>;
   create(props: StoreCreateProps): Promise<StoreCreateReturn>;
   update(props: StoreUpdateProps): Promise<StoreUpdateReturn>;

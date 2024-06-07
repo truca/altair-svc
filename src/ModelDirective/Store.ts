@@ -47,7 +47,9 @@ export interface StoreRemoveProps {
 export type StoreRemoveReturn = boolean;
 
 export interface Store {
-  find(props: StoreFindProps): Promise<[StoreFindReturn]>;
+  find(
+    props: StoreFindProps
+  ): Promise<{ list: [StoreFindReturn]; maxPages: number | null }>;
   findOne(props: StoreFindOneProps): Promise<StoreFindOneReturn>;
   create(props: StoreCreateProps): Promise<StoreCreateReturn>;
   update(props: StoreUpdateProps): Promise<StoreUpdateReturn>;

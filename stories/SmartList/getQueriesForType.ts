@@ -77,7 +77,7 @@ export const getQueryForType = async (type: string) => {
   return { query, fieldNames };
 };
 
-function capitalizeFirstLetter(text: string) {
+export function capitalizeFirstLetter(text: string) {
   return text.replace(/^\w/, (c: string) => c.toUpperCase());
 }
 

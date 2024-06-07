@@ -36,56 +36,58 @@ export enum Direction {
   COLUMN = "column",
 }
 
+export interface FieldValidation {
+  type: ["string" | "number" | "mixed" | "date", string];
+  format?: ["email" | "url", string];
+  matches?: [string | RegExp, string];
+  enum?: [string[], string];
+  enum_titles?: [string[], string];
+  exclusiveMinimum?: [number, string];
+
+  // Common
+  // strict
+  // default
+  // nullable
+  // const?: [string | number, string];
+  required?: [boolean, string];
+  notRequired?: [boolean, string];
+  // oneOf (enum, anyOf)
+  // notOneOf
+  // refValueFor for confirm password scenario
+  // typeError custom type error message (in config)
+  // when
+  // isType
+  nullable?: [boolean, string];
+
+  // Number
+  // integer?: []; => use step property instead
+  // moreThan (exclusiveMinimum)
+  // lessThan (exclusiveMaximum)
+  positive?: [string];
+  negative?: [string];
+  min?: [string, string];
+  max?: [string, string];
+  // truncate?: [];
+  // round?: []; // will force user to input an integer
+
+  // Date
+  maxDate?: [Date, string];
+  minDate?: [Date, string];
+
+  // String
+  minLength?: [number, string];
+  maxLength?: [number, string];
+  pattern?: [RegExp, string];
+  //
+  lowercase?: [];
+  uppercase?: [];
+  trim?: [];
+}
+
 export interface Field {
   id: string;
   type: FieldType;
-  validation?: {
-    type: ["string" | "number" | "mixed" | "date", string];
-    format?: ["email" | "url", string];
-    matches?: [string | RegExp, string];
-    enum?: [string[], string];
-    enum_titles?: [string[], string];
-    exclusiveMinimum?: [number, string];
-
-    // Common
-    // strict
-    // default
-    // nullable
-    // const?: [string | number, string];
-    required?: [boolean, string];
-    notRequired?: [boolean, string];
-    // oneOf (enum, anyOf)
-    // notOneOf
-    // refValueFor for confirm password scenario
-    // typeError custom type error message (in config)
-    // when
-    // isType
-    nullable?: [boolean, string];
-
-    // Number
-    // integer?: []; => use step property instead
-    // moreThan (exclusiveMinimum)
-    // lessThan (exclusiveMaximum)
-    positive?: [string];
-    negative?: [string];
-    min?: [string, string];
-    max?: [string, string];
-    // truncate?: [];
-    // round?: []; // will force user to input an integer
-
-    // Date
-    maxDate?: [Date, string];
-    minDate?: [Date, string];
-
-    // String
-    minLength?: [number, string];
-    maxLength?: [number, string];
-    pattern?: [RegExp, string];
-    //
-    lowercase?: [];
-    uppercase?: [];
-    trim?: [];
-  };
+  validation?: FieldValidation;
   label: string;
   hasTitle?: boolean; // specific for radio button
   placeholder?: string;

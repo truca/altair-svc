@@ -30,6 +30,9 @@ export const SimpleDebugForm: Story = {
     commonFieldProps: {
       inputProps: { colorScheme: "red" } as any,
     },
+    onSubmit: (data) => {
+      alert(`Values: ${JSON.stringify(data)}`);
+    },
     fields: [
       {
         id: "radio",
@@ -122,9 +125,6 @@ export const SimpleDebugForm: Story = {
       //   },
       // },
     ],
-    onSubmit: (data) => {
-      alert(`Values: ${JSON.stringify(data)}`);
-    },
   },
   decorators: [Wrapper],
 };

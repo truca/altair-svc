@@ -34,3 +34,14 @@ export const SmartListWithControls: Story = {
   },
   decorators: [Wrapper],
 };
+
+export const SmartListWithInitialPageAndPageSize: Story = {
+  args: {
+    pluralType: "books",
+    singularType: "book",
+    initialPage: 2,
+    initialPageSize: 10,
+    controls: [ControlType.Page, ControlType.PageSize],
+  },
+  decorators: [Wrapper],
+};

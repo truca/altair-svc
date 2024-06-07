@@ -23,7 +23,12 @@ import {
   Tr,
   VStack,
 } from "@chakra-ui/react";
-import { ChevronLeftIcon, ChevronRightIcon } from "@chakra-ui/icons";
+import {
+  ChevronLeftIcon,
+  ChevronRightIcon,
+  DeleteIcon,
+  EditIcon,
+} from "@chakra-ui/icons";
 import { Button } from "../Button";
 
 const client = new ApolloClient({
@@ -42,6 +47,8 @@ export interface DisplayListProps {
   pluralType: string;
   fieldNames: string[];
   controls?: ControlType[];
+  initialPage?: number;
+  initialPageSize?: number;
 }
 
 function DisplayList({
@@ -49,17 +56,18 @@ function DisplayList({
   removeMutation,
   pluralType,
   fieldNames,
+  initialPage = 1,
+  initialPageSize = 5,
   controls = [ControlType.Page, ControlType.PageSize],
 }: DisplayListProps) {
-  const [page, setPage] = useState(1);
-  const [pageSize, setPageSize] = useState(5);
+  const [page, setPage] = useState(initialPage);
+  const [pageSize, setPageSize] = useState(initialPageSize);
   const maxPages = 5;
   const { loading, error, data, refetch } = useQuery<
     any,
     { page: number; pageSize: number }
   >(query, { variables: { page, pageSize } });
   const [removeElement, { data: removeData }] = useMutation(removeMutation); // , { data, loading, error }
-  console.log({ removeData });
 
   if (loading) return <p>Loading...</p>;
   if (error && !data) return <p>Error : {error.message}</p>;
@@ -91,14 +99,30 @@ function DisplayList({
                   <Td key={fieldName}>{elem[fieldName]}</Td>
                 ))}
                 <Td>
-                  <Button
-                    primary
-                    label="Remove"
-                    onClick={async () => {
-                      await removeElement({ variables: { id: elem.id } });
-                      refetch();
-                    }}
-                  />
+                  <HStack spacing={4}>
+                    <IconButton
+                      size="sm"
+                      variant="outline"
+                      colorScheme="teal"
+                      aria-label="Edit"
+                      icon={<EditIcon />}
+                      onClick={async () => {
+                        await removeElement({ variables: { id: elem.id } });
+                        refetch();
+                      }}
+                    />
+                    <IconButton
+                      size="sm"
+                      variant="outline"
+                      colorScheme="red"
+                      aria-label="Remove"
+                      icon={<DeleteIcon />}
+                      onClick={async () => {
+                        await removeElement({ variables: { id: elem.id } });
+                        refetch();
+                      }}
+                    />
+                  </HStack>
                 </Td>
               </Tr>
             ))}
@@ -123,7 +147,12 @@ function DisplayList({
             </Select>
           )}
           {hasPageControl && (
-            <ButtonGroup size="sm" isAttached variant="outline">
+            <ButtonGroup
+              size="sm"
+              isAttached
+              variant="outline"
+              colorScheme="teal"
+            >
               <IconButton
                 aria-label="Previous page"
                 icon={<ChevronLeftIcon />}
@@ -140,7 +169,9 @@ function DisplayList({
                   {page - 1}
                 </ChakraButton>
               )}
-              <ChakraButton>{page}</ChakraButton>
+              <ChakraButton colorScheme="teal" variant="solid">
+                {page}
+              </ChakraButton>
               {!isLastPage && (
                 <ChakraButton onClick={() => setPage(page + 1)}>
                   {page + 1}

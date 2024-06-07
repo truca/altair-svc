@@ -1,14 +1,15 @@
-import { DocumentNode, gql, useQuery } from "@apollo/client";
+import { DocumentNode, useMutation, useQuery } from "@apollo/client";
 import { Form, FormProps } from "../Form";
 import { FieldValidation } from "../Form/types";
 import { useEffect, useState } from "react";
-import { getQueryForType } from "./getQueriesForType";
+import { getFormQueryForType, getQueryForType } from "./getQueriesForType";
 
 interface SmartFormProps extends FormProps {
   // if id is passed, it'll update, otherwise it'll create
   id?: string;
   entityType: string;
   formQuery: DocumentNode;
+  formMutation: DocumentNode;
 }
 
 enum ValueType {
@@ -49,12 +50,15 @@ function SmartForm({
   id,
   entityType,
   formQuery,
+  formMutation,
   ...formProps
 }: SmartFormProps) {
   const { loading, error, data } = useQuery<
     any,
     { id?: string; type: string; include: boolean }
   >(formQuery, { variables: { id, type: entityType, include: Boolean(id) } });
+
+  const [mutate, mutationResult] = useMutation(formMutation);
 
   if (loading) return <p>Loading...</p>;
   if (error) return <p>Error: {JSON.stringify(error)}</p>;
@@ -67,28 +71,46 @@ function SmartForm({
     defaultValue: data?.[entityName]?.[field.label],
     validation: parseValidation(field.validation),
   }));
-  return <Form {...formProps} fields={fields} />;
+
+  console.log(mutationResult);
+  return (
+    <Form
+      {...formProps}
+      fields={fields}
+      onSubmit={(data) => {
+        mutate({ variables: { id, ...data } });
+      }}
+    />
+  );
 }
 
 function SmartFormWrapper({
-  entityType,
   ...formProps
-}: Omit<SmartFormProps, "formQuery">) {
+}: Omit<SmartFormProps, "formQuery" | "formMutation">) {
+  const { id, entityType } = formProps;
   const [formQuery, setFormQuery] = useState<DocumentNode | null>(null);
+  const [formMutation, setFormMutation] = useState<DocumentNode | null>(null);
 
   useEffect(() => {
     (async () => {
-      const { query: tempQuery } = await getQueryForType(
-        entityType.toLowerCase()
-      );
+      const [{ query: tempQuery }, tempFormMutation] = await Promise.all([
+        getQueryForType(entityType.toLowerCase()),
+        getFormQueryForType(entityType.toLowerCase(), id),
+      ]);
+      console.log({ tempFormMutation, tempQuery });
       setFormQuery(tempQuery);
+      setFormMutation(tempFormMutation);
     })();
-  }, [entityType]);
+  }, [id, entityType]);
 
-  if (!formQuery) return <p>Query Loading...</p>;
+  if (!formQuery || !formMutation) return <p>Query Loading...</p>;
 
   return (
-    <SmartForm entityType={entityType} {...formProps} formQuery={formQuery} />
+    <SmartForm
+      {...formProps}
+      formQuery={formQuery}
+      formMutation={formMutation}
+    />
   );
 }
 

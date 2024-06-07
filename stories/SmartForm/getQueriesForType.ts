@@ -1,4 +1,4 @@
-import { gql } from "@apollo/client";
+import { DocumentNode, gql } from "@apollo/client";
 import { getFieldnamesForType } from "../SmartList/getQueriesForType";
 
 export const getQueryStringForType = async (type: string) => {
@@ -7,7 +7,9 @@ export const getQueryStringForType = async (type: string) => {
   return { query, fieldNames };
 };
 
-export async function getQueryForType(type: string) {
+export async function getQueryForType(
+  type: string
+): Promise<{ query: DocumentNode }> {
   const { query: entityQuery } = await getQueryStringForType(type);
   const query = gql`
     query Form($id: ID, $type: FormType, $include: Boolean = false) {
@@ -35,8 +37,56 @@ export function capitalizeFirstLetter(text: string) {
   return text.replace(/^\w/, (c: string) => c.toUpperCase());
 }
 
-export const getRemoveMutationForType = (type: string) => {
+export async function getCreateMutationForType(
+  type: string
+): Promise<DocumentNode> {
+  const { fieldNames } = await getFieldnamesForType(type);
   const capitalizedType = capitalizeFirstLetter(type);
-  const removeMutation = gql`mutation Remove${capitalizedType}($id: ID!) { remove${capitalizedType}(where: {id: $id}) }`;
-  return { removeMutation };
-};
+  const mutationParamsString = fieldNames
+    ?.filter((fieldName) => fieldName !== "id")
+    ?.map((fieldName) => `${fieldName}: $${fieldName}`)
+    .join(", ");
+  const mutationParamTypesString = fieldNames
+    ?.filter((fieldName) => fieldName !== "id")
+    ?.map(
+      (fieldName) => `$${fieldName}: ${fieldName === "id" ? "ID" : "String"}`
+    )
+    .join(", ");
+
+  console.log(
+    `mutation Create${capitalizedType}(${mutationParamTypesString}) { create${capitalizedType}(data: {${mutationParamsString}}) { ${fieldNames?.join(" ")} } }`
+  );
+  const createMutation = gql`mutation Create${capitalizedType}(${mutationParamTypesString}) { create${capitalizedType}(data: {${mutationParamsString}}) { ${fieldNames?.join(" ")} } }`;
+  return createMutation;
+}
+
+export async function getUpdateMutationForType(
+  type: string
+): Promise<DocumentNode> {
+  const { fieldNames } = await getFieldnamesForType(type);
+  const capitalizedType = capitalizeFirstLetter(type);
+  const mutationParamsString = fieldNames
+    ?.filter((fieldName) => fieldName !== "id")
+    ?.map((fieldName) => `${fieldName}: $${fieldName}`)
+    .join(", ");
+  const mutationParamTypesString = fieldNames
+    ?.map(
+      (fieldName) => `$${fieldName}: ${fieldName === "id" ? "ID!" : "String"}`
+    )
+    .join(", ");
+
+  console.log(
+    `mutation Update${capitalizedType}(${mutationParamTypesString}) { update${capitalizedType}(where: {id: $id}, data: {${mutationParamsString}}) { ${fieldNames?.join(" ")} } }`
+  );
+  const updateMutation = gql`mutation Update${capitalizedType}(${mutationParamTypesString}) { update${capitalizedType}(where: {id: $id}, data: {${mutationParamsString}}) { ${fieldNames?.join(" ")} } }`;
+  return updateMutation;
+}
+
+// Get form query based on id existence
+export async function getFormQueryForType(
+  type: string,
+  id?: string
+): Promise<DocumentNode> {
+  if (id) return await getUpdateMutationForType(type);
+  return await getCreateMutationForType(type);
+}

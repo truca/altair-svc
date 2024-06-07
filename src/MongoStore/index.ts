@@ -83,7 +83,6 @@ export class MongoStore implements Store {
       { new: true }
     );
 
-    console.log({ res });
     return res;
   }
   public async remove(
@@ -106,12 +105,12 @@ export class MongoStore implements Store {
     props: StoreRemoveProps
   ): Promise<StoreRemoveReturn> {
     const model = this.getModel(props.type.name);
-    const res = await model.update(this.formatInput(props.where), {
+    const res = await model.updateOne(this.formatInput(props.where), {
       $set: {
         deletedAt: new Date(),
       },
     });
-    return res.n > 0;
+    return res.modifiedCount > 0;
   }
   // Adds an `id` field to the output
   private formatOutput(object: any): any {

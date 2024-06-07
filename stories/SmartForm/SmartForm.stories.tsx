@@ -1,7 +1,7 @@
 import React from "react";
 import type { Meta, StoryObj } from "@storybook/react";
 import { ThemeProvider, theme } from "@chakra-ui/react";
-import { SmartForm } from "./index";
+import SmartForm from "./index";
 import { Direction, FieldType } from "../Form/types";
 import { ApolloClient, ApolloProvider, InMemoryCache } from "@apollo/client";
 
@@ -29,8 +29,8 @@ const Wrapper = (Story: any) => {
 
 export const BaseSmartForm: Story = {
   args: {
-    id: "placeholder-id",
-    entityType: "AUTHOR",
+    id: "665d1cf715dbe844897f0b59",
+    entityType: "BOOK",
 
     debug: false,
     direction: Direction.COLUMN,

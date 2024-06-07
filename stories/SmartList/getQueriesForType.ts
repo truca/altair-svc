@@ -43,7 +43,7 @@ const getTypeFromSchemaTypes = (
   return schemaTypes.find((type: { name: string }) => type.name === typeName);
 };
 
-export const getQueryForType = async (type: string) => {
+export const getFieldnamesForType = async (type: any) => {
   const { data } = await axios.request(config);
   const schema = data.data.__schema;
   const queries = getTypeFromSchemaTypes(schema.types, schema.queryType.name);
@@ -54,7 +54,7 @@ export const getQueryForType = async (type: string) => {
   const entityType = getTypeFromSchemaTypes(
     schema.types,
     // @ts-ignore
-    listType?.type.ofType.name
+    listType?.type?.ofType ? listType?.type.ofType.name : listType?.type.name
   );
 
   const fieldNames = entityType?.fields
@@ -73,6 +73,11 @@ export const getQueryForType = async (type: string) => {
       return 0;
     });
 
+  return { fieldNames };
+};
+
+export const getQueryForType = async (type: string) => {
+  const { fieldNames } = await getFieldnamesForType(type);
   const query = gql`query ${type}($page: Int, $pageSize: Int) { ${type}(page: $page, pageSize: $pageSize) { ${fieldNames?.join(" ")} } }`;
   return { query, fieldNames };
 };

@@ -2,7 +2,6 @@ import React, { useEffect, useState } from "react";
 import {
   ApolloClient,
   InMemoryCache,
-  ApolloProvider,
   useQuery,
   DocumentNode,
   useMutation,
@@ -22,6 +21,8 @@ import {
   Thead,
   Tr,
   VStack,
+  useToast,
+  Button,
 } from "@chakra-ui/react";
 import {
   ChevronLeftIcon,
@@ -29,19 +30,13 @@ import {
   DeleteIcon,
   EditIcon,
 } from "@chakra-ui/icons";
-import { Button } from "../Button";
-
-const client = new ApolloClient({
-  uri: "http://localhost:4000/graphql",
-  cache: new InMemoryCache(),
-});
 
 export enum ControlType {
   PageSize,
   Page,
 }
 
-export interface DisplayListProps {
+export interface SmartListProps {
   query: DocumentNode;
   removeMutation: DocumentNode;
   pluralType: string;
@@ -51,7 +46,7 @@ export interface DisplayListProps {
   initialPageSize?: number;
 }
 
-function DisplayList({
+function SmartList({
   query,
   removeMutation,
   pluralType,
@@ -59,7 +54,8 @@ function DisplayList({
   initialPage = 1,
   initialPageSize = 5,
   controls = [ControlType.Page, ControlType.PageSize],
-}: DisplayListProps) {
+}: SmartListProps) {
+  const toast = useToast();
   const [page, setPage] = useState(initialPage);
   const [pageSize, setPageSize] = useState(initialPageSize);
   const [maxPages, setMaxPages] = useState(5);
@@ -88,9 +84,22 @@ function DisplayList({
   const hasControls = Boolean(controls.length);
   const hasPageControl = controls.includes(ControlType.Page);
   const hasPageSizeControl = controls.includes(ControlType.PageSize);
-  console.log({ maxPages, page, pageSize, data, isLastPage, isFirstPage });
   return (
     <VStack>
+      <Button
+        onClick={() => {
+          console.log("called");
+          toast({
+            title: "Account created.",
+            description: "We've created your account for you.",
+            status: "success",
+            duration: 9000,
+            isClosable: true,
+          });
+        }}
+      >
+        Show Toast
+      </Button>
       <TableContainer w="100%">
         <Table variant="simple">
           <Thead>
@@ -114,6 +123,7 @@ function DisplayList({
                       variant="outline"
                       colorScheme="teal"
                       aria-label="Edit"
+                      cursor="pointer"
                       icon={<EditIcon />}
                       onClick={async () => {
                         await removeElement({ variables: { id: elem.id } });
@@ -125,9 +135,30 @@ function DisplayList({
                       variant="outline"
                       colorScheme="red"
                       aria-label="Remove"
+                      cursor="pointer"
                       icon={<DeleteIcon />}
                       onClick={async () => {
-                        await removeElement({ variables: { id: elem.id } });
+                        const res = await removeElement({
+                          variables: { id: elem.id },
+                        });
+                        if (res.data.removed) {
+                          toast({
+                            title: "Element deleted.",
+                            description: "We've deleted the element for you.",
+                            status: "success",
+                            duration: 4000,
+                            isClosable: true,
+                          });
+                        } else {
+                          toast({
+                            title: "Element not deleted.",
+                            description:
+                              "We couldn't delete the element for you.",
+                            status: "error",
+                            duration: 4000,
+                            isClosable: true,
+                          });
+                        }
                         refetch();
                       }}
                     />
@@ -207,12 +238,12 @@ function DisplayList({
   );
 }
 
-export interface SmartListProps
-  extends Omit<DisplayListProps, "query" | "removeMutation" | "fieldNames"> {
+export interface SmartListWrapperProps
+  extends Omit<SmartListProps, "query" | "removeMutation" | "fieldNames"> {
   singularType: string;
 }
 
-export function SmartList(props: SmartListProps) {
+export function SmartListWrapper(props: SmartListWrapperProps) {
   const { pluralType, singularType } = props;
   const [query, setQuery] = useState<DocumentNode | null>(null);
   const [removeMutation, setRemoveMutation] = useState<DocumentNode | null>(
@@ -235,13 +266,11 @@ export function SmartList(props: SmartListProps) {
   if (!query || !removeMutation) return <p>Query Loading...</p>;
 
   return (
-    <ApolloProvider client={client}>
-      <DisplayList
-        query={query}
-        removeMutation={removeMutation}
-        fieldNames={fieldNames}
-        {...props}
-      />
-    </ApolloProvider>
+    <SmartList
+      query={query}
+      removeMutation={removeMutation}
+      fieldNames={fieldNames}
+      {...props}
+    />
   );
 }

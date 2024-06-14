@@ -95,6 +95,6 @@ export function capitalizeFirstLetter(text: string) {
 
 export const getRemoveMutationForType = (type: string) => {
   const capitalizedType = capitalizeFirstLetter(type);
-  const removeMutation = gql`mutation Remove${capitalizedType}($id: ID!) { remove${capitalizedType}(where: {id: $id}) }`;
+  const removeMutation = gql`mutation Remove${capitalizedType}($id: ID!) { removed: remove${capitalizedType}(where: {id: $id}) }`;
   return { removeMutation };
 };

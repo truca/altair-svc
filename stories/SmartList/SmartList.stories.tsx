@@ -28,16 +28,14 @@ const Wrapper = (Story: any) => {
 
 export const BaseSmartList: Story = {
   args: {
-    pluralType: "books",
-    singularType: "book",
+    entityType: "book",
   },
   decorators: [Wrapper],
 };
 
 export const SmartListWithControls: Story = {
   args: {
-    pluralType: "books",
-    singularType: "book",
+    entityType: "book",
     controls: [ControlType.Page],
   },
   decorators: [Wrapper],
@@ -45,8 +43,7 @@ export const SmartListWithControls: Story = {
 
 export const SmartListWithInitialPageAndPageSize: Story = {
   args: {
-    pluralType: "books",
-    singularType: "book",
+    entityType: "book",
     initialPage: 2,
     initialPageSize: 10,
     controls: [ControlType.Page, ControlType.PageSize],

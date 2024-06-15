@@ -1,5 +1,6 @@
 import { DocumentNode, gql } from "@apollo/client";
 import { getFieldnamesForType } from "../SmartList/getQueriesForType";
+import pluralize from "pluralize";
 
 export const getQueryStringForType = async (type: string) => {
   const { fieldNames } = await getFieldnamesForType(type);
@@ -8,9 +9,9 @@ export const getQueryStringForType = async (type: string) => {
 };
 
 export async function getQueryForType(
-  type: string
+  singularType: string
 ): Promise<{ query: DocumentNode }> {
-  const { query: entityQuery } = await getQueryStringForType(type);
+  const { query: entityQuery } = await getQueryStringForType(singularType);
   const query = gql`
     query Form($id: ID, $type: FormType, $include: Boolean = false) {
       form(type: $type) {
@@ -40,8 +41,11 @@ export function capitalizeFirstLetter(text: string) {
 export async function getCreateMutationForType(
   type: string
 ): Promise<DocumentNode> {
+  const singularType = pluralize.isSingular(type)
+    ? type
+    : pluralize.singular(type);
   const { fieldNames } = await getFieldnamesForType(type);
-  const capitalizedType = capitalizeFirstLetter(type);
+  const capitalizedType = capitalizeFirstLetter(singularType);
   const mutationParamsString = fieldNames
     ?.filter((fieldName) => fieldName !== "id")
     ?.map((fieldName) => `${fieldName}: $${fieldName}`)
@@ -60,8 +64,11 @@ export async function getCreateMutationForType(
 export async function getUpdateMutationForType(
   type: string
 ): Promise<DocumentNode> {
+  const singularType = pluralize.isSingular(type)
+    ? type
+    : pluralize.singular(type);
   const { fieldNames } = await getFieldnamesForType(type);
-  const capitalizedType = capitalizeFirstLetter(type);
+  const capitalizedType = capitalizeFirstLetter(singularType);
   const mutationParamsString = fieldNames
     ?.filter((fieldName) => fieldName !== "id")
     ?.map((fieldName) => `${fieldName}: $${fieldName}`)

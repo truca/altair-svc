@@ -63,9 +63,6 @@ function SideFormWrapper({
           ? {
               drawer: {
                 title,
-                isOpen,
-                onClose,
-                btnRef,
               },
             }
           : {})}
@@ -73,8 +70,6 @@ function SideFormWrapper({
           ? {
               bottomSheet: {
                 title,
-                isOpen,
-                onClose,
               },
             }
           : {})}

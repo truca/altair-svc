@@ -15,7 +15,7 @@ import BottomSheet, { BottomSheetProps } from "../BottomSheet";
 interface DrawerProps {
   isOpen: boolean;
   onClose: () => void;
-  btnRef: React.RefObject<HTMLButtonElement>;
+  btnRef?: React.RefObject<HTMLButtonElement>;
   title?: string;
   children: React.ReactNode;
   footer?: React.ReactNode;
@@ -76,9 +76,10 @@ function Drawer({
 }
 
 interface SideFormProps {
-  form: FormProps;
-  bottomSheet?: Omit<BottomSheetProps, "children">;
-  drawer?: Omit<DrawerProps, "children">;
+  form?: FormProps;
+  children?: React.ReactNode;
+  type?: "drawer" | "bottomSheet";
+  title?: string;
   isOpen: boolean;
   onClose: () => void;
 }
@@ -86,27 +87,24 @@ interface SideFormProps {
 // source
 // https://codesandbox.io/p/sandbox/bottomsheet-modal-example-l3z7q?file=%2Fsrc%2FBottomSheet.js%3A11%2C17
 function SideForm(props: SideFormProps) {
-  const { isOpen, onClose, drawer, bottomSheet } = props;
+  const { isOpen, onClose, type, title, form, children } = props;
   const btnRef = React.useRef<HTMLButtonElement | null>(null);
 
-  if (bottomSheet) {
+  if (!form && !children) return null;
+
+  if (type === "bottomSheet") {
     return (
-      <BottomSheet {...bottomSheet} isOpen={isOpen} onClose={onClose}>
-        <Form {...props.form} />
+      <BottomSheet title={title} isOpen={isOpen} onClose={onClose}>
+        {children ?? <Form {...(props.form as FormProps)} />}
       </BottomSheet>
     );
   }
 
-  if (drawer) {
-    return (
-      <Drawer {...drawer} isOpen={isOpen} onClose={onClose} btnRef={btnRef}>
-        <Form {...props.form} />
-      </Drawer>
-    );
-  }
-
-  // handle modals and other cases
-  return null;
+  return (
+    <Drawer title={title} isOpen={isOpen} onClose={onClose} btnRef={btnRef}>
+      {children ?? <Form {...(props.form as FormProps)} />}
+    </Drawer>
+  );
 }
 
 export default SideForm;

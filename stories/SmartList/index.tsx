@@ -23,6 +23,7 @@ import {
   VStack,
   useToast,
   Button,
+  useDisclosure,
 } from "@chakra-ui/react";
 import {
   ChevronLeftIcon,
@@ -30,10 +31,20 @@ import {
   DeleteIcon,
   EditIcon,
 } from "@chakra-ui/icons";
+import SideForm from "../SideForm";
+import { Direction } from "../Form/types";
+import pluralize from "pluralize";
+import SmartSideForm from "../SmartSideForm";
 
 export enum ControlType {
   PageSize,
   Page,
+}
+
+export enum SubFormType {
+  Sidebar = "sidebar",
+  Modal = "modal",
+  Page = "page",
 }
 
 export interface SmartListProps {
@@ -44,6 +55,7 @@ export interface SmartListProps {
   controls?: ControlType[];
   initialPage?: number;
   initialPageSize?: number;
+  subFormType?: SubFormType;
 }
 
 function SmartList({
@@ -54,9 +66,14 @@ function SmartList({
   initialPage = 1,
   initialPageSize = 5,
   controls = [ControlType.Page, ControlType.PageSize],
+  subFormType = SubFormType.Sidebar,
 }: SmartListProps) {
   const toast = useToast();
   const [page, setPage] = useState(initialPage);
+  const { isOpen, onOpen, onClose } = useDisclosure();
+  const [subFormDocumentId, setSubFormDocumentId] = useState<
+    string | undefined
+  >(undefined);
   const [pageSize, setPageSize] = useState(initialPageSize);
   const [maxPages, setMaxPages] = useState(5);
   const [hasSetMaxPages, setHasSetMaxPages] = useState(false);
@@ -87,19 +104,43 @@ function SmartList({
   return (
     <VStack>
       <Button
+        alignSelf="flex-end"
         onClick={() => {
-          console.log("called");
-          toast({
-            title: "Account created.",
-            description: "We've created your account for you.",
-            status: "success",
-            duration: 9000,
-            isClosable: true,
-          });
+          onOpen();
+          setSubFormDocumentId(undefined);
         }}
       >
-        Show Toast
+        Create
       </Button>
+      <SmartSideForm
+        entityType={pluralType}
+        id={subFormDocumentId}
+        isOpen={isOpen}
+        onClose={onClose}
+        onSubmit={() => {
+          if (subFormDocumentId) {
+            // edit
+            toast({
+              title: "Element updated.",
+              description: "We've updated the element for you.",
+              status: "success",
+              duration: 4000,
+              isClosable: true,
+            });
+          } else {
+            // create
+            toast({
+              title: "Element created.",
+              description: "We've created the element for you.",
+              status: "success",
+              duration: 4000,
+              isClosable: true,
+            });
+          }
+          refetch();
+          onClose();
+        }}
+      />
       <TableContainer w="100%">
         <Table variant="simple">
           <Thead>
@@ -125,9 +166,9 @@ function SmartList({
                       aria-label="Edit"
                       cursor="pointer"
                       icon={<EditIcon />}
-                      onClick={async () => {
-                        await removeElement({ variables: { id: elem.id } });
-                        refetch();
+                      onClick={() => {
+                        onOpen();
+                        setSubFormDocumentId(elem.id);
                       }}
                     />
                     <IconButton
@@ -239,12 +280,17 @@ function SmartList({
 }
 
 export interface SmartListWrapperProps
-  extends Omit<SmartListProps, "query" | "removeMutation" | "fieldNames"> {
-  singularType: string;
+  extends Omit<
+    SmartListProps,
+    "query" | "removeMutation" | "fieldNames" | "pluralType"
+  > {
+  // singularType: string;
+  entityType: string;
 }
 
 export function SmartListWrapper(props: SmartListWrapperProps) {
-  const { pluralType, singularType } = props;
+  const { entityType: singularType } = props;
+  const pluralType = pluralize(singularType);
   const [query, setQuery] = useState<DocumentNode | null>(null);
   const [removeMutation, setRemoveMutation] = useState<DocumentNode | null>(
     null
@@ -270,6 +316,7 @@ export function SmartListWrapper(props: SmartListWrapperProps) {
       query={query}
       removeMutation={removeMutation}
       fieldNames={fieldNames}
+      pluralType={pluralType}
       {...props}
     />
   );

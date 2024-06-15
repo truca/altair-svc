@@ -1,5 +1,6 @@
 import { gql } from "@apollo/client";
 import axios from "axios";
+import pluralize from "pluralize";
 
 const data = JSON.stringify({
   query:
@@ -44,12 +45,13 @@ const getTypeFromSchemaTypes = (
 };
 
 export const getFieldnamesForType = async (type: any) => {
+  const pluralType = pluralize.isPlural(type) ? type : pluralize(type);
   const { data } = await axios.request(config);
   const schema = data.data.__schema;
   const queries = getTypeFromSchemaTypes(schema.types, schema.queryType.name);
   // get query
   // @ts-ignore
-  const manyType = getTypeFromSchemaTypes(queries?.fields, type);
+  const manyType = getTypeFromSchemaTypes(queries?.fields, pluralType);
 
   const listType = getTypeFromSchemaTypes(
     schema.types,

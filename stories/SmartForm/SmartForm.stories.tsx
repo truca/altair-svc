@@ -37,23 +37,6 @@ export const BaseSmartForm: Story = {
     commonFieldProps: {
       inputProps: { colorScheme: "red" } as any,
     },
-    onSubmit: (data) => {
-      alert(`Values: ${JSON.stringify(data)}`);
-    },
-    fields: [
-      {
-        id: "radio",
-        label: "Radio",
-        type: FieldType.RADIO,
-        hasTitle: true,
-        direction: Direction.ROW,
-        options: [
-          { value: "1", label: "Option 1" },
-          { value: "2", label: "Option 2" },
-          { value: "3", label: "Option 3" },
-        ],
-      },
-    ],
   },
   decorators: [Wrapper],
 };

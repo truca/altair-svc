@@ -1,11 +1,7 @@
+"use client";
+
 import React, { useEffect, useState } from "react";
-import {
-  ApolloClient,
-  InMemoryCache,
-  useQuery,
-  DocumentNode,
-  useMutation,
-} from "@apollo/client";
+import { useQuery, DocumentNode, useMutation } from "@apollo/client";
 import { getQueryForType, getRemoveMutationForType } from "./getQueriesForType";
 import {
   ButtonGroup,
@@ -30,11 +26,12 @@ import {
   ChevronRightIcon,
   DeleteIcon,
   EditIcon,
+  ViewIcon,
 } from "@chakra-ui/icons";
-import SideForm from "../SideForm";
-import { Direction } from "../Form/types";
 import pluralize from "pluralize";
 import SmartSideForm from "../SmartSideForm";
+import Sidebar from "../Sidebar";
+import SmartItemRenderer from "../SmartItemRenderer";
 
 export enum ControlType {
   PageSize,
@@ -70,7 +67,16 @@ function SmartList({
 }: SmartListProps) {
   const toast = useToast();
   const [page, setPage] = useState(initialPage);
-  const { isOpen, onOpen, onClose } = useDisclosure();
+  const {
+    isOpen: isItemFormOpen,
+    onOpen: onItemFormOpen,
+    onClose: onItemFormClose,
+  } = useDisclosure();
+  const {
+    isOpen: isItemViewOpen,
+    onOpen: onItemViewOpen,
+    onClose: onItemViewClose,
+  } = useDisclosure();
   const [subFormDocumentId, setSubFormDocumentId] = useState<
     string | undefined
   >(undefined);
@@ -106,7 +112,7 @@ function SmartList({
       <Button
         alignSelf="flex-end"
         onClick={() => {
-          onOpen();
+          onItemFormOpen();
           setSubFormDocumentId(undefined);
         }}
       >
@@ -115,8 +121,8 @@ function SmartList({
       <SmartSideForm
         entityType={pluralType}
         id={subFormDocumentId}
-        isOpen={isOpen}
-        onClose={onClose}
+        isOpen={isItemFormOpen}
+        onClose={onItemFormClose}
         onSubmit={() => {
           if (subFormDocumentId) {
             // edit
@@ -138,9 +144,15 @@ function SmartList({
             });
           }
           refetch();
-          onClose();
+          onItemFormClose();
         }}
       />
+      <Sidebar isOpen={isItemViewOpen} onClose={onItemViewClose}>
+        <SmartItemRenderer
+          id={subFormDocumentId as any}
+          entityType={pluralType}
+        />
+      </Sidebar>
       <TableContainer w="100%">
         <Table variant="simple">
           <Thead>
@@ -163,11 +175,23 @@ function SmartList({
                       size="sm"
                       variant="outline"
                       colorScheme="teal"
+                      aria-label="View"
+                      cursor="pointer"
+                      icon={<ViewIcon />}
+                      onClick={() => {
+                        onItemViewOpen();
+                        setSubFormDocumentId(elem.id);
+                      }}
+                    />
+                    <IconButton
+                      size="sm"
+                      variant="outline"
+                      colorScheme="teal"
                       aria-label="Edit"
                       cursor="pointer"
                       icon={<EditIcon />}
                       onClick={() => {
-                        onOpen();
+                        onItemFormOpen();
                         setSubFormDocumentId(elem.id);
                       }}
                     />
@@ -321,3 +345,5 @@ export function SmartListWrapper(props: SmartListWrapperProps) {
     />
   );
 }
+
+export default SmartListWrapper;

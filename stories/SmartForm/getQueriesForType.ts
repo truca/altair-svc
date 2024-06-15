@@ -8,7 +8,13 @@ export const getQueryStringForType = async (type: string) => {
   return { query, fieldNames };
 };
 
-export async function getQueryForType(
+export async function gerQueryForType(singularType: string) {
+  const { fieldNames } = await getFieldnamesForType(singularType);
+  const query = gql`query QueryForType($id: ID) { item: ${singularType}(where: { id: $id }) { ${fieldNames?.join(" ")} }}`;
+  return { query, fieldNames };
+}
+
+export async function getFormQueryForType(
   singularType: string
 ): Promise<{ query: DocumentNode }> {
   const { query: entityQuery } = await getQueryStringForType(singularType);
@@ -84,7 +90,7 @@ export async function getUpdateMutationForType(
 }
 
 // Get form query based on id existence
-export async function getFormQueryForType(
+export async function getFormMutationForType(
   type: string,
   id?: string
 ): Promise<DocumentNode> {

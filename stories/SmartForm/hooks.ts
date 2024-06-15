@@ -1,6 +1,9 @@
 import { DocumentNode, useMutation, useQuery } from "@apollo/client";
 import { useEffect, useState } from "react";
-import { getFormQueryForType, getQueryForType } from "./getQueriesForType";
+import {
+  getFormMutationForType,
+  getFormQueryForType,
+} from "./getQueriesForType";
 import pluralize from "pluralize";
 
 export function useSmartFormFields({
@@ -41,8 +44,8 @@ export function useSmartFormQueries(entityType: string, id?: string) {
         : pluralize.singular(lowercaseEntityType);
       const pluralType = pluralize(singularType);
       const [{ query: tempQuery }, tempFormMutation] = await Promise.all([
-        getQueryForType(singularType),
-        getFormQueryForType(pluralType, id),
+        getFormQueryForType(singularType),
+        getFormMutationForType(pluralType, id),
       ]);
       setFormQuery(tempQuery);
       setFormMutation(tempFormMutation);

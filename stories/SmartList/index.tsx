@@ -245,6 +245,7 @@ function SmartList({
                 setPage(1);
                 setHasSetMaxPages(false);
               }}
+              cursor="pointer"
               borderRadius={5}
             >
               <option value="5">5</option>
@@ -264,35 +265,56 @@ function SmartList({
                 aria-label="Previous page"
                 icon={<ChevronLeftIcon />}
                 disabled={isFirstPage}
+                cursor={isFirstPage ? "not-allowed" : "pointer"}
+                colorScheme={isFirstPage ? "gray" : "teal"}
                 onClick={isFirstPage ? undefined : () => setPage(page - 1)}
               />
               {!isSecondOrFirstPage && (
-                <ChakraButton onClick={() => setPage(page - 2)}>
+                <ChakraButton
+                  cursor="pointer"
+                  onClick={() => setPage(page - 2)}
+                >
                   {page - 2}
                 </ChakraButton>
               )}
               {!isFirstPage && (
-                <ChakraButton onClick={() => setPage(page - 1)}>
+                <ChakraButton
+                  cursor="pointer"
+                  onClick={() => setPage(page - 1)}
+                >
                   {page - 1}
                 </ChakraButton>
               )}
-              <ChakraButton colorScheme="teal" variant="solid">
+              <ChakraButton
+                cursor="pointer"
+                colorScheme="teal"
+                variant="solid"
+                border="none"
+              >
                 {page}
               </ChakraButton>
               {!isLastPage && (
-                <ChakraButton onClick={() => setPage(page + 1)}>
+                <ChakraButton
+                  cursor="pointer"
+                  onClick={() => setPage(page + 1)}
+                >
                   {page + 1}
                 </ChakraButton>
               )}
               {!isSecondLastOrLastPage && (
-                <ChakraButton onClick={() => setPage(page + 2)}>
+                <ChakraButton
+                  cursor="pointer"
+                  onClick={() => setPage(page + 2)}
+                >
                   {page + 2}
                 </ChakraButton>
               )}
               <IconButton
                 aria-label="Next page"
+                cursor={isLastPage ? "not-allowed" : "pointer"}
                 icon={<ChevronRightIcon />}
                 disabled={isLastPage}
+                colorScheme={isLastPage ? "gray" : "teal"}
                 onClick={isLastPage ? undefined : () => setPage(page + 1)}
               />
             </ButtonGroup>

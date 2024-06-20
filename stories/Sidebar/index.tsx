@@ -2,16 +2,18 @@ import React from "react";
 import {
   Button,
   Drawer as BaseDrawer,
+  DrawerProps as BaseDrawerProps,
   DrawerBody,
   DrawerCloseButton,
   DrawerContent,
+  DrawerContentProps,
   DrawerFooter,
   DrawerHeader,
   DrawerOverlay,
 } from "@chakra-ui/react";
 import BottomSheet from "../BottomSheet";
 
-interface DrawerProps {
+type DrawerProps = {
   isOpen: boolean;
   onClose: () => void;
   title?: string;
@@ -23,7 +25,9 @@ interface DrawerProps {
     cancel?: string;
     onCancel?: () => void;
   };
-}
+  drawerProps?: BaseDrawerProps;
+  drawerContentProps?: DrawerContentProps;
+};
 
 function Drawer({
   isOpen,
@@ -32,12 +36,19 @@ function Drawer({
   title,
   footer,
   footerButtons,
+  drawerProps,
+  drawerContentProps,
 }: DrawerProps) {
   return (
-    <BaseDrawer isOpen={isOpen} placement="right" onClose={onClose}>
+    <BaseDrawer
+      isOpen={isOpen}
+      placement="right"
+      onClose={onClose}
+      {...drawerProps}
+    >
       <DrawerOverlay onClick={onClose} />
-      <DrawerContent>
-        <DrawerCloseButton />
+      <DrawerContent {...drawerContentProps}>
+        <DrawerCloseButton cursor="pointer" />
         {title && <DrawerHeader>{title}</DrawerHeader>}
 
         <DrawerBody>{children}</DrawerBody>
@@ -89,7 +100,12 @@ function Sidebar(props: SidebarProps) {
   }
 
   return (
-    <Drawer title={title} isOpen={isOpen} onClose={onClose}>
+    <Drawer
+      title={title}
+      isOpen={isOpen}
+      onClose={onClose}
+      drawerContentProps={{ pt: 4 }}
+    >
       {children}
     </Drawer>
   );

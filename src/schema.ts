@@ -6,9 +6,13 @@ import { GraphQLID } from "graphql";
 import { config } from "dotenv";
 import { FORMS } from "./form";
 
+const fs = require(`fs`);
+const path = require(`path`);
+
 config();
 const typeDefinitions = /* GraphQL */ `
   scalar ID
+  scalar File
   directive @model on OBJECT
 
   type Author @model {
@@ -21,6 +25,7 @@ const typeDefinitions = /* GraphQL */ `
   }
 
   type Book @model {
+    avatar: File
     name: String!
     authors: [Author]
   }
@@ -54,6 +59,8 @@ const typeDefinitions = /* GraphQL */ `
     STRING
     BOOLEAN
     NUMBER
+    FILE
+    MIXED
   }
 
   type FieldValidation {
@@ -86,6 +93,8 @@ const typeDefinitions = /* GraphQL */ `
 
   type Mutation {
     _: Boolean
+    readTextFile(file: File!): String!
+    saveFile(file: File!): Boolean!
   }
 `;
 
@@ -103,6 +112,26 @@ const resolvers = {
       return {
         fields: [],
       };
+    },
+  },
+  Mutation: {
+    readTextFile: async (_: any, { file }: { file: File }) => {
+      const textContent = await file.text();
+      return textContent;
+    },
+
+    saveFile: async (_: any, { file }: { file: File }) => {
+      try {
+        const fileArrayBuffer = await file.arrayBuffer();
+        await fs.promises.writeFile(
+          path.join(__dirname, file.name),
+          Buffer.from(fileArrayBuffer)
+        );
+      } catch (e) {
+        console.log({ e });
+        return false;
+      }
+      return true;
     },
   },
 };

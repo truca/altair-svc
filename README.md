@@ -16,3 +16,19 @@
 - attributes on mutations to match form specs
 - handle removal of n:m relations without removing one of the objects
 - separar los Inputs de create y update
+
+## File transfer
+
+### Read file
+
+curl localhost:4000/graphql \
+ -F operations='{ "query": "mutation ($file: File!) { readTextFile(file: $file) }", "variables": { "file": null } }' \
+ -F map='{ "0": ["variables.file"] }' \
+ -F 0=@file.txt
+
+### Save file
+
+curl localhost:4000/graphql \
+ -F operations='{ "query": "mutation ($file: File!) { saveFile(file: $file) }", "variables": { "file": null } }' \
+ -F map='{ "0": ["variables.file"] }' \
+ -F 0=@img.png

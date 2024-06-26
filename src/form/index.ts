@@ -2,6 +2,8 @@ enum ValueType {
   STRING = "STRING",
   BOOLEAN = "BOOLEAN",
   NUMBER = "NUMBER",
+  FILE = "FILE",
+  MIXED = "MIXED",
 }
 
 enum FieldType {
@@ -39,7 +41,7 @@ interface FieldValidation {
 interface Field {
   label: string;
   type: FieldType;
-  validation: FieldValidation[];
+  validation?: FieldValidation[];
 }
 
 export const AUTHOR_FORM: Field[] = [
@@ -81,6 +83,10 @@ export const BOOK_FORM: Field[] = [
         errorMessage: "Name is required",
       },
     ],
+  },
+  {
+    label: "avatar",
+    type: FieldType.FILE,
   },
 ];
 

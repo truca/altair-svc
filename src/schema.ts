@@ -14,6 +14,7 @@ const typeDefinitions = /* GraphQL */ `
   scalar ID
   scalar File
   directive @model on OBJECT
+  directive @file on FIELD_DEFINITION
 
   type Author @model {
     name: String!
@@ -25,7 +26,7 @@ const typeDefinitions = /* GraphQL */ `
   }
 
   type Book @model {
-    avatar: File
+    avatar: String @file
     name: String!
     authors: [Author]
   }
@@ -142,6 +143,10 @@ export const context = {
       store: new MongoStore({
         connection: `${process.env.DB_URI}/${process.env.DATABASE}`,
       }),
+    },
+    file: {
+      maxSize: 1000000,
+      types: ["image/jpeg", "image/png"],
     },
   },
 };

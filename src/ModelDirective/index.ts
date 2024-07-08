@@ -19,6 +19,7 @@ import { validateInputData } from "./validateInputData";
 import { addInputTypesForObjectType } from "./addInputTypesForObjectType";
 import { Store } from "./Store";
 import mongoose from "mongoose";
+import { uploadFiles } from "./uploadFileFields";
 
 export interface ResolverContext {
   directives: {
@@ -260,6 +261,9 @@ export class ModelDirective extends SchemaDirectiveVisitor {
         schema: this.schema,
       });
 
+      // This will update all files and return the file paths
+      await uploadFiles(type, args.data);
+
       // add _id to the object if it doesn't exist
       if (!args.data._id) {
         args.data._id = new mongoose.Types.ObjectId();
@@ -340,6 +344,9 @@ export class ModelDirective extends SchemaDirectiveVisitor {
         type,
         schema: this.schema,
       });
+
+      // This will update all files and return the file paths
+      await uploadFiles(type, args.data);
 
       const currentRootObject = await context.directives.model.store.findOne({
         where: args.where,

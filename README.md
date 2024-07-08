@@ -32,3 +32,10 @@ curl localhost:4000/graphql \
  -F operations='{ "query": "mutation ($file: File!) { saveFile(file: $file) }", "variables": { "file": null } }' \
  -F map='{ "0": ["variables.file"] }' \
  -F 0=@img.png
+
+### Create book with avatar
+
+curl localhost:4000/graphql \
+ -F operations='{ "query": "mutation ($file: File!) { createBook(data:{avatar: $file, name: \"book\"}) { id } }", "variables": { "file": null } }' \
+ -F map='{ "0": ["variables.file"] }' \
+ -F 0=@img.png

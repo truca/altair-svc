@@ -14,6 +14,7 @@ import {
   toInputObjectTypeName,
 } from "./util";
 import { omitResolvers } from "./omitResolvers";
+import { mapFileFieldsToFileInputType } from "./mapFileFieldsToFileInputType";
 
 export interface AddInputTypesForObjectTypeProps {
   objectType: GraphQLObjectType;
@@ -50,7 +51,9 @@ export const addInputTypesForObjectType = ({
   parent = null,
 }: AddInputTypesForObjectTypeProps) => {
   // Fields of an input type cannot have resolvers
-  const fields = omitResolvers(objectType.getFields());
+  let fields = omitResolvers(objectType.getFields());
+  // To Do: don't map field type for query type
+  fields = mapFileFieldsToFileInputType(fields, schema);
 
   // Create the corresponding input type.
   // For example, if given `type Foo` will create `input FooInputType`

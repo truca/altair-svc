@@ -7,14 +7,16 @@ const path = require(`path`);
 
 async function uploadFile(
   name: string,
+  entityName: string,
   file: any
 ): Promise<string | undefined> {
-  // To Do: if the path doesn't exist, create folders
   const fileExtension = file.name.split(".").pop();
-  const filePath = path.join(
-    __dirname,
-    `../../${process.env.UPLOAD_PATH}/${name}.${fileExtension}`
-  );
+  const folderName = `../../${process.env.UPLOAD_PATH}/${entityName}`;
+  const folderPath = path.join(__dirname, folderName);
+  if (!fs.existsSync(folderPath)) fs.mkdirSync(folderPath);
+
+  const fileName = `${folderName}/${name}.${fileExtension}`;
+  const filePath = path.join(__dirname, fileName);
   try {
     const fileArrayBuffer = await file.arrayBuffer();
     await fs.promises.writeFile(filePath, Buffer.from(fileArrayBuffer));
@@ -49,7 +51,7 @@ export async function uploadFiles(type: any, data: Record<string, any>) {
   await Promise.all(
     fileKeys.map(async (key) => {
       const id = uuidv4();
-      const filePath = await uploadFile(id, data[key]);
+      const filePath = await uploadFile(id, type.name.toLowerCase(), data[key]);
       data[key] = filePath;
     })
   );

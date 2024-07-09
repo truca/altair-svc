@@ -14,7 +14,7 @@ const typeDefinitions = /* GraphQL */ `
   scalar ID
   scalar File
   directive @model on OBJECT
-  directive @file on FIELD_DEFINITION
+  directive @file(maxSize: Float!, types: [String!]!) on FIELD_DEFINITION
 
   type Author @model {
     name: String!
@@ -26,7 +26,7 @@ const typeDefinitions = /* GraphQL */ `
   }
 
   type Book @model {
-    avatar: String @file
+    avatar: String @file(maxSize: 1000000, types: ["image/jpeg", "image/png"])
     name: String!
     authors: [Author]
   }

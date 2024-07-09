@@ -154,7 +154,9 @@ export function Form({
       {...extraProps}
     >
       {fields.map((field: Field) => {
-        const FieldComponent = FieldComponentsHash[field.type];
+        const FieldComponent = field.component
+          ? field.component
+          : FieldComponentsHash[field.type];
         return (
           <FieldComponent
             key={field.id}

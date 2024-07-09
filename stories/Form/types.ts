@@ -100,6 +100,7 @@ export interface Field {
   sx?: StackProps;
   optionSx?: StackProps;
   inputProps?: any;
+  component?: React.FC<{ field: InternalField }>;
 }
 
 export interface InternalField extends Field {

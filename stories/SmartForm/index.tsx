@@ -1,3 +1,5 @@
+"use client";
+
 import { DocumentNode } from "@apollo/client";
 import { Form, FormProps } from "../Form";
 import { getFormFieldsFromFormQueryResults } from "./helpers";

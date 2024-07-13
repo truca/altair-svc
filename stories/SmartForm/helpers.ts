@@ -17,6 +17,7 @@ interface ServerFieldValidation {
 function parseValidation(
   validations: ServerFieldValidation[]
 ): FieldValidation {
+  if (!validations) return { type: ["string", "string"] };
   return validations.reduce((acc, validation) => {
     const value = (() => {
       switch (validation.valueType) {

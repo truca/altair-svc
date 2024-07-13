@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useLazyGetPokemonByNameQuery } from "@/lib/apis/pokemonApi";
+import { useLazyGetPokemonByNameQuery } from "@/lib/redux/apis/pokemonApi";
 import { Input } from "@chakra-ui/react";
 
 const API = () => {

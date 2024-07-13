@@ -36,9 +36,21 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@apollo/client@npm:^3.10.4":
-  version: 3.10.4
-  resolution: "@apollo/client@npm:3.10.4"
+"@apollo/client-react-streaming@npm:0.11.2":
+  version: 0.11.2
+  resolution: "@apollo/client-react-streaming@npm:0.11.2"
+  dependencies:
+    ts-invariant: "npm:^0.10.3"
+  peerDependencies:
+    "@apollo/client": ^3.10.4
+    react: ^18
+  checksum: 10c0/fe0d75d8ae495472e094ad05d126d4d82601892e452568e443cba8c7d6f52e64f2bd10c180e70e1a578f224144a2b38a18234a3eefcef4c63f1796851fdc0be2
+  languageName: node
+  linkType: hard
+
+"@apollo/client@npm:^3.11.0-rc.1":
+  version: 3.11.0-rc.1
+  resolution: "@apollo/client@npm:3.11.0-rc.1"
   dependencies:
     "@graphql-typed-document-node/core": "npm:^3.1.1"
     "@wry/caches": "npm:^1.0.0"
@@ -69,7 +81,20 @@ __metadata:
       optional: true
     subscriptions-transport-ws:
       optional: true
-  checksum: 10c0/057af5534db5e454957b2922fa973ccaa1b159d4cb39964b0a7fdbaeb07c779ca14eb680caa9579dfdbd85554ca7c5e9981d79ad1e6924ccef57e4acf6c67988
+  checksum: 10c0/61866b39521ff9c6e6b105d2f083e3cfe5994a9dc52c02915a14662e47510837b3673c2cfdb8860a1e1a41d4c4e271b42a8d098fd9afc8649b2683ed14fe268a
+  languageName: node
+  linkType: hard
+
+"@apollo/experimental-nextjs-app-support@npm:^0.11.2":
+  version: 0.11.2
+  resolution: "@apollo/experimental-nextjs-app-support@npm:0.11.2"
+  dependencies:
+    "@apollo/client-react-streaming": "npm:0.11.2"
+  peerDependencies:
+    "@apollo/client": ^3.10.4
+    next: ^13.4.1 || ^14.0.0 || 15.0.0-rc.0
+    react: ^18
+  checksum: 10c0/bb3c1e19bb01d09ef8bcaab7f13d440faff7fce288f816e1aa9899fb9fcfcf8c739fb34df24a15430a6308394b9dea4bc70431a4f999e52c7136848fa3c3f7b3
   languageName: node
   linkType: hard
 
@@ -7543,7 +7568,8 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "dynamic-ui-2@workspace:."
   dependencies:
-    "@apollo/client": "npm:^3.10.4"
+    "@apollo/client": "npm:^3.11.0-rc.1"
+    "@apollo/experimental-nextjs-app-support": "npm:^0.11.2"
     "@chakra-ui/icons": "npm:^2.1.1"
     "@chakra-ui/next-js": "npm:^2.2.0"
     "@chakra-ui/react": "npm:^2.8.2"
@@ -7570,7 +7596,7 @@ __metadata:
     eslint-config-next: "npm:14.1.4"
     eslint-plugin-storybook: "npm:^0.8.0"
     framer-motion: "npm:^11.0.20"
-    graphql: "npm:^16.8.1"
+    graphql: "npm:^16.9.0"
     next: "npm:14.1.4"
     pluralize: "npm:^8.0.0"
     postcss: "npm:^8"
@@ -9185,10 +9211,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"graphql@npm:^16.8.1":
-  version: 16.8.1
-  resolution: "graphql@npm:16.8.1"
-  checksum: 10c0/129c318156b466f440914de80dbf7bc67d17f776f2a088a40cb0da611d19a97c224b1c6d2b13cbcbc6e5776e45ed7468b8432f9c3536724e079b44f1a3d57a8a
+"graphql@npm:^16.9.0":
+  version: 16.9.0
+  resolution: "graphql@npm:16.9.0"
+  checksum: 10c0/a8850f077ff767377237d1f8b1da2ec70aeb7623cdf1dfc9e1c7ae93accc0c8149c85abe68923be9871a2934b1bce5a2496f846d4d56e1cfb03eaaa7ddba9b6a
   languageName: node
   linkType: hard
 

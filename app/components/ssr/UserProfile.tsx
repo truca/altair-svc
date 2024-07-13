@@ -19,7 +19,12 @@ const UserProfile = async () => {
   const client = getClient();
   const ourCookies = cookies();
 
-  let token = await ourCookies.get("jwtToken")!.value;
+  let cookie = await ourCookies.get("jwtToken");
+  if (!cookie) {
+    return <h1>Not Authenticated (SSR)</h1>;
+  }
+
+  let token = cookie!.value;
 
   let jwtToken = JSON.parse(token);
 

@@ -4,7 +4,8 @@ import Modal from "./components/Modal";
 import ToastExample from "./components/Toast";
 import SmartForm from "../stories/SmartForm";
 import { Direction } from "@/stories/Form/types";
-// import UserProfile from "./components/ssr/UserProfile";
+import UserProfile from "./components/ssr/UserProfile";
+import HomeComponent from "./components/Home";
 
 export default function Home() {
   return (
@@ -13,7 +14,10 @@ export default function Home() {
       <ToastExample />
       <Modal />
       <Drawer />
-      {/* <UserProfile /> */}
+      {/* Example Client component */}
+      <HomeComponent />
+      {/* Example SSR component */}
+      <UserProfile />
       <SmartForm
         id="665d1cf715dbe844897f0b59"
         entityType="BOOK"

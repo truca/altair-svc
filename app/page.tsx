@@ -26,7 +26,7 @@ export default function Home() {
               {
                 type: "img",
                 props: {
-                  src: "https://via.placeholder.com/95x50",
+                  src: "/logo.svg",
                   width: 95,
                   height: 50,
                 },
@@ -45,7 +45,7 @@ export default function Home() {
                       fontWeight: "bold",
                       width: 20,
                       height: 20,
-                      src: "https://via.placeholder.com/20",
+                      src: "/mage-hat.svg",
                     },
                   },
                   {

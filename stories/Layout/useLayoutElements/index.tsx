@@ -1,10 +1,19 @@
+import DashboardLayout from "@/app/components/DashboardLayout";
 import SmartForm from "@/stories/SmartForm";
-import { Flex, Grid, Text } from "@chakra-ui/react";
+import { Card, Flex, Grid, Text } from "@chakra-ui/react";
 import Image from "next/image";
 import { ReactNode, useMemo } from "react";
 
 export interface GridNode {
-  type: "grid" | "item" | "flex" | "text" | "img" | "smartform";
+  type:
+    | "grid"
+    | "item"
+    | "flex"
+    | "text"
+    | "img"
+    | "smartform"
+    | "card"
+    | "dashboardLayout";
   area?: string;
   items?: GridNode[];
   props?: any;
@@ -42,6 +51,22 @@ export const getLayoutElements = (
   if (!isArrayStructure && layout.type === "smartform") {
     const { area, props } = layout;
     return <SmartForm key={area} {...props} />;
+  }
+  if (!isArrayStructure && layout.type === "card") {
+    const { area, props, items } = layout;
+    return (
+      <Card key={area} {...props}>
+        {getLayoutElements(items || [], nodes)}
+      </Card>
+    );
+  }
+  if (!isArrayStructure && layout.type === "dashboardLayout") {
+    const { area, props, items } = layout;
+    return (
+      <DashboardLayout key={area} {...props}>
+        {getLayoutElements(items || [], nodes)}
+      </DashboardLayout>
+    );
   }
 
   if (!isArrayStructure && layout.type === "item") {

@@ -30,10 +30,10 @@ const Wrapper = (Story: any) => {
 export const BaseSmartForm: Story = {
   args: {
     id: "665d1cf715dbe844897f0b59",
+    direction: Direction.COLUMN,
     entityType: "BOOK",
 
     debug: false,
-    direction: Direction.COLUMN,
     commonFieldProps: {
       inputProps: { colorScheme: "red" } as any,
     },

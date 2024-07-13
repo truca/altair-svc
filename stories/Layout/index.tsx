@@ -3,7 +3,7 @@ import { useLayoutElements, GridNode } from "./useLayoutElements";
 
 export interface LayoutProps {
   layout: GridNode;
-  children: ReactNode;
+  children?: ReactNode;
 }
 
 export function Layout(props: LayoutProps) {

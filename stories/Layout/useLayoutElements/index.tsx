@@ -1,11 +1,12 @@
-import { Grid } from "@chakra-ui/react";
+import SmartForm from "@/stories/SmartForm";
+import { Flex, Grid, Text } from "@chakra-ui/react";
+import Image from "next/image";
 import { ReactNode, useMemo } from "react";
 
 export interface GridNode {
-  type: "grid" | "item";
+  type: "grid" | "item" | "flex" | "text" | "img" | "smartform";
   area?: string;
   items?: GridNode[];
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   props?: any;
 }
 
@@ -22,6 +23,27 @@ export const getLayoutElements = (
       </Grid>
     );
   }
+  if (!isArrayStructure && layout.type === "flex") {
+    const { area, props, items } = layout;
+    return (
+      <Flex area={area} {...props}>
+        {getLayoutElements(items || [], nodes)}
+      </Flex>
+    );
+  }
+  if (!isArrayStructure && layout.type === "text") {
+    const { area, props } = layout;
+    return <Text area={area} {...props} />;
+  }
+  if (!isArrayStructure && layout.type === "img") {
+    const { area, props } = layout;
+    return <Image key={props.src} area={area} alt={props.alt} {...props} />;
+  }
+  if (!isArrayStructure && layout.type === "smartform") {
+    const { area, props } = layout;
+    return <SmartForm key={area} {...props} />;
+  }
+
   if (!isArrayStructure && layout.type === "item") {
     const { area } = layout;
     const item =

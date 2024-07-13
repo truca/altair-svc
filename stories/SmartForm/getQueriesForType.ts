@@ -23,8 +23,13 @@ export async function getFormQueryForType(
       form(type: $type) {
         fields {
           label
+          field
           type
           defaultValue
+          options {
+            label
+            value
+          }
           validation {
             label
             value

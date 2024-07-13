@@ -44,7 +44,10 @@ function SmartForm({
       direction={direction}
       fields={fields}
       onSubmit={async (data) => {
-        await mutate({ variables: { id, ...data } });
+        const mappedData = fields.reduce((acc: any, field: any) => {
+          return { ...acc, [field.field || field.label]: data[field.label] };
+        }, {});
+        await mutate({ variables: { id, ...mappedData } });
         onSubmit(data);
       }}
     />

@@ -1,15 +1,7 @@
-import { createSchema } from "graphql-yoga";
-import { makeExecutableSchema } from "@graphql-tools/schema";
-import { ModelDirective } from "./ModelDirective";
-import { MongoStore } from "./MongoStore";
-import { GraphQLID } from "graphql";
-import { config } from "dotenv";
-import { FORMS } from "./form";
+import { makeSchema } from "../lib/utils";
+import { FormTypes } from "../lib/types";
+import { FORMS } from "./forms";
 
-const fs = require(`fs`);
-const path = require(`path`);
-
-config();
 const typeDefinitions = /* GraphQL */ `
   scalar ID
   scalar File
@@ -99,62 +91,15 @@ const typeDefinitions = /* GraphQL */ `
   }
 `;
 
-const resolvers = {
-  ID: GraphQLID,
-  FormType: {
-    AUTHOR: "author",
-    BOOK: "book",
-  },
-  Query: {
-    form: async (_: any, { type }: { id: string; type: string }) => {
-      if (FORMS[type]) {
-        return { fields: FORMS[type] };
-      }
-      return {
-        fields: [],
-      };
-    },
-  },
-  Mutation: {
-    readTextFile: async (_: any, { file }: { file: File }) => {
-      const textContent = await file.text();
-      return textContent;
-    },
-
-    saveFile: async (_: any, { file }: { file: File }) => {
-      try {
-        const fileArrayBuffer = await file.arrayBuffer();
-        await fs.promises.writeFile(
-          path.join(__dirname, file.name),
-          Buffer.from(fileArrayBuffer)
-        );
-      } catch (e) {
-        console.log({ e });
-        return false;
-      }
-      return true;
-    },
-  },
+const formTypes: FormTypes = {
+  AUTHOR: "author",
+  BOOK: "book",
 };
 
-export const context = {
-  directives: {
-    model: {
-      store: new MongoStore({
-        connection: `${process.env.DB_URI}/${process.env.DATABASE}`,
-      }),
-    },
-    file: {
-      maxSize: 1000000,
-      types: ["image/jpeg", "image/png"],
-    },
-  },
-};
-
-export const schema = makeExecutableSchema({
+export const schema = makeSchema({
   typeDefs: typeDefinitions,
-  resolvers,
-  schemaDirectives: {
-    model: ModelDirective,
-  },
+  formTypes,
+  forms: FORMS,
+  queries: {},
+  mutations: {},
 });

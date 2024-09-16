@@ -42,7 +42,7 @@ export default function Home() {
                       type: "text",
                       props: {
                         children:
-                          "São apenas três passos para criar seu Stude Plan. Vamos lá?",
+                          "São apenas três passos para criar seu Stude Plan. *Vamos lá?*",
                         fontSize: "38px",
                         fontWeight: "600",
                         lineHeight: "140%",
@@ -75,7 +75,7 @@ export default function Home() {
                           type: "smartform",
                           props: {
                             direction: Direction.COLUMN,
-                            entityType: "STUDYPLAN",
+                            entityType: "AUTHOR",
                             submitText: "Próximo",
                             submitProps: {
                               colorScheme: "pink",

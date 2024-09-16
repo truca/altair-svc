@@ -111,7 +111,6 @@ const meta: Meta<typeof Layout> = {
 export default meta;
 type Story = StoryObj<typeof Layout>;
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 const Wrapper = (Story: any) => (
   <ThemeProvider theme={theme}>
     <Story />

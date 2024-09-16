@@ -1,6 +1,7 @@
-import DashboardLayout from "@/app/components/DashboardLayout";
+import DashboardLayout from "@/stories/DashboardLayout";
 import SmartForm from "@/stories/SmartForm";
-import { Card, Flex, Grid, Text } from "@chakra-ui/react";
+import { Text } from "@/stories/Text";
+import { Card, Flex, Grid } from "@chakra-ui/react";
 import Image from "next/image";
 import { ReactNode, useMemo } from "react";
 
@@ -76,7 +77,6 @@ export const getLayoutElements = (
     return item;
   }
 
-  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
   // @ts-ignore
   return (layout as GridNode[]).map((node: GridNode) =>
     getLayoutElements(node, nodes)

@@ -63,10 +63,17 @@ const typeDefinitions = /* GraphQL */ `
     errorMessage: String
   }
 
+  type FieldOption {
+    label: String
+    value: String
+  }
+
   type Field {
     label: String
+    field: String
     type: FieldType
     defaultValue: String
+    options: [FieldOption]
     validation: [FieldValidation]
   }
 

@@ -38,9 +38,17 @@ export interface FieldValidation {
   errorMessage: String;
 }
 
+export interface FieldOption {
+  label: string;
+  value: string;
+}
+
 export interface Field {
   label: string;
+  // In case label doesnt match the field name
+  field?: string;
   type: FieldType;
+  options?: FieldOption[];
   validation?: FieldValidation[];
 }
 

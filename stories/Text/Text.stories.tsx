@@ -50,3 +50,17 @@ export const Code: Story = {
   },
   decorators: [Wrapper],
 };
+
+export const Icon: Story = {
+  args: {
+    children: "Hola {i|FaBuildingUser} Chao",
+  },
+  decorators: [Wrapper],
+};
+
+export const Mixed: Story = {
+  args: {
+    children: "Hola [{i|FaBuildingUser}][Icon!] Chao",
+  },
+  decorators: [Wrapper],
+};

@@ -68,7 +68,7 @@ export default function Home() {
                             width: "100%",
                             paddingBottom: "10px",
                             borderBottom: "1px solid #E5E7EB",
-                            marginBottom: "32px",
+                            marginBottom: "16px",
                           },
                         },
                         {
@@ -82,7 +82,7 @@ export default function Home() {
                               alignSelf: "flex-end",
                               background: "#7D40FF",
                               color: "white",
-                              marginTop: "100px",
+                              marginTop: "20px",
                             },
                           },
                         },

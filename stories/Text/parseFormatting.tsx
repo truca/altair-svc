@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import React from "react";
 import { Tooltip } from "@chakra-ui/react";
-// import { FaIcon } from "react-icons/fa"; // Adjust import based on the FontAwesome package used
+import { FaIcon } from "./FaIcons";
 
 // Type for formatted elements
 interface FormattedElement {
@@ -89,12 +89,8 @@ export function parseFormatting(text: string): React.ReactNode[] {
             <span style={{ cursor: "pointer" }}>{content}</span>
           </Tooltip>
         );
-        // } else if (type === "icon") {
-        //   formattedOutput.push(
-        //     <span key={index}>
-        //       <FaIcon className={iconClass} />
-        //     </span>
-        //   );
+      } else if (type === "icon") {
+        formattedOutput.push(<FaIcon key={index} icon={iconClass as string} />);
       } else {
         formattedOutput.push(
           React.createElement(type, { key: index }, content)

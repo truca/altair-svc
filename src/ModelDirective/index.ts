@@ -94,11 +94,18 @@ export class ModelDirective extends SchemaDirectiveVisitor {
     });
   }
 
-  private async visitNestedModels({ data, type, modelFunction, info }) {
+  private async visitNestedModels({
+    data,
+    type,
+    modelFunction,
+    info,
+    localInfo,
+  }) {
     const res = {};
 
     // move into its own function
     const selectedFields =
+      localInfo?.selectionSet.selections ||
       info?.fieldNodes?.[0].selectionSet.selections ||
       info?.selectionSet.selections ||
       [];
@@ -168,6 +175,10 @@ export class ModelDirective extends SchemaDirectiveVisitor {
     }, {});
   }
 
+  private getListSelection(info) {
+    return info.fieldNodes[0].selectionSet.selections[0];
+  }
+
   private findQueryResolver(type) {
     return async (
       root,
@@ -195,6 +206,7 @@ export class ModelDirective extends SchemaDirectiveVisitor {
               type,
               data,
               info,
+              localInfo: this.getListSelection(info),
               modelFunction: async (localType, value, newInfo = null) => {
                 const found = await this.findOneQueryResolver(localType)(
                   root,

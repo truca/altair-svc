@@ -1,5 +1,12 @@
 # README
 
+## Mongo
+
+- Use docker to install and run mongodb: https://www.mongodb.com/docs/manual/tutorial/install-mongodb-community-with-docker/
+  - start docker container: docker run --name mongodb -p 27017:27017 -d mongodb/mongodb-community-server:latest
+  - check if docker started: docker container ls
+  - connect to docker: mongosh --port 27017
+
 ## Limitations
 
 - Create A with a Children B. If in the creation request A is requested through B, it'll fail as A doesn't exist when we look for B's children

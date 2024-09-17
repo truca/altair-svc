@@ -7,10 +7,14 @@ import { useMemo } from "react";
 
 interface TextProps {
   children: string;
+  tooltipProps?: any;
 }
 
 export function Text(props: TextProps & ChakraTextProps) {
-  const { children, ...other } = props;
-  const formattedText = useMemo(() => parseFormatting(children), [children]);
+  const { children, tooltipProps, ...other } = props;
+  const formattedText = useMemo(
+    () => parseFormatting(children, tooltipProps),
+    [children, tooltipProps]
+  );
   return <ChakraText {...other}>{formattedText}</ChakraText>;
 }

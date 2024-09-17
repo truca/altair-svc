@@ -1,12 +1,15 @@
 import React from "react";
 import { Tooltip } from "@chakra-ui/react";
-import { FaIcon } from "./FaIcons"; // Adjust the import based on your FontAwesome package
+import { FaIcon } from "./FaIcon"; // Adjust the import based on your FontAwesome package
 
 // Define the types of formatting that the function will support
 type FormattingType = "b" | "i" | "del" | "code" | "tooltip" | "icon";
 
 // Utility function to parse and apply multiple formatting types
-export const parseFormatting = (input: string): React.ReactNode[] => {
+export const parseFormatting = (
+  input: string,
+  tooltipProps: any
+): React.ReactNode[] => {
   // Define patterns for each type of formatting
   const formatPatterns: {
     regex: RegExp;
@@ -23,7 +26,8 @@ export const parseFormatting = (input: string): React.ReactNode[] => {
   // Process the text for a single pattern and return the result
   const processPattern = (
     text: string,
-    pattern: { regex: RegExp; type: FormattingType }
+    pattern: { regex: RegExp; type: FormattingType },
+    tooltipProps: any
   ): React.ReactNode[] => {
     const { regex, type } = pattern;
     const parts: React.ReactNode[] = [];
@@ -40,13 +44,17 @@ export const parseFormatting = (input: string): React.ReactNode[] => {
 
       // Handle each formatting type
       if (type === "tooltip") {
+        console.log({ tooltipProps });
         parts.push(
           <Tooltip
             key={match.index}
-            label={parseFormatting(tooltipContent)}
+            label={parseFormatting(tooltipContent, tooltipProps)}
             hasArrow
+            {...tooltipProps}
           >
-            <span>{parseFormatting(content)}</span>
+            <span style={{ cursor: "pointer" }}>
+              {parseFormatting(content, tooltipProps)}
+            </span>
           </Tooltip>
         );
       } else if (type === "icon") {
@@ -63,7 +71,7 @@ export const parseFormatting = (input: string): React.ReactNode[] => {
           React.createElement(
             ElementType,
             { key: match.index },
-            parseFormatting(content)
+            parseFormatting(content, tooltipProps)
           )
         );
       }
@@ -85,7 +93,7 @@ export const parseFormatting = (input: string): React.ReactNode[] => {
   formatPatterns.forEach((pattern) => {
     formattedParts = formattedParts.flatMap((part) => {
       if (typeof part === "string") {
-        return processPattern(part, pattern);
+        return processPattern(part, pattern, tooltipProps);
       }
       return part;
     });

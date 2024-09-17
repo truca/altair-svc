@@ -65,6 +65,22 @@ export const IconWithTooltip: Story = {
   decorators: [Wrapper],
 };
 
+export const TooltipWithStyles: Story = {
+  args: {
+    children: "Hola [Tooltip][Icon!] Chao",
+    tooltipProps: {
+      size: "lg",
+      variant: "colorful",
+      colorScheme: "brand",
+      sx: {
+        padding: "8px 20px",
+        borderRadius: "6px",
+      },
+    },
+  },
+  decorators: [Wrapper],
+};
+
 export const BoldAndItalic: Story = {
   args: {
     children: "Hola *_Señor!_* Chao",

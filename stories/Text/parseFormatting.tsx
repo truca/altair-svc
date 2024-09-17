@@ -44,7 +44,6 @@ export const parseFormatting = (
 
       // Handle each formatting type
       if (type === "tooltip") {
-        console.log({ tooltipProps });
         parts.push(
           <Tooltip
             key={match.index}

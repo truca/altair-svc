@@ -8,6 +8,62 @@ export default function Home() {
       <Layout
         layout={{
           type: "dashboardLayout",
+          props: {
+            sidebarItems: [
+              {
+                type: "text",
+                props: {
+                  children: "{i|FaHatWizard} Criando seu Stude Plan",
+                  fontSize: "16px",
+                  lineHeight: "16px",
+                  color: "#EB42BE",
+                  display: "flex",
+                  gap: 2,
+                  cursor: "pointer",
+                  fontWeight: "600",
+                  marginBottom: "16px",
+                },
+              },
+              {
+                type: "text",
+                props: {
+                  children: "{i|FaArrowDownWideShort} Criando seu Stude Plan",
+                  fontSize: "16px",
+                  lineHeight: "16px",
+                  display: "flex",
+                  gap: 2,
+                  cursor: "pointer",
+                  fontWeight: "400",
+                },
+              },
+              {
+                type: "text",
+                props: {
+                  children: "{i|FaBell} Criando seu Stude Plan",
+                  fontSize: "16px",
+                  lineHeight: "16px",
+                  display: "flex",
+                  gap: 2,
+                  cursor: "pointer",
+                  fontWeight: "400",
+                },
+              },
+            ],
+            headerItems: [
+              {
+                type: "text",
+                props: {
+                  children: "Robério {i|FaUserLarge}",
+                  fontSize: "16px",
+                  lineHeight: "16px",
+                  display: "flex",
+                  gap: 2,
+                  fontWeight: "400",
+                  cursor: "pointer",
+                },
+              },
+            ],
+          },
           items: [
             {
               type: "flex",
@@ -42,7 +98,7 @@ export default function Home() {
                       type: "text",
                       props: {
                         children:
-                          "São apenas três passos para criar seu Stude Plan. *Vamos lá?*",
+                          "São apenas três passos para criar seu Stude Plan. Vamos lá?",
                         fontSize: "38px",
                         fontWeight: "600",
                         lineHeight: "140%",

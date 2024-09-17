@@ -1,109 +1,95 @@
-import { useState, useEffect } from "react";
 import React from "react";
 import { Tooltip } from "@chakra-ui/react";
-import { FaIcon } from "./FaIcons";
+import { FaIcon } from "./FaIcons"; // Adjust the import based on your FontAwesome package
 
-// Type for formatted elements
-interface FormattedElement {
-  type: "b" | "i" | "del" | "code" | "tooltip" | "icon" | "text";
-  content: string;
-  tooltip?: string;
-  iconClass?: string;
-  index: number;
-  length: number;
-}
+// Define the types of formatting that the function will support
+type FormattingType = "b" | "i" | "del" | "code" | "tooltip" | "icon";
 
-export function parseFormatting(text: string): React.ReactNode[] {
-  let match: RegExpExecArray | null;
-  const formattedElements: FormattedElement[] = [];
-
-  // Patterns for bold, italic, strikethrough, and monospace
-  const patterns = [
-    { regex: /\*([^\*]+)\*/g, component: "b" }, // Bold
-    { regex: /_([^_]+)_/g, component: "i" }, // Italic
-    { regex: /~([^~]+)~/g, component: "del" }, // Strikethrough
-    { regex: /`([^`]+)`/g, component: "code" }, // Monospace
+// Utility function to parse and apply multiple formatting types
+export const parseFormatting = (input: string): React.ReactNode[] => {
+  // Define patterns for each type of formatting
+  const formatPatterns: {
+    regex: RegExp;
+    type: FormattingType;
+  }[] = [
+    { regex: /\*([^\*]+)\*/g, type: "b" }, // Bold
+    { regex: /_([^_]+)_/g, type: "i" }, // Italic
+    { regex: /~([^~]+)~/g, type: "del" }, // Strikethrough
+    { regex: /`([^`]+)`/g, type: "code" }, // Monospace
+    { regex: /\[(.*?)\]\[(.*?)\]/g, type: "tooltip" }, // Tooltip
+    { regex: /\{i\|([^\}]+)\}/g, type: "icon" }, // Icon
   ];
 
-  // Find and push formatting elements
-  patterns.forEach(({ regex, component }) => {
+  // Process the text for a single pattern and return the result
+  const processPattern = (
+    text: string,
+    pattern: { regex: RegExp; type: FormattingType }
+  ): React.ReactNode[] => {
+    const { regex, type } = pattern;
+    const parts: React.ReactNode[] = [];
+    let lastIndex = 0;
+    let match: RegExpExecArray | null;
+
     while ((match = regex.exec(text)) !== null) {
-      const [fullMatch, content] = match;
-      formattedElements.push({
-        // @ts-ignore
-        type: component,
-        content,
-        index: match.index,
-        length: fullMatch.length,
-      });
-    }
-  });
+      const [fullMatch, content, tooltipContent] = match;
 
-  // Pattern for tooltips: [visible text][tooltip content]
-  const tooltipPattern = /\[(.*?)\]\[(.*?)\]/g;
-  // @ts-ignore
-  while ((match = tooltipPattern.exec(text)) !== null) {
-    // @ts-ignore
-    const [fullMatch, visibleText, tooltipContent] = match;
-    formattedElements.push({
-      type: "tooltip",
-      content: visibleText,
-      tooltip: tooltipContent,
-      // @ts-ignore
-      index: match.index,
-      length: fullMatch.length,
-    });
-  }
-
-  // Pattern for icons: {i|icon-class}
-  const iconPattern = /\{i\|([^\}]+)\}/g;
-  // @ts-ignore
-  while ((match = iconPattern.exec(text)) !== null) {
-    // @ts-ignore
-    const [fullMatch, iconClass] = match;
-    formattedElements.push({
-      type: "icon",
-      content: "",
-      iconClass: iconClass,
-      // @ts-ignore
-      index: match.index,
-      length: fullMatch.length,
-    });
-  }
-
-  // Sort elements by their appearance in the text (index)
-  formattedElements.sort((a, b) => a.index - b.index);
-
-  // Split text and apply formatting with tooltips and icons where applicable
-  let formattedOutput: React.ReactNode[] = [];
-  let lastIndex = 0;
-  formattedElements.forEach(
-    ({ type, content, tooltip, iconClass, index, length }) => {
-      if (index > lastIndex) {
-        formattedOutput.push(text.slice(lastIndex, index));
+      // Add the part before the match
+      if (match.index > lastIndex) {
+        parts.push(text.slice(lastIndex, match.index));
       }
 
+      // Handle each formatting type
       if (type === "tooltip") {
-        formattedOutput.push(
-          <Tooltip key={index} label={tooltip} hasArrow>
-            <span style={{ cursor: "pointer" }}>{content}</span>
+        parts.push(
+          <Tooltip
+            key={match.index}
+            label={parseFormatting(tooltipContent)}
+            hasArrow
+          >
+            <span>{parseFormatting(content)}</span>
           </Tooltip>
         );
       } else if (type === "icon") {
-        formattedOutput.push(<FaIcon key={index} icon={iconClass as string} />);
+        parts.push(<FaIcon key={match.index} icon={content} />);
       } else {
-        formattedOutput.push(
-          React.createElement(type, { key: index }, content)
+        const ElementType = {
+          b: "b",
+          i: "i",
+          del: "del",
+          code: "code",
+        }[type] as keyof JSX.IntrinsicElements;
+
+        parts.push(
+          React.createElement(
+            ElementType,
+            { key: match.index },
+            parseFormatting(content)
+          )
         );
       }
 
-      lastIndex = index + length;
+      // Update last index
+      lastIndex = match.index + fullMatch.length;
     }
-  );
 
-  if (lastIndex < text.length) {
-    formattedOutput.push(text.slice(lastIndex));
-  }
+    // Add any remaining text after the last match
+    if (lastIndex < text.length) {
+      parts.push(text.slice(lastIndex));
+    }
 
-  return formattedOutput;
-}
+    return parts;
+  };
+
+  // Apply each formatting pattern in sequence
+  let formattedParts: React.ReactNode[] = [input];
+  formatPatterns.forEach((pattern) => {
+    formattedParts = formattedParts.flatMap((part) => {
+      if (typeof part === "string") {
+        return processPattern(part, pattern);
+      }
+      return part;
+    });
+  });
+
+  return formattedParts;
+};

@@ -58,9 +58,31 @@ export const Icon: Story = {
   decorators: [Wrapper],
 };
 
-export const Mixed: Story = {
+export const IconWithTooltip: Story = {
   args: {
     children: "Hola [{i|FaBuildingUser}][Icon!] Chao",
+  },
+  decorators: [Wrapper],
+};
+
+export const BoldAndItalic: Story = {
+  args: {
+    children: "Hola *_Señor!_* Chao",
+  },
+  decorators: [Wrapper],
+};
+
+export const BoldAndItalicAndStrike: Story = {
+  args: {
+    children: "Hola *_~Señor!~_* Chao",
+  },
+  decorators: [Wrapper],
+};
+
+export const BoldAndItalicAndStrikeAndTooltipWithIcon: Story = {
+  args: {
+    children:
+      "Hola *_~[Señor! {i|FaBuildingUser}][O Señora! {i|FaBuildingUser}]~_* Chao",
   },
   decorators: [Wrapper],
 };

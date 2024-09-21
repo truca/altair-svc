@@ -19,7 +19,7 @@ function DashboardLayout({
         gridTemplateColumns: "255px 1fr",
         gridTemplateRows: "64px 1fr",
         gridTemplateAreas: `
-          "sidebar header"
+          "header header"
           "sidebar content"
         `,
         minHeight: "100vh",
@@ -35,7 +35,6 @@ function DashboardLayout({
           alignItems: "flex-start",
         }}
       >
-        <Image src="/logo.svg" alt="logo" width={95} height={50} />
         <div
           style={{
             display: "flex",
@@ -44,20 +43,21 @@ function DashboardLayout({
             alignItems: "center",
           }}
         >
-          {getLayoutElements(sidebarItems as any)}
+          {getLayoutElements(sidebarItems as any, [])}
         </div>
       </div>
       <div
         style={{
           gridArea: "header",
-          padding: "16px",
+          padding: "16px 25px",
           display: "flex",
-          justifyContent: "flex-end",
+          justifyContent: "space-between",
           gap: "16px",
           alignItems: "center",
         }}
       >
-        {headerItems && getLayoutElements(headerItems as any)}
+        <Image src="/logo.svg" alt="logo" width={95} height={50} />
+        <div>{headerItems && getLayoutElements(headerItems as any, [])}</div>
       </div>
 
       {children}

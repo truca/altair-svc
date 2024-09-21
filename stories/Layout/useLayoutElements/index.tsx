@@ -1,4 +1,6 @@
+import UserData from "@/app/components/UserData";
 import DashboardLayout from "@/stories/DashboardLayout";
+import { Direction } from "@/stories/Form/types";
 import SmartForm from "@/stories/SmartForm";
 import { Text } from "@/stories/Text";
 import { Card, Flex, Grid } from "@chakra-ui/react";
@@ -14,7 +16,9 @@ export interface GridNode {
     | "img"
     | "smartform"
     | "card"
-    | "dashboardLayout";
+    | "dashboardLayout"
+    | "formWithTitle"
+    | "headerUser";
   area?: string;
   items?: GridNode[];
   props?: any;
@@ -52,6 +56,48 @@ export const getLayoutElements = (
   if (!isArrayStructure && layout.type === "smartform") {
     const { area, props } = layout;
     return <SmartForm key={area} {...props} />;
+  }
+  if (!isArrayStructure && layout.type === "formWithTitle") {
+    const {
+      area,
+      props: {
+        title,
+        formProps: { submitProps, ...other },
+      },
+    } = layout;
+    return (
+      <>
+        <Text
+          fontSize="20px"
+          lineHeight="40px"
+          fontWeight="600"
+          color="#111827"
+          width="100%"
+          paddingBottom="10px"
+          borderBottom="1px solid #E5E7EB"
+          marginBottom="16px"
+        >
+          {title}
+        </Text>
+        <SmartForm
+          direction={Direction.COLUMN}
+          submitText="Next"
+          submitProps={{
+            colorScheme: "pink",
+            alignSelf: "flex-end",
+            background: "#7D40FF",
+            color: "white",
+            marginTop: "20px",
+            ...submitProps,
+          }}
+          {...other}
+        />
+      </>
+    );
+  }
+  if (!isArrayStructure && layout.type === "headerUser") {
+    const { props } = layout;
+    return <UserData {...props} />;
   }
   if (!isArrayStructure && layout.type === "card") {
     const { area, props, items } = layout;

@@ -23,6 +23,18 @@ const typeDefinitions = /* GraphQL */ `
     authors: [Author]
   }
 
+  type Profile @model {
+    uid: String
+    displayName: String!
+    email: String!
+    photoURL: String
+    phoneNumber: String
+    emailVerified: Boolean
+    isAnonymous: Boolean
+    lastSignInTime: String
+    creationTime: String
+  }
+
   enum FieldType {
     TEXT
     TEXTAREA
@@ -84,6 +96,7 @@ const typeDefinitions = /* GraphQL */ `
   enum FormType {
     AUTHOR
     BOOK
+    PROFILE
   }
 
   type Query {
@@ -95,12 +108,22 @@ const typeDefinitions = /* GraphQL */ `
     _: Boolean
     readTextFile(file: File!): String!
     saveFile(file: File!): Boolean!
+    authenticate(
+      uid: String
+      displayName: String
+      email: String
+      photoURL: String
+      phoneNumber: String
+      emailVerified: Boolean
+      isAnonymous: Boolean
+    ): String
   }
 `;
 
 const formTypes: FormTypes = {
   AUTHOR: "author",
   BOOK: "book",
+  PROFILE: "profile",
 };
 
 export const schema = makeSchema({

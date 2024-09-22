@@ -5,10 +5,11 @@ import { MongoStore } from "./MongoStore";
 import { GraphQLID } from "graphql";
 import { FORMS } from "../src/forms";
 import _ from "lodash";
-import { FormsHash } from "./types";
+import { FormsHash, Profile } from "./types";
 import { config } from "dotenv";
 config();
 
+const jwt = require("jsonwebtoken");
 const fs = require(`fs`);
 const path = require(`path`);
 
@@ -78,6 +79,59 @@ export function makeSchema({
           return false;
         }
         return true;
+      },
+      authenticate: async (
+        _: any,
+        {
+          displayName,
+          email,
+          photoURL,
+          uid,
+          phoneNumber,
+          emailVerified,
+          isAnonymous,
+        }: Profile,
+        context: any
+      ) => {
+        const secretKey = process.env.JWT_SECRET;
+        let profile = await context.directives.model.store.findOne({
+          where: { uid, deletedAt: null },
+          type: { name: "Profile" },
+        });
+        if (profile) {
+          const token = jwt.sign(
+            profile,
+            secretKey as string,
+            { expiresIn: "1h" } // Token expires in 1 hour
+          );
+
+          return token;
+        }
+
+        profile = await context.directives.model.store.create({
+          data: {
+            uid,
+            displayName,
+            email,
+            role: "user",
+            photoURL,
+            phoneNumber,
+            emailVerified,
+            isAnonymous,
+          },
+          type: { name: "Profile" },
+        });
+
+        if (!profile) {
+          return null;
+        }
+
+        const token = jwt.sign(
+          profile,
+          secretKey as string,
+          { expiresIn: "1h" } // Token expires in 1 hour
+        );
+        return token;
       },
       ...mutations,
     },

@@ -52,6 +52,16 @@ export interface Field {
   validation?: FieldValidation[];
 }
 
+export interface Profile {
+  uid: string;
+  displayName: string;
+  email: string;
+  photoURL: string;
+  phoneNumber: string;
+  emailVerified: boolean;
+  isAnonymous: boolean;
+}
+
 export type FormTypes = Record<string, string>;
 export type Form = Field[];
 export type FormsHash = { [key: string]: Form };

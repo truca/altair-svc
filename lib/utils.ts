@@ -12,8 +12,47 @@ config();
 const jwt = require("jsonwebtoken");
 const fs = require(`fs`);
 const path = require(`path`);
+const cookie = require("cookie");
 
-export function makeContext({ context: contextArg }: { context: any }) {
+export function generateTokens(profile: Profile) {
+  const secretKey = process.env.JWT_SECRET;
+  const accessToken = jwt.sign(
+    profile,
+    secretKey as string,
+    { expiresIn: "1h" } // Token expires in 1 hour
+  );
+  const refreshToken = jwt.sign(
+    { userId: profile.uid },
+    secretKey as string,
+    { expiresIn: "1d" } // Token expires in 7 days
+  );
+  return { accessToken, refreshToken };
+}
+
+export function setTokensAsCookies(
+  res: any,
+  tokens: { accessToken: string; refreshToken: string }
+) {
+  console.log({ res });
+  res.cookieStore.set("accessToken", tokens.accessToken, {
+    // httpOnly: true,
+    // secure: true,
+    // sameSite: "none",
+  });
+  // res.cookie("accessToken", tokens.accessToken, {
+  // httpOnly: true,
+  // secure: true,
+  // sameSite: "none",
+  // });
+  // res.cookie("refreshToken", tokens.refreshToken, {
+  // httpOnly: true,
+  // secure: true,
+  // sameSite: "none",
+  // });
+}
+
+export function makeContext({ context: contextArg }: any) {
+  console.log({ contextArg });
   const context = {
     ...contextArg,
     directives: {
@@ -80,44 +119,23 @@ export function makeSchema({
         }
         return true;
       },
-      authenticate: async (
-        _: any,
-        {
-          displayName,
-          email,
-          photoURL,
-          uid,
-          phoneNumber,
-          emailVerified,
-          isAnonymous,
-        }: Profile,
-        context: any
-      ) => {
+      authenticate: async (_: any, params: Profile, context: any) => {
         const secretKey = process.env.JWT_SECRET;
         let profile = await context.directives.model.store.findOne({
-          where: { uid, deletedAt: null },
+          where: { uid: params.uid, deletedAt: null },
           type: { name: "Profile" },
         });
         if (profile) {
-          const token = jwt.sign(
-            profile,
-            secretKey as string,
-            { expiresIn: "1h" } // Token expires in 1 hour
-          );
+          const tokens = generateTokens(profile);
+          setTokensAsCookies(context.res, tokens);
 
-          return token;
+          return tokens.accessToken;
         }
 
         profile = await context.directives.model.store.create({
           data: {
-            uid,
-            displayName,
-            email,
+            ...params,
             role: "user",
-            photoURL,
-            phoneNumber,
-            emailVerified,
-            isAnonymous,
           },
           type: { name: "Profile" },
         });
@@ -126,12 +144,10 @@ export function makeSchema({
           return null;
         }
 
-        const token = jwt.sign(
-          profile,
-          secretKey as string,
-          { expiresIn: "1h" } // Token expires in 1 hour
-        );
-        return token;
+        console.log({ cookie });
+        const tokens = generateTokens(profile);
+        setTokensAsCookies(context.res, tokens);
+        return tokens.accessToken;
       },
       ...mutations,
     },

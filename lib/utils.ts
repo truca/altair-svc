@@ -12,47 +12,41 @@ config();
 const jwt = require("jsonwebtoken");
 const fs = require(`fs`);
 const path = require(`path`);
-const cookie = require("cookie");
 
 export function generateTokens(profile: Profile) {
   const secretKey = process.env.JWT_SECRET;
   const accessToken = jwt.sign(
     profile,
     secretKey as string,
-    { expiresIn: "1h" } // Token expires in 1 hour
+    { expiresIn: process.env.ACCESS_TOKEN_DURATION_SECONDS } // Token expires in 1 hour
   );
   const refreshToken = jwt.sign(
     { userId: profile.uid },
     secretKey as string,
-    { expiresIn: "1d" } // Token expires in 7 days
+    { expiresIn: process.env.REFRESH_TOKEN_DURATION_SECONDS } // Token expires in 7 days
   );
   return { accessToken, refreshToken };
 }
 
 export function setTokensAsCookies(
-  res: any,
+  ctx: any,
   tokens: { accessToken: string; refreshToken: string }
 ) {
-  console.log({ res });
-  res.cookieStore.set("accessToken", tokens.accessToken, {
-    // httpOnly: true,
-    // secure: true,
-    // sameSite: "none",
+  ctx.cookieStore.set("accessToken", tokens.accessToken, {
+    httpOnly: true,
+    secure: true,
+    sameSite: "none",
+    maxAge: process.env.ACCESS_TOKEN_DURATION_SECONDS,
   });
-  // res.cookie("accessToken", tokens.accessToken, {
-  // httpOnly: true,
-  // secure: true,
-  // sameSite: "none",
-  // });
-  // res.cookie("refreshToken", tokens.refreshToken, {
-  // httpOnly: true,
-  // secure: true,
-  // sameSite: "none",
-  // });
+  ctx.cookieStore.set("refreshToken", tokens.refreshToken, {
+    httpOnly: true,
+    secure: true,
+    sameSite: "none",
+    maxAge: process.env.REFRESH_TOKEN_DURATION_SECONDS,
+  });
 }
 
 export function makeContext({ context: contextArg }: any) {
-  console.log({ contextArg });
   const context = {
     ...contextArg,
     directives: {
@@ -127,7 +121,7 @@ export function makeSchema({
         });
         if (profile) {
           const tokens = generateTokens(profile);
-          setTokensAsCookies(context.res, tokens);
+          setTokensAsCookies(context, tokens);
 
           return tokens.accessToken;
         }
@@ -144,9 +138,8 @@ export function makeSchema({
           return null;
         }
 
-        console.log({ cookie });
         const tokens = generateTokens(profile);
-        setTokensAsCookies(context.res, tokens);
+        setTokensAsCookies(context, tokens);
         return tokens.accessToken;
       },
       ...mutations,

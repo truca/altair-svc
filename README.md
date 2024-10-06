@@ -46,3 +46,11 @@ curl localhost:4000/graphql \
  -F operations='{ "query": "mutation ($file: File!) { createBook(data:{avatar: $file, name: \"book\"}) { id } }", "variables": { "file": null } }' \
  -F map='{ "0": ["variables.file"] }' \
  -F 0=@img.png
+
+### AuthN / AuthZ
+
+We're using 2 tokens: an access token and a refresh token. The access token has all the info of the user and is secure to read directly from, but has a shorter duration. If the access token is expired, we use the refresh token to give you a new access token automatically on any endpoint. Both durations are handled by env variables
+
+#### Access token expiration
+
+it has 2 expirations: one for the cookie, and another in the expiresIn param, which is the one that matters because it can't be modified by the user. We just added the cookie expiration so that in most cases where the access token is expired, we're simply going to not receive it, so there's less things to check

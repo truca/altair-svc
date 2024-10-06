@@ -17,41 +17,30 @@ function main() {
         ...context,
         ...args,
         cookies,
-        res: {
-          ...(args as any)?.res,
-          // create cookieStore bound to res object
-          cookieStore: {
-            get: function (key: string) {
-              return cookies[key];
-            },
-            set: function (key: string, value: string, options: any) {
-              (args as any)?.res?.setHeader?.(
-                "Set-Cookie",
-                cookie.serialize(key, value, options)
-              );
-            },
-            remove: function (key: string) {
-              (args as any)?.res?.setHeader?.(
+        cookieStore: {
+          get: ((paramCookies) =>
+            function (key: string) {
+              return paramCookies[key];
+            })(cookies),
+          set: ((res) =>
+            function (key: string, value: string, options: any) {
+              const existingCookies = res.getHeader("Set-Cookie") || [];
+              const cookiesArray = Array.isArray(existingCookies)
+                ? existingCookies
+                : [existingCookies];
+              cookiesArray.push(cookie.serialize(key, value, options));
+
+              res?.setHeader?.("Set-Cookie", cookiesArray);
+            })((args as any)?.res),
+          remove: ((res) =>
+            function (key: string) {
+              res?.setHeader?.(
                 "Set-Cookie",
                 cookie.serialize(key, "", { maxAge: -1 })
               );
-            },
-          },
+            })((args as any)?.res),
         },
       };
-    },
-    // Hook for setting headers (like Set-Cookie) in the response
-    // @ts-ignore
-    onResponse: ({ response, context }) => {
-      console.log("onResponse", context.setCookies);
-      // Append each cookie to the response
-      // @ts-ignore
-      context.setCookies.forEach(({ name, value, options }) => {
-        response.headers.append(
-          "Set-Cookie",
-          cookie.serialize(name, value, options)
-        );
-      });
     },
   });
   const server = createServer(yoga);

@@ -65,3 +65,9 @@ export interface Profile {
 export type FormTypes = Record<string, string>;
 export type Form = Field[];
 export type FormsHash = { [key: string]: Form };
+
+export interface CookieStore {
+  get: (key: string) => string;
+  set: (key: string, value: string, options: any) => void;
+  remove: (key: string) => void;
+}

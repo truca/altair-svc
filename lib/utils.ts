@@ -5,44 +5,96 @@ import { MongoStore } from "./MongoStore";
 import { GraphQLID } from "graphql";
 import { FORMS } from "../src/forms";
 import _ from "lodash";
-import { FormsHash, Profile } from "./types";
+import { CookieStore, FormsHash, Profile } from "./types";
 import { config } from "dotenv";
+import { parse } from "node:path";
 config();
 
 const jwt = require("jsonwebtoken");
 const fs = require(`fs`);
 const path = require(`path`);
 
+// Interface for the function result
+export interface VerifyTokenResult {
+  decoded?: object | string;
+  error?: string;
+}
+
+// Secure token verification method
+export function verifyToken(token: string, secret: string): VerifyTokenResult {
+  if (!token) {
+    return { error: "MissingTokenError" };
+  }
+
+  try {
+    // Verify the token
+    const decoded = jwt.verify(token, secret);
+
+    // Return the decoded payload if verification is successful
+    return { decoded };
+  } catch (error: any) {
+    // Handle specific token-related errors
+    if (error.name === "TokenExpiredError") {
+      return { error: "TokenExpiredError" }; // Handle token expiration
+    } else if (error.name === "JsonWebTokenError") {
+      return { error: "InvalidTokenError" }; // Handle other token-related errors
+    } else {
+      return { error: "UnknownError" }; // Catch-all for other unknown errors
+    }
+  }
+}
+
 export function generateTokens(profile: Profile) {
   const secretKey = process.env.JWT_SECRET;
+  const accessTokenExpiresIn = parseInt(
+    process.env.ACCESS_TOKEN_DURATION_SECONDS as string,
+    10
+  );
   const accessToken = jwt.sign(
     profile,
     secretKey as string,
-    { expiresIn: process.env.ACCESS_TOKEN_DURATION_SECONDS } // Token expires in 1 hour
+    { expiresIn: accessTokenExpiresIn } // Token expires in 1 hour
+  );
+
+  const refreshTokenExpiresIn = parseInt(
+    process.env.REFRESH_TOKEN_DURATION_SECONDS as string,
+    10
   );
   const refreshToken = jwt.sign(
     { userId: profile.uid },
     secretKey as string,
-    { expiresIn: process.env.REFRESH_TOKEN_DURATION_SECONDS } // Token expires in 7 days
+    { expiresIn: refreshTokenExpiresIn } // Token expires in 7 days
   );
   return { accessToken, refreshToken };
 }
 
 export function setTokensAsCookies(
-  ctx: any,
-  tokens: { accessToken: string; refreshToken: string }
+  cookieStore: CookieStore,
+  tokens: { accessToken: string; refreshToken: string },
+  setRefreshToken = true
 ) {
-  ctx.cookieStore.set("accessToken", tokens.accessToken, {
+  if (setRefreshToken) {
+    const refreshMaxAge = parseInt(
+      process.env.REFRESH_TOKEN_DURATION_SECONDS as string,
+      10
+    );
+    cookieStore.set("refreshToken", tokens.refreshToken, {
+      httpOnly: true,
+      secure: true,
+      sameSite: "none",
+      maxAge: refreshMaxAge,
+    });
+  }
+
+  const maxAge = parseInt(
+    process.env.ACCESS_TOKEN_DURATION_SECONDS as string,
+    10
+  );
+  cookieStore.set("accessToken", tokens.accessToken, {
     httpOnly: true,
     secure: true,
     sameSite: "none",
-    maxAge: process.env.ACCESS_TOKEN_DURATION_SECONDS,
-  });
-  ctx.cookieStore.set("refreshToken", tokens.refreshToken, {
-    httpOnly: true,
-    secure: true,
-    sameSite: "none",
-    maxAge: process.env.REFRESH_TOKEN_DURATION_SECONDS,
+    maxAge,
   });
 }
 
@@ -121,7 +173,7 @@ export function makeSchema({
         });
         if (profile) {
           const tokens = generateTokens(profile);
-          setTokensAsCookies(context, tokens);
+          setTokensAsCookies(context.cookieStore, tokens);
 
           return tokens.accessToken;
         }
@@ -139,7 +191,7 @@ export function makeSchema({
         }
 
         const tokens = generateTokens(profile);
-        setTokensAsCookies(context, tokens);
+        setTokensAsCookies(context.cookieStore, tokens);
         return tokens.accessToken;
       },
       ...mutations,

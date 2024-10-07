@@ -24,7 +24,7 @@ import {
   extractFieldDirectiveParams,
   getEntityTypeFromField,
   getFieldType,
-} from "../AuthDirective";
+} from "../GraphQL/utils";
 
 export interface ResolverContext {
   directives: {

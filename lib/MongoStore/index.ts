@@ -16,11 +16,11 @@ import mongoose, { Schema } from "mongoose";
 import { Context } from "../types";
 import {
   ActionTypes,
-  extractDirectiveParams,
   getHasNecessaryRolePermissionsToContinue,
   getHasPermissionOnlyThroughAnotherEntity,
   getMongoFilterForOwnerOrCollaborator,
 } from "../AuthDirective";
+import { extractDirectiveParams } from "../GraphQL/utils";
 
 export interface MongoStoreOptions {
   connection: string;

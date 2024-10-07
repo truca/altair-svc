@@ -13,6 +13,14 @@ import {
 } from "./types";
 import { cloneDeep } from "lodash";
 import mongoose, { Schema } from "mongoose";
+import { Context } from "../types";
+import {
+  ActionTypes,
+  extractDirectiveParams,
+  getHasNecessaryRolePermissionsToContinue,
+  getHasPermissionOnlyThroughAnotherEntity,
+  getMongoFilterForOwnerOrCollaborator,
+} from "../AuthDirective";
 
 export interface MongoStoreOptions {
   connection: string;
@@ -31,7 +39,22 @@ export class MongoStore implements Store {
     this.db = await mongoose.connect(connection);
   }
 
-  public async findOne(props: StoreFindOneProps): Promise<StoreFindOneReturn> {
+  public async findOne(
+    props: StoreFindOneProps,
+    context: Context,
+    info: any
+  ): Promise<StoreFindOneReturn | null> {
+    const directiveParams = extractDirectiveParams(props.type.astNode, "auth");
+    const hasNecessaryRolePermissionsToContinue =
+      getHasNecessaryRolePermissionsToContinue(
+        directiveParams,
+        context?.session,
+        ActionTypes.read
+      );
+    if (!hasNecessaryRolePermissionsToContinue) {
+      return null;
+    }
+
     const model = this.getModel(props.type.name);
     const findOneParams = this.formatInput(props.where);
     const res = await model.findOne({ ...findOneParams, deletedAt: null });
@@ -39,19 +62,46 @@ export class MongoStore implements Store {
   }
 
   public async find(
-    props: StoreFindProps
-  ): Promise<{ list: [StoreFindReturn]; maxPages: number | null }> {
+    props: StoreFindProps,
+    context: Context,
+    info: any
+  ): Promise<{ list: StoreFindReturn[]; maxPages: number | null }> {
+    const directiveParams = extractDirectiveParams(props.type.astNode, "auth");
+    const hasNecessaryRolePermissionsToContinue =
+      getHasNecessaryRolePermissionsToContinue(
+        directiveParams,
+        context?.session,
+        ActionTypes.read
+      );
+    const hasPermissionOnlyThroughAnotherEntity =
+      getHasPermissionOnlyThroughAnotherEntity({
+        config: directiveParams,
+        action: ActionTypes.read,
+      });
+    const isNestedRequest = info.kind === "Field";
+    if (
+      !hasNecessaryRolePermissionsToContinue ||
+      (hasPermissionOnlyThroughAnotherEntity && !isNestedRequest)
+    ) {
+      return { list: [], maxPages: null };
+    }
+
     const model = this.getModel(props.type.name);
     const page = props.page || 1;
     const pageSize = props.pageSize || 10;
     const includeMaxPages = props.includeMaxPages || false;
     const findOneParams = this.formatInput(props.where);
+    const permissionFilters = getMongoFilterForOwnerOrCollaborator({
+      config: directiveParams,
+      profile: context?.session,
+      action: ActionTypes.read,
+    });
 
     let maxPages: number | null = null;
     if (includeMaxPages) {
       const count = await model.aggregate([
         {
-          $match: { ...findOneParams, deletedAt: null },
+          $match: { ...findOneParams, ...permissionFilters, deletedAt: null },
         },
         {
           $count: "count",
@@ -63,17 +113,55 @@ export class MongoStore implements Store {
     }
 
     const res = await model
-      .find({ ...findOneParams, deletedAt: null })
+      .find({ ...findOneParams, ...permissionFilters, deletedAt: null })
       .skip((page - 1) * pageSize)
       .limit(pageSize);
     return { list: this.formatOutput(res), maxPages };
   }
-  public async create(props: StoreCreateProps): Promise<StoreCreateReturn> {
+  public async create(
+    props: StoreCreateProps,
+    context: Context,
+    info: any
+  ): Promise<StoreCreateReturn> {
+    const directiveParams = extractDirectiveParams(props.type.astNode, "auth");
+    const hasNecessaryRolePermissionsToContinue =
+      getHasNecessaryRolePermissionsToContinue(
+        directiveParams,
+        context?.session,
+        ActionTypes.create
+      );
+    if (!hasNecessaryRolePermissionsToContinue) {
+      return null;
+    }
+
     const model = this.getModel(props.type.name);
-    const res = await model.create({ ...props.data, createdAt: new Date() });
+    // check permissions (if the auth allows the user to create this type)
+    // access create permissions from auth directive
+    // check if the user has the right permissions
+
+    const res = await model.create({
+      ...props.data,
+      createdAt: new Date(),
+      ownerIds: [context?.session.uid],
+    });
     return this.formatOutput(res);
   }
-  public async update(props: StoreUpdateProps): Promise<StoreUpdateReturn> {
+  public async update(
+    props: StoreUpdateProps,
+    context: Context,
+    info: any
+  ): Promise<StoreUpdateReturn> {
+    const directiveParams = extractDirectiveParams(props.type.astNode, "auth");
+    const hasNecessaryRolePermissionsToContinue =
+      getHasNecessaryRolePermissionsToContinue(
+        directiveParams,
+        context?.session,
+        ActionTypes.update
+      );
+    if (!hasNecessaryRolePermissionsToContinue) {
+      return false;
+    }
+
     const model = this.getModel(props.type.name);
     const res = await model.findOneAndUpdate(
       this.formatInput(props.where),
@@ -86,8 +174,21 @@ export class MongoStore implements Store {
     return res;
   }
   public async remove(
-    props: StoreRemoveProps & { hardDelete: boolean }
+    props: StoreRemoveProps & { hardDelete: boolean },
+    context: Context,
+    info: any
   ): Promise<StoreRemoveReturn> {
+    const directiveParams = extractDirectiveParams(props.type.astNode, "auth");
+    const hasNecessaryRolePermissionsToContinue =
+      getHasNecessaryRolePermissionsToContinue(
+        directiveParams,
+        context?.session,
+        ActionTypes.delete
+      );
+    if (!hasNecessaryRolePermissionsToContinue) {
+      return false;
+    }
+
     const isHardDelete = props.hardDelete || false;
     if (isHardDelete) {
       return this.hardDelete(props);

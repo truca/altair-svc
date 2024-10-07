@@ -30,6 +30,10 @@ export const validateInputData = (props: ValidateInputDataProps) => {
         type: getNullableType(field.type) as any,
       });
     } else {
+      // The type is normal, not the input one.
+      // We need to continue this case just in case we need to add elements to an existing entity
+      // TODO: instead of passing the normal type, pass the input type
+      if (props.data.id) return;
       // IF the field value provided is null and the field is non nullable
       // OR the field was not provided but is marked as non nullable in the input type
       if (

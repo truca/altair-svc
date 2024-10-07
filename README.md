@@ -23,6 +23,9 @@
 - attributes on mutations to match form specs
 - handle removal of n:m relations without removing one of the objects
 - separar los Inputs de create y update
+- manejar el caso en que tenga permisos para crear una entidad pero no la otra (bloquear toda la operación)
+- block readOne when you don't have access to the owner entity (AuthZ)
+- Agregar list y maxPages a children entities (Ej: mensajes dentro de chats)
 
 ## File transfer
 
@@ -51,6 +54,12 @@ curl localhost:4000/graphql \
 
 We're using 2 tokens: an access token and a refresh token. The access token has all the info of the user and is secure to read directly from, but has a shorter duration. If the access token is expired, we use the refresh token to give you a new access token automatically on any endpoint. Both durations are handled by env variables
 
+### AuthZ
+
+AuthZ has 2 components: static and entity based. static is when the permission depends on user roles or is public. entity based is when we check for owners and collaborators in the final entity
+
 #### Access token expiration
 
 it has 2 expirations: one for the cookie, and another in the expiresIn param, which is the one that matters because it can't be modified by the user. We just added the cookie expiration so that in most cases where the access token is expired, we're simply going to not receive it, so there's less things to check
+
+###

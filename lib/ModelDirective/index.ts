@@ -20,6 +20,11 @@ import { addInputTypesForObjectType } from "./addInputTypesForObjectType";
 import { Store } from "./Store";
 import mongoose from "mongoose";
 import { uploadFiles } from "./uploadFileFields";
+import {
+  extractFieldDirectiveParams,
+  getEntityTypeFromField,
+  getFieldType,
+} from "../AuthDirective";
 
 export interface ResolverContext {
   directives: {
@@ -95,24 +100,34 @@ export class ModelDirective extends SchemaDirectiveVisitor {
   }
 
   private async visitNestedModels({
-    data,
+    data: dataParam,
     type,
     modelFunction,
+    modelsFunction,
+    context,
     info,
     localInfo,
   }) {
     const res = {};
+    const data = { ...dataParam };
 
     // move into its own function
     const selectedFields =
-      localInfo?.selectionSet.selections ||
-      info?.fieldNodes?.[0].selectionSet.selections ||
-      info?.selectionSet.selections ||
+      localInfo?.selectionSet?.selections ||
+      info?.fieldNodes?.[0]?.selectionSet?.selections ||
+      info?.selectionSet?.selections ||
       [];
     const selectedFieldsHash = selectedFields.reduce((res, selection) => {
       res[selection.name.value] = selection;
       return res;
     }, {});
+    Object.keys(selectedFieldsHash).forEach((key) => {
+      if (!data[key]) {
+        const fieldType = getFieldType(type.astNode, key);
+        data[key] =
+          fieldType === "array" ? [] : fieldType === "object" ? {} : undefined;
+      }
+    });
     // end move
     for (const key of Object.keys(data)) {
       if (key === "_id") continue;
@@ -121,12 +136,39 @@ export class ModelDirective extends SchemaDirectiveVisitor {
       const value = data[key];
       const field = getNamedType(type.getFields()[key]) as any;
 
-      const fieldType = getNamedType(field.type);
+      let fieldType = getNamedType(field.type);
 
       if (isPlainObject(value) && hasDirective("model", fieldType)) {
         const info = selectedFieldsHash[key];
         const foundObject = await modelFunction(fieldType, value, info);
         res[key] = foundObject;
+        return;
+      }
+
+      const connectionDirective = extractFieldDirectiveParams(
+        type.astNode,
+        key,
+        "connection"
+      );
+      const isSearchableArray =
+        Array.isArray(value) && connectionDirective?.type === "search";
+
+      if (isSearchableArray) {
+        const info = selectedFieldsHash[key];
+        const entityType = getEntityTypeFromField(type.astNode, key);
+        // const namedType = getNamedType(entityType);
+        fieldType = this.schema.getType(entityType);
+        const foundObjects = await modelsFunction?.(
+          fieldType,
+          {
+            where: { "chat._id": data.id },
+            page: 1,
+            pageSize: 10,
+          },
+          info
+        );
+        res[key] = foundObjects?.list;
+        continue;
       }
 
       if (Array.isArray(value) && value.every((v) => isPlainObject(v))) {
@@ -176,7 +218,10 @@ export class ModelDirective extends SchemaDirectiveVisitor {
   }
 
   private getListSelection(info) {
-    return info.fieldNodes[0].selectionSet.selections[0];
+    return (
+      info?.fieldNodes?.[0]?.selectionSet?.selections?.[0] ??
+      info?.selectionSet?.selections?.[0]
+    );
   }
 
   private findQueryResolver(type) {
@@ -186,13 +231,17 @@ export class ModelDirective extends SchemaDirectiveVisitor {
       context: ResolverContext,
       info: any
     ) => {
-      const initialData: object[] = await context.directives.model.store.find({
-        where: args.where,
-        page: args.page,
-        pageSize: args.pageSize,
-        includeMaxPages: args.includeMaxPages,
-        type,
-      });
+      const initialData: object[] = await context.directives.model.store.find(
+        {
+          where: args.where,
+          page: args.page,
+          pageSize: args.pageSize,
+          includeMaxPages: args.includeMaxPages,
+          type,
+        },
+        context,
+        info
+      );
 
       if (!initialData) {
         return null;
@@ -206,11 +255,27 @@ export class ModelDirective extends SchemaDirectiveVisitor {
               type,
               data,
               info,
+              context,
               localInfo: this.getListSelection(info),
               modelFunction: async (localType, value, newInfo = null) => {
                 const found = await this.findOneQueryResolver(localType)(
                   root,
                   { ...args, where: value },
+                  context,
+                  newInfo ? newInfo : info
+                );
+                return found;
+              },
+              modelsFunction: async (localType, value, newInfo = null) => {
+                // We need to get the right type here
+                const found = await this.findQueryResolver(localType)(
+                  root,
+                  {
+                    ...args,
+                    where: value.where,
+                    page: value.page,
+                    pageSize: value.pageSize,
+                  },
                   context,
                   newInfo ? newInfo : info
                 );
@@ -234,10 +299,14 @@ export class ModelDirective extends SchemaDirectiveVisitor {
       context: ResolverContext,
       info: any
     ) => {
-      const rootObject = await context.directives.model.store.findOne({
-        where: args.where,
-        type,
-      });
+      const rootObject = await context.directives.model.store.findOne(
+        {
+          where: args.where,
+          type,
+        },
+        context,
+        info
+      );
 
       if (!rootObject) {
         return null;
@@ -247,6 +316,7 @@ export class ModelDirective extends SchemaDirectiveVisitor {
         type,
         data: rootObject,
         info,
+        context,
         modelFunction: (localType: any, value: any, infoParam: any = {}) =>
           this.findOneQueryResolver(localType)(
             root,
@@ -285,6 +355,7 @@ export class ModelDirective extends SchemaDirectiveVisitor {
         type,
         data: args.data,
         info,
+        context,
         modelFunction: async (localType: any, value: any) => {
           const parentType = getNamedType(type) as any;
           const parentTypeName = parentType.name.toLowerCase();
@@ -326,14 +397,18 @@ export class ModelDirective extends SchemaDirectiveVisitor {
 
       const objectIds = this.pluckModelObjectIds(relatedObjects);
 
-      const rootObject = await context.directives.model.store.create({
-        data: {
-          ...args.data,
-          ...objectIds,
-          ...parentIdsParam,
+      const rootObject = await context.directives.model.store.create(
+        {
+          data: {
+            ...args.data,
+            ...objectIds,
+            ...parentIdsParam,
+          },
+          type,
         },
-        type,
-      });
+        context,
+        info
+      );
 
       const mergedObjects = {
         ...rootObject,
@@ -360,10 +435,14 @@ export class ModelDirective extends SchemaDirectiveVisitor {
       // This will update all files and return the file paths
       await uploadFiles(type, args.data);
 
-      const currentRootObject = await context.directives.model.store.findOne({
-        where: args.where,
-        type,
-      });
+      const currentRootObject = await context.directives.model.store.findOne(
+        {
+          where: args.where,
+          type,
+        },
+        context,
+        info
+      );
 
       if (!args.data._id) {
         args.data._id = currentRootObject.id;
@@ -373,6 +452,7 @@ export class ModelDirective extends SchemaDirectiveVisitor {
         type,
         data: args.data,
         info,
+        context,
         modelFunction: async (localType: any, value: any) => {
           // update
           if (value.id) {
@@ -451,29 +531,38 @@ export class ModelDirective extends SchemaDirectiveVisitor {
       }
       const objectIds = mergeWith(filteredRootObject, newObjectIds, customizer);
 
-      const updated = await context.directives.model.store.update({
-        where: args.where,
-        data: {
-          ...filteredData,
-          ...objectIds,
+      const updated = await context.directives.model.store.update(
+        {
+          where: args.where,
+          data: {
+            ...filteredData,
+            ...objectIds,
+          },
+          upsert: args.upsert,
+          type,
         },
-        upsert: args.upsert,
-        type,
-      });
+        context,
+        info
+      );
 
       if (!updated) {
         throw new Error(`Failed to update ${type}`);
       }
 
-      const rootObject = await context.directives.model.store.findOne({
-        where: args.where,
-        type,
-      });
+      const rootObject = await context.directives.model.store.findOne(
+        {
+          where: args.where,
+          type,
+        },
+        context,
+        info
+      );
 
       const nestedObjects = await this.visitNestedModels({
         type,
         data: rootObject,
         info,
+        context,
         modelFunction: (localType: any, value: any, infoParam: any = {}) =>
           this.findOneQueryResolver(localType)(
             root,
@@ -570,11 +659,20 @@ export class ModelDirective extends SchemaDirectiveVisitor {
           type: this.schema.getType(names.input.type),
         } as any,
       ],
-      resolve: (root, args: RemoveResolverArgs, context: ResolverContext) => {
-        return context.directives.model.store.remove({
-          where: args.where,
-          type,
-        });
+      resolve: (
+        root,
+        args: RemoveResolverArgs,
+        context: ResolverContext,
+        info: any
+      ) => {
+        return context.directives.model.store.remove(
+          {
+            where: args.where,
+            type,
+          },
+          context,
+          info
+        );
       },
       isDeprecated: false,
     });

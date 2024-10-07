@@ -7,8 +7,22 @@ const typeDefinitions = /* GraphQL */ `
   scalar File
   directive @model on OBJECT
   directive @file(maxSize: Float!, types: [String!]!) on FIELD_DEFINITION
+  directive @auth(
+    create: [String]
+    read: [String]
+    update: [String]
+    delete: [String]
+  ) on OBJECT | FIELD_DEFINITION
+  directive @connection(type: String) on FIELD_DEFINITION
 
-  type Author @model {
+  type Author
+    @model
+    @auth(
+      create: ["public"]
+      read: ["owner"]
+      update: ["owner"]
+      delete: ["owner"]
+    ) {
     name: String!
     books: [Book]
     """
@@ -21,6 +35,30 @@ const typeDefinitions = /* GraphQL */ `
     avatar: String @file(maxSize: 1000000, types: ["image/jpeg", "image/png"])
     name: String!
     authors: [Author]
+  }
+
+  type Chat
+    @model
+    @auth(
+      create: ["public"]
+      read: ["owner", "collaborator"]
+      update: ["owner"]
+      delete: ["owner"]
+    ) {
+    name: String!
+    messages: [Message] @connection(type: "search")
+  }
+
+  type Message
+    @model
+    @auth(
+      create: ["owner|chats:chat", "collaborator|chats:chat"]
+      read: ["owner|chats:chat", "collaborator|chats:chat"]
+      update: [""]
+      delete: [""]
+    ) {
+    text: String!
+    chat: Chat
   }
 
   type Profile @model {

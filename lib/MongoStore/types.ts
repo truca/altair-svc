@@ -1,4 +1,6 @@
 import { GraphQLNamedType } from "graphql";
+import { Context } from "../types";
+
 export interface StoreFindProps {
   where: object;
   type: GraphQLNamedType;
@@ -22,10 +24,10 @@ export interface StoreCreateProps {
   data: object;
   type: GraphQLNamedType;
 }
-export interface StoreCreateReturn {
+export type StoreCreateReturn = {
   id: string;
   [key: string]: any;
-}
+} | null;
 export interface StoreUpdateProps {
   data: object;
   type: GraphQLNamedType;
@@ -40,10 +42,28 @@ export interface StoreRemoveProps {
 export declare type StoreRemoveReturn = boolean;
 export interface Store {
   find(
-    props: StoreFindProps
-  ): Promise<{ list: [StoreFindReturn]; maxPages: number | null }>;
-  findOne(props: StoreFindOneProps): Promise<StoreFindOneReturn>;
-  create(props: StoreCreateProps): Promise<StoreCreateReturn>;
-  update(props: StoreUpdateProps): Promise<StoreUpdateReturn>;
-  remove(props: StoreRemoveProps): Promise<StoreRemoveReturn>;
+    props: StoreFindProps,
+    context: Context,
+    info: any
+  ): Promise<{ list: StoreFindReturn[]; maxPages: number | null }>;
+  findOne(
+    props: StoreFindOneProps,
+    context: Context,
+    info: any
+  ): Promise<StoreFindOneReturn | null>;
+  create(
+    props: StoreCreateProps,
+    context: Context,
+    info: any
+  ): Promise<StoreCreateReturn>;
+  update(
+    props: StoreUpdateProps,
+    context: Context,
+    info: any
+  ): Promise<StoreUpdateReturn>;
+  remove(
+    props: StoreRemoveProps,
+    context: Context,
+    info: any
+  ): Promise<StoreRemoveReturn>;
 }

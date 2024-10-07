@@ -53,6 +53,7 @@ export interface Field {
 }
 
 export interface Profile {
+  id: string;
   uid: string;
   displayName: string;
   email: string;
@@ -60,6 +61,7 @@ export interface Profile {
   phoneNumber: string;
   emailVerified: boolean;
   isAnonymous: boolean;
+  roles?: string[];
 }
 
 export type FormTypes = Record<string, string>;
@@ -70,4 +72,12 @@ export interface CookieStore {
   get: (key: string) => string;
   set: (key: string, value: string, options: any) => void;
   remove: (key: string) => void;
+}
+
+export interface Context {
+  req: any;
+  res: any;
+  directives: any;
+  session: Profile;
+  cookieStore: CookieStore;
 }

@@ -43,12 +43,15 @@ export const hasDirective = (directive, type) => {
 
 export const cleanNestedObjects = (nestedObjects) => {
   const result = {};
-  Object.keys(nestedObjects).forEach((key) => {
+  Object.keys(nestedObjects ?? {}).forEach((key) => {
     if (nestedObjects[key] === null) {
       result[key] = [];
     }
     if (Array.isArray(nestedObjects[key])) {
       result[key] = nestedObjects[key].filter((v) => v);
+    }
+    if (typeof nestedObjects[key] === "object") {
+      result[key] = nestedObjects[key];
     }
   });
 

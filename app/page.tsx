@@ -1,7 +1,80 @@
 import { Layout } from "@/stories/Layout";
 
+import { ReactNode } from "react";
+import { Box, Flex, IconButton } from "@chakra-ui/react";
+
+interface DashboardLayoutProps {
+  children: ReactNode;
+}
+
+const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
+  // const { isOpen, onOpen, onClose } = useDisclosure();
+  // const [isMobile, setIsMobile] = useState(false); // Optional state if you'd like to detect mobile explicitly
+  const isOpen = true;
+  const onOpen = () => {};
+  const onClose = () => {};
+
+  return (
+    <Flex direction="column" className="h-screen w-full">
+      {/* Header */}
+      <Flex
+        as="header"
+        alignItems="center"
+        justifyContent="space-between"
+        bg="blue.500" /* Chakra for color */
+        className="p-4 shadow-md"
+      >
+        <Box className="text-white text-lg font-bold">My Header</Box>
+        {/* Hamburger for Mobile */}
+        <IconButton
+          display={{ base: "block", md: "none" }}
+          icon={isOpen ? <span>close</span> : <span>open</span>}
+          // onClick={isOpen ? onClose : onOpen}
+          variant="ghost"
+          aria-label="Toggle Navigation"
+          color="white"
+        />
+      </Flex>
+
+      <Flex className="h-full">
+        {/* Sidebar */}
+        <Box
+          as="nav"
+          display={{ base: isOpen ? "block" : "none", md: "block" }}
+          bg="blue.500" /* Same color as header */
+          className="w-64 p-4 text-white h-full"
+          position={{ base: "fixed", md: "relative" }}
+          left={0}
+          zIndex={10}
+        >
+          <Box className="mb-4 font-bold">Sidebar</Box>
+          <Box>Link 1</Box>
+          <Box>Link 2</Box>
+          <Box>Link 3</Box>
+        </Box>
+
+        {/* Content */}
+        <Box
+          as="main"
+          className="flex-1 p-4 bg-gray-100 flex items-center justify-center"
+        >
+          <Box
+            bg="white"
+            p={6}
+            boxShadow="md"
+            rounded="md"
+            className="w-full max-w-3xl"
+          >
+            {children}
+          </Box>
+        </Box>
+      </Flex>
+    </Flex>
+  );
+};
+
 export default function Home() {
-  const news = true;
+  const news = false;
   if (news) {
     return (
       <Layout
@@ -120,4 +193,6 @@ export default function Home() {
       />
     );
   }
+
+  return <DashboardLayout>Dashboard Content</DashboardLayout>;
 }

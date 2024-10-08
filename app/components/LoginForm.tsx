@@ -36,7 +36,7 @@ export const useHandleAuthStateChange = ({
     });
 
     return () => unsubscribe();
-  }, [auth, onLogin, onLogout]);
+  }, []);
 };
 
 const FacebookLoginButton = ({

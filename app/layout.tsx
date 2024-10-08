@@ -64,9 +64,9 @@ export default async function RootLayout({ children }: RootLayoutProps) {
     <html lang="en">
       <body className={inter.className}>
         <ThemeProvider>
-          <AuthProvider>
-            <ApolloWrapper>{children}</ApolloWrapper>
-          </AuthProvider>
+          <ApolloWrapper>
+            <AuthProvider>{children}</AuthProvider>
+          </ApolloWrapper>
         </ThemeProvider>
       </body>
     </html>

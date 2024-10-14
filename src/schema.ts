@@ -71,6 +71,7 @@ const typeDefinitions = /* GraphQL */ `
     isAnonymous: Boolean
     lastSignInTime: String
     creationTime: String
+    roles: [String]
   }
 
   enum FieldType {

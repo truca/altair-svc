@@ -44,7 +44,10 @@ export class MongoStore implements Store {
     context: Context,
     info: any
   ): Promise<StoreFindOneReturn | null> {
-    const directiveParams = extractDirectiveParams(props.type.astNode, "auth");
+    const directiveParams = extractDirectiveParams(
+      props.type.astNode as any,
+      "auth"
+    );
     const hasNecessaryRolePermissionsToContinue =
       getHasNecessaryRolePermissionsToContinue(
         directiveParams,
@@ -66,7 +69,10 @@ export class MongoStore implements Store {
     context: Context,
     info: any
   ): Promise<{ list: StoreFindReturn[]; maxPages: number | null }> {
-    const directiveParams = extractDirectiveParams(props.type.astNode, "auth");
+    const directiveParams = extractDirectiveParams(
+      props.type.astNode as any,
+      "auth"
+    );
     const hasNecessaryRolePermissionsToContinue =
       getHasNecessaryRolePermissionsToContinue(
         directiveParams,
@@ -123,7 +129,10 @@ export class MongoStore implements Store {
     context: Context,
     info: any
   ): Promise<StoreCreateReturn> {
-    const directiveParams = extractDirectiveParams(props.type.astNode, "auth");
+    const directiveParams = extractDirectiveParams(
+      props.type.astNode as any,
+      "auth"
+    );
     const hasNecessaryRolePermissionsToContinue =
       getHasNecessaryRolePermissionsToContinue(
         directiveParams,
@@ -151,7 +160,10 @@ export class MongoStore implements Store {
     context: Context,
     info: any
   ): Promise<StoreUpdateReturn> {
-    const directiveParams = extractDirectiveParams(props.type.astNode, "auth");
+    const directiveParams = extractDirectiveParams(
+      props.type.astNode as any,
+      "auth"
+    );
     const hasNecessaryRolePermissionsToContinue =
       getHasNecessaryRolePermissionsToContinue(
         directiveParams,
@@ -178,7 +190,10 @@ export class MongoStore implements Store {
     context: Context,
     info: any
   ): Promise<StoreRemoveReturn> {
-    const directiveParams = extractDirectiveParams(props.type.astNode, "auth");
+    const directiveParams = extractDirectiveParams(
+      props.type.astNode as any,
+      "auth"
+    );
     const hasNecessaryRolePermissionsToContinue =
       getHasNecessaryRolePermissionsToContinue(
         directiveParams,

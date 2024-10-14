@@ -6,7 +6,6 @@ import { context } from "./context";
 import { config } from "dotenv";
 import { generateTokens, setTokensAsCookies, verifyToken } from "../lib/utils";
 import { CookieStore } from "../lib/types";
-import { error } from "node:console";
 config();
 
 const cookie = require("cookie");

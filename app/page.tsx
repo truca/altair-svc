@@ -39,17 +39,16 @@ function LinkSidebar() {
   return (
     <Box
       as="nav"
-      display={{ base: "block", md: "block" }}
       bg="blue.500" /* Same color as header */
-      className="w-64 p-4 text-white h-full"
+      className="w-64 p-4 text-white h-full flex flex-col gap-1"
       position={{ base: "fixed", md: "relative" }}
       left={0}
       zIndex={10}
     >
       <Box className="mb-4 font-bold">Sidebar</Box>
-      <Box>Link 1</Box>
-      <Box>Link 2</Box>
-      <Box>Link 3</Box>
+      <Box className="cursor-pointer">Link 1</Box>
+      <Box className="cursor-pointer">Link 2</Box>
+      <Box className="cursor-pointer">Link 3</Box>
     </Box>
   );
 }
@@ -119,6 +118,19 @@ function Content() {
             }
           >
             Change Slot
+          </Button>
+
+          {/* Change Slot to Sidebar */}
+          <Button
+            onClick={() =>
+              dispatch({
+                type: "changeSlot",
+                slot: "sidebar",
+                section: "LinkSidebar",
+              })
+            }
+          >
+            Change Slot Sidebar
           </Button>
         </VStack>
       </Box>

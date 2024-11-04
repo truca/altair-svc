@@ -120,6 +120,7 @@ export function Form({
   submitText,
   ...extraProps
 }: FormProps) {
+  console.log({ fields });
   const { validationValues, validationMessages } =
     getValidationsFromFields(fields);
   const resolver = useYupValidationResolver(

@@ -15,12 +15,7 @@ async function fetchUser(cookieStore: ReadonlyRequestCookies) {
   const token = cookieStore.get("token")?.value;
 
   if (!token) {
-    return {
-      redirect: {
-        destination: "/login",
-        permanent: false,
-      },
-    };
+    return { props: { user: {} } };
   }
 
   try {

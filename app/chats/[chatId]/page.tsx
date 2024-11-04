@@ -10,16 +10,16 @@ import {
 const initialState: PageState = {
   page: "",
   slots: {
-    sidebar: "LinkSidebar",
+    sidebar: "ChatList",
     logo: "Logo",
     user: "User",
-    content: "Content",
+    content: "ChatHistory",
   },
   modals: [],
   sidebars: [],
 };
 
-export default function Home() {
+export default function Chats() {
   const state = usePageContextReducer(initialState);
 
   return (

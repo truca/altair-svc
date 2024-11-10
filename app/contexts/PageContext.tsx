@@ -13,17 +13,27 @@ export interface IModal {
   ctx: any;
 }
 
+export interface IPage {
+  type: string;
+  ctx?: any;
+}
+
+export interface ISlot {
+  type: string;
+  ctx?: any;
+}
+
 export interface PageState {
-  page: string;
-  slots: { [key: string]: string };
+  page: IPage;
+  slots: { [key: string]: ISlot };
   // these are arrays of sections
   modals: IModal[];
   sidebars: ISidebar[];
 }
 
 type Action =
-  | { type: "setPage"; page: string; slots: { [key: string]: string } }
-  | { type: "changeSlot"; slot: string; section: string }
+  | { type: "setPage"; page: IPage; slots: { [key: string]: ISlot } }
+  | { type: "changeSlot"; slot: string; section: ISlot }
   | { type: "showToast"; description: string; status: string }
   | { type: "showSidebar"; section: string; ctx?: any }
   | { type: "hideSidebar"; section: string }
@@ -85,12 +95,12 @@ function pageReducer(state: PageState, action: Action): PageState {
 }
 
 const initialState: PageState = {
-  page: "",
+  page: { type: "" },
   slots: {
-    sidebar: "ChatList",
-    logo: "Logo",
-    user: "User",
-    content: "Content",
+    sidebar: { type: "ChatList" },
+    logo: { type: "Logo" },
+    user: { type: "User" },
+    content: { type: "Content" },
   },
   modals: [],
   sidebars: [],

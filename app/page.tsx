@@ -8,12 +8,12 @@ import {
 } from "@/app/contexts/PageContext";
 
 const initialState: PageState = {
-  page: "",
+  page: { type: "" },
   slots: {
-    sidebar: "LinkSidebar",
-    logo: "Logo",
-    user: "User",
-    content: "Content",
+    sidebar: { type: "LinkSidebar" },
+    logo: { type: "Logo" },
+    user: { type: "User" },
+    content: { type: "Content" },
   },
   modals: [],
   sidebars: [],

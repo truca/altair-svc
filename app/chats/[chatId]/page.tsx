@@ -8,12 +8,12 @@ import {
 } from "@/app/contexts/PageContext";
 
 const initialState: PageState = {
-  page: "",
+  page: { type: "" },
   slots: {
-    sidebar: "ChatList",
-    logo: "Logo",
-    user: "User",
-    content: "ChatHistory",
+    sidebar: { type: "ChatList" },
+    logo: { type: "Logo" },
+    user: { type: "User" },
+    content: { type: "ChatHistory" },
   },
   modals: [],
   sidebars: [],

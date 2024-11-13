@@ -75,7 +75,6 @@ const useYupValidationResolver = (
   return useCallback(
     async (data: Record<string, string>) => {
       try {
-        console.log({ data });
         const values = await validationSchema.validate(data, {
           abortEarly: false,
         });

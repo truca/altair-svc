@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
-import StoreProvider from "./contexts/StoreProvider";
 import AuthProvider from "./contexts/AuthProvider";
 import ThemeProvider from "./contexts/ThemeProvider";
 import { ApolloWrapper } from "../lib/apollo/apollo-wrapper";
@@ -11,11 +10,20 @@ import { ReadonlyRequestCookies } from "next/dist/server/web/spec-extension/adap
 import { redirect } from "next/navigation";
 import { headers } from "next/headers";
 
-async function fetchUser(cookieStore: ReadonlyRequestCookies) {
+async function fetchUser(
+  cookieStore: ReadonlyRequestCookies,
+  pathname: string
+) {
   const token = cookieStore.get("token")?.value;
 
   if (!token) {
-    return { props: { user: {} } };
+    return {
+      redirect: {
+        destination:
+          pathname !== "/login" ? `/login?redirect=${pathname}` : "/login",
+        permanent: false,
+      },
+    };
   }
 
   try {
@@ -43,13 +51,16 @@ interface RootLayoutProps {
   // user: any | null; // You can define a better User type
 }
 
-export default async function RootLayout({ children }: RootLayoutProps) {
+export default async function RootLayout(props: RootLayoutProps) {
+  const { children } = props;
   const cookieStore = cookies();
-  const currentUrl = headers().get("referer");
-  const { props, redirect: { destination } = {} } =
-    await fetchUser(cookieStore);
-
-  console.log({ props, destination, currentUrl });
+  const headersList = headers();
+  const currentUrl = headersList.get("referer");
+  const pathname = headersList.get("x-next-pathname") || "/";
+  const { redirect: { destination } = {} } = await fetchUser(
+    cookieStore,
+    pathname
+  );
 
   if (currentUrl && destination && !currentUrl.includes(destination)) {
     redirect(destination);

@@ -22,17 +22,17 @@ import {
 import { FaCheckDouble, FaPlus, FaPaperPlane } from "react-icons/fa";
 import { useParams, useRouter } from "next/navigation";
 
-import { PageContext, usePageContext } from "@/app/contexts/PageContext";
+import { ISlot, PageContext, usePageContext } from "@/app/contexts/PageContext";
 import cn from "classnames";
 import { Form, FormProps } from "@/stories/Form";
 import Sidebar from "@/stories/Sidebar";
 import { Direction, FieldType } from "@/stories/Form/types";
 
 interface DashboardLayoutProps {
-  sidebar: string;
-  logo: string;
-  user: string;
-  content: string;
+  sidebar: ISlot;
+  logo: ISlot;
+  user: ISlot;
+  content: ISlot;
 }
 
 export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
@@ -52,18 +52,18 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
         className="p-4 shadow-md"
       >
         {/* Logo */}
-        {SectionsHash[logo]?.({})}
+        {SectionsHash[logo.type]?.({})}
 
         {/* User */}
-        {SectionsHash[user]?.({})}
+        {SectionsHash[user.type]?.({})}
       </Flex>
 
       <Flex height="calc(100vh - 60px)">
         {/* Sidebar */}
-        {SectionsHash[sidebar]?.({})}
+        {SectionsHash[sidebar.type]?.({})}
 
         {/* Content */}
-        {SectionsHash[content]?.({})}
+        {SectionsHash[content.type]?.({})}
       </Flex>
     </Flex>
   );
@@ -232,7 +232,6 @@ function ChatList() {
   const router = useRouter();
   const params = useParams();
   const selectedChatId = params.chatId;
-  console.log({ selectedChatId });
 
   const handleChatClick = (id: string) => {
     router.push(`/chats/${id}`); // Update URL with selected chat ID
@@ -1029,8 +1028,6 @@ function MessageInput() {
 
   const handleSendMessage = () => {
     if (message.trim()) {
-      // Handle sending message logic
-      console.log("Sending message:", message);
       setMessage("");
     }
   };

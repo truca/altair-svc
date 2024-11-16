@@ -2,6 +2,7 @@
 
 import { useReducer, createContext, useContext } from "react";
 import { useToast } from "@chakra-ui/react";
+import { useRouter } from "next/router";
 
 export interface ISidebar {
   type: string;
@@ -23,15 +24,16 @@ export interface ISlot {
   ctx?: any;
 }
 
-export interface PageState {
+export interface PageState<SlotsKeys extends string> {
   page: IPage;
-  slots: { [key: string]: ISlot };
+  slots: { [key in SlotsKeys]: ISlot };
   // these are arrays of sections
   modals: IModal[];
   sidebars: ISidebar[];
 }
 
 type Action =
+  | { type: "redirect"; path: string }
   | { type: "setPage"; page: IPage; slots: { [key: string]: ISlot } }
   | { type: "changeSlot"; slot: string; section: ISlot }
   | { type: "showToast"; description: string; status: string }
@@ -40,13 +42,16 @@ type Action =
   | { type: "showModal"; section: string; ctx?: any }
   | { type: "hideModal"; section: string };
 
-function pageReducer(state: PageState, action: Action): PageState {
+function pageReducer<SlotsKeys extends string>(
+  state: PageState<SlotsKeys>,
+  action: Action
+): PageState<SlotsKeys> {
   console.log({ state, action });
   switch (action.type) {
     case "setPage":
       return {
-        page: action.page,
-        slots: action.slots,
+        page: { ...state.page, ...action.page },
+        slots: { ...state.slots, ...action.slots },
         modals: [],
         sidebars: [],
       };
@@ -94,7 +99,7 @@ function pageReducer(state: PageState, action: Action): PageState {
   }
 }
 
-const initialState: PageState = {
+const initialState: PageState<"sidebar" | "logo" | "user" | "content"> = {
   page: { type: "" },
   slots: {
     sidebar: { type: "ChatList" },
@@ -106,9 +111,10 @@ const initialState: PageState = {
   sidebars: [],
 };
 
-export function usePageContextReducer(
-  init: PageState
-): PageState & { dispatch: any } {
+export function usePageContextReducer<SlotsKeys extends string>(
+  init: PageState<SlotsKeys>
+): PageState<SlotsKeys> & { dispatch: any } {
+  const router = useRouter();
   const showToast = useToast();
   const [state, reduxDispatch] = useReducer(pageReducer, init);
 
@@ -117,15 +123,21 @@ export function usePageContextReducer(
       showToast(action as any);
       return;
     }
+    if (action.type === "redirect") {
+      router.push(action.path);
+      return;
+    }
     reduxDispatch(action);
   };
   return { ...(state as any), dispatch };
 }
 
-export const PageContext = createContext<PageState & { dispatch: any }>({
-  ...initialState,
-  dispatch: () => {},
-});
+export const PageContext = createContext<PageState<string> & { dispatch: any }>(
+  {
+    ...initialState,
+    dispatch: () => {},
+  }
+);
 
 export function usePageContext() {
   return useContext(PageContext);

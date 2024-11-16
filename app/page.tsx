@@ -7,7 +7,7 @@ import {
   usePageContextReducer,
 } from "@/app/contexts/PageContext";
 
-const initialState: PageState = {
+const initialState: PageState<"sidebar" | "logo" | "user" | "content"> = {
   page: { type: "" },
   slots: {
     sidebar: { type: "LinkSidebar" },
@@ -24,7 +24,7 @@ export default function Home() {
 
   return (
     <PageContext.Provider value={state}>
-      <DashboardLayout {...(state.slots as any)} />
+      <DashboardLayout page={state.page} {...(state.slots as any)} />
       <ModalsAndSidebars />
     </PageContext.Provider>
   );

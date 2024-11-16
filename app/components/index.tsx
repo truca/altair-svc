@@ -22,13 +22,22 @@ import {
 import { FaCheckDouble, FaPlus, FaPaperPlane } from "react-icons/fa";
 import { useParams, useRouter } from "next/navigation";
 
-import { ISlot, PageContext, usePageContext } from "@/app/contexts/PageContext";
+import {
+  IPage,
+  ISlot,
+  PageContext,
+  usePageContext,
+} from "@/app/contexts/PageContext";
 import cn from "classnames";
 import { Form, FormProps } from "@/stories/Form";
 import Sidebar from "@/stories/Sidebar";
 import { Direction, FieldType } from "@/stories/Form/types";
 
-interface DashboardLayoutProps {
+interface CommonPageProps {
+  page: IPage;
+}
+
+interface DashboardLayoutProps extends CommonPageProps {
   sidebar: ISlot;
   logo: ISlot;
   user: ISlot;
@@ -36,6 +45,7 @@ interface DashboardLayoutProps {
 }
 
 export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
+  page,
   logo,
   user,
   sidebar,
@@ -52,18 +62,18 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
         className="p-4 shadow-md"
       >
         {/* Logo */}
-        {SectionsHash[logo.type]?.({})}
+        {SectionsHash[logo.type]?.({ ...page.ctx, ...logo.ctx })}
 
         {/* User */}
-        {SectionsHash[user.type]?.({})}
+        {SectionsHash[user.type]?.({ ...page.ctx, ...user.ctx })}
       </Flex>
 
       <Flex height="calc(100vh - 60px)">
         {/* Sidebar */}
-        {SectionsHash[sidebar.type]?.({})}
+        {SectionsHash[sidebar.type]?.({ ...page.ctx, ...sidebar.ctx })}
 
         {/* Content */}
-        {SectionsHash[content.type]?.({})}
+        {SectionsHash[content.type]?.({ ...page.ctx, ...content.ctx })}
       </Flex>
     </Flex>
   );

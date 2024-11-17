@@ -10,7 +10,7 @@ import {
 const initialState: PageState<"sidebar" | "logo" | "user" | "content"> = {
   page: { type: "" },
   slots: {
-    sidebar: { type: "LinkSidebar" },
+    sidebar: { type: "SmartList", ctx: { entityType: "book" } },
     logo: { type: "Logo" },
     user: { type: "User" },
     content: { type: "Content" },

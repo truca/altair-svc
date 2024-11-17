@@ -32,6 +32,7 @@ import cn from "classnames";
 import { Form, FormProps } from "@/stories/Form";
 import Sidebar from "@/stories/Sidebar";
 import { Direction, FieldType } from "@/stories/Form/types";
+import SmartListWrapper from "@/stories/SmartList";
 
 interface CommonPageProps {
   page: IPage;
@@ -1115,4 +1116,5 @@ export const SectionsHash: {
   ChatList,
   ChatHistory,
   Form,
+  SmartList: SmartListWrapper,
 };

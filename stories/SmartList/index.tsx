@@ -36,6 +36,7 @@ import SmartItemRenderer from "../SmartItemRenderer";
 export enum ControlType {
   PageSize,
   Page,
+  Create,
 }
 
 export enum SubFormType {
@@ -53,6 +54,8 @@ export interface SmartListProps {
   initialPage?: number;
   initialPageSize?: number;
   subFormType?: SubFormType;
+
+  itemComponent?: string;
 }
 
 function SmartList({
@@ -62,8 +65,9 @@ function SmartList({
   fieldNames,
   initialPage = 1,
   initialPageSize = 5,
-  controls = [ControlType.Page, ControlType.PageSize],
+  controls = [ControlType.Create, ControlType.Page, ControlType.PageSize],
   subFormType = SubFormType.Sidebar,
+  itemComponent,
 }: SmartListProps) {
   const toast = useToast();
   const [page, setPage] = useState(initialPage);
@@ -105,19 +109,22 @@ function SmartList({
   const isSecondLastOrLastPage = page >= maxPages - 1;
 
   const hasControls = Boolean(controls.length);
+  const hasCreateControl = controls.includes(ControlType.Create);
   const hasPageControl = controls.includes(ControlType.Page);
   const hasPageSizeControl = controls.includes(ControlType.PageSize);
   return (
     <VStack>
-      <Button
-        alignSelf="flex-end"
-        onClick={() => {
-          onItemFormOpen();
-          setSubFormDocumentId(undefined);
-        }}
-      >
-        Create
-      </Button>
+      {hasCreateControl && (
+        <Button
+          alignSelf="flex-end"
+          onClick={() => {
+            onItemFormOpen();
+            setSubFormDocumentId(undefined);
+          }}
+        >
+          Create
+        </Button>
+      )}
       <SmartSideForm
         entityType={pluralType}
         id={subFormDocumentId}

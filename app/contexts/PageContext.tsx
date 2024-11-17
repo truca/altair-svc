@@ -114,7 +114,7 @@ const initialState: PageState<"sidebar" | "logo" | "user" | "content"> = {
 export function usePageContextReducer<SlotsKeys extends string>(
   init: PageState<SlotsKeys>
 ): PageState<SlotsKeys> & { dispatch: any } {
-  const router = useRouter();
+  //   const router = useRouter();
   const showToast = useToast();
   const [state, reduxDispatch] = useReducer(pageReducer, init);
 
@@ -124,7 +124,7 @@ export function usePageContextReducer<SlotsKeys extends string>(
       return;
     }
     if (action.type === "redirect") {
-      router.push(action.path);
+      //   router.push(action.path);
       return;
     }
     reduxDispatch(action);

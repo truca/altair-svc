@@ -104,6 +104,7 @@ export function getHasNecessaryRolePermissionsToContinue(
 ) {
   const hasPublicPermission = getHasPublicPermissionsInConfig(config, action);
   if (hasPublicPermission) return true;
+  if (!hasPublicPermission && !profile) return false;
 
   const hasOnlyRolePermissions = getHasOnlyRolePermissionsInConfig(
     config,
@@ -199,6 +200,9 @@ export function getMongoFilterForOwnerOrCollaborator({
   const hasCollaboratorPermissionInConfig =
     getHasCollaboratorPermissionInConfig({ config, action });
 
+  // TODO: Less restrictions if the user is not logged in? This seems wrong.
+  if (!profile?.uid) return {};
+
   if (hasOwnerPermissionInConfig && hasCollaboratorPermissionInConfig) {
     return {
       $or: [{ ownerIds: profile.uid }, { collaboratorIds: profile.uid }],
@@ -213,6 +217,7 @@ export function getMongoFilterForOwnerOrCollaborator({
     return { collaboratorIds: profile.uid };
   }
 
+  // TODO: Less restrictions if the user is not logged in? This seems wrong.
   return {};
 }
 

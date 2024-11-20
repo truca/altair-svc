@@ -41,6 +41,36 @@ export const hasDirective = (directive, type) => {
   return false;
 };
 
+export const getDirectiveParams = (directiveName, type) => {
+  const directive = hasDirective(directiveName, type);
+  if (!directive) return {};
+
+  return directive.arguments.reduce((acc, arg) => {
+    // handle array case
+    if (arg.value.kind === "ListValue") {
+      acc[arg.name.value] = arg.value.values.map((v) => v.value);
+      return acc;
+    }
+
+    acc[arg.name.value] = arg.value.value;
+    return acc;
+  }, {});
+};
+
+export const getAllKafkaTopicsFromSchema = (
+  schema: GraphQLSchema
+): string[] => {
+  const types = schema.getTypeMap();
+  return Object.keys(types).reduce((acc, key) => {
+    const type = types[key];
+    const { topic } = getDirectiveParams("subscribe", type);
+    if (topic) {
+      acc.push(topic);
+    }
+    return acc;
+  }, []);
+};
+
 export const cleanNestedObjects = (nestedObjects) => {
   const result = {};
   Object.keys(nestedObjects ?? {}).forEach((key) => {

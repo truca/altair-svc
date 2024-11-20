@@ -1,13 +1,16 @@
-import { createSchema } from "graphql-yoga";
 import { makeExecutableSchema } from "@graphql-tools/schema";
-import { ModelDirective } from "./ModelDirective";
-import { MongoStore } from "./MongoStore";
+import { ModelDirective } from "../ModelDirective";
+import { MongoStore } from "../MongoStore";
+import { CookieStore, FormsHash, Profile } from "../types";
+
 import { GraphQLID } from "graphql";
-import { FORMS } from "../src/forms";
 import _ from "lodash";
-import { CookieStore, FormsHash, Profile } from "./types";
+import { createPubSub } from "graphql-yoga";
+
+const pubSub = createPubSub();
+
 import { config } from "dotenv";
-import { parse } from "node:path";
+import { consumeMessages } from "./kafka";
 config();
 
 const jwt = require("jsonwebtoken");
@@ -18,6 +21,12 @@ const path = require(`path`);
 export interface VerifyTokenResult {
   decoded?: object | string;
   error?: string;
+}
+
+interface Message {
+  id: string;
+  chatId: string;
+  text: string;
 }
 
 // Secure token verification method
@@ -79,9 +88,9 @@ export function setTokensAsCookies(
       10
     );
     cookieStore.set("refreshToken", tokens.refreshToken, {
-      httpOnly: true,
-      secure: true,
-      sameSite: "none",
+      // httpOnly: true,
+      // secure: true,
+      // sameSite: "none",
       maxAge: refreshMaxAge,
     });
   }
@@ -91,22 +100,22 @@ export function setTokensAsCookies(
     10
   );
   cookieStore.set("accessToken", tokens.accessToken, {
-    httpOnly: true,
-    secure: true,
-    sameSite: "none",
+    // httpOnly: true,
+    // secure: true,
+    // sameSite: "none",
     maxAge,
   });
 }
 
 export function makeContext({ context: contextArg }: any) {
+  const store = new MongoStore({
+    connection: `${process.env.DB_URI}/${process.env.DATABASE}`,
+  });
+
   const context = {
     ...contextArg,
     directives: {
-      model: {
-        store: new MongoStore({
-          connection: `${process.env.DB_URI}/${process.env.DATABASE}`,
-        }),
-      },
+      model: { store },
       file: {
         maxSize: 1000000,
         types: ["image/jpeg", "image/png"],
@@ -130,6 +139,7 @@ export function makeSchema({
   forms?: FormsHash;
   queries?: { [key: string]: () => {} };
   mutations?: { [key: string]: () => {} };
+  subscriptions?: { [key: string]: () => {} };
 }) {
   const resolvers = {
     ID: GraphQLID,
@@ -195,6 +205,34 @@ export function makeSchema({
         return tokens.accessToken;
       },
       ...mutations,
+    },
+    Subscription: {
+      messageAdded: {
+        subscribe: async function* (
+          _: any,
+          { chatId }: { chatId: string }
+        ): AsyncIterable<Message> {
+          const asyncIterator = {
+            async next(): Promise<IteratorResult<Record<string, any>>> {
+              return new Promise((resolve) => {
+                consumeMessages("messageAdded", (message) => {
+                  if (message.chatId === chatId) {
+                    resolve({ value: message, done: false });
+                  }
+                });
+              });
+            },
+            async return(): Promise<IteratorResult<Message>> {
+              return { value: undefined as any, done: true };
+            },
+            async throw(error: any): Promise<IteratorResult<Message>> {
+              throw error;
+            },
+          };
+
+          return asyncIterator;
+        },
+      },
     },
   };
 

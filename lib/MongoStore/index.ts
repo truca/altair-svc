@@ -37,6 +37,9 @@ export class MongoStore implements Store {
 
   private async connect(connection: string) {
     this.db = await mongoose.connect(connection);
+    if (!this.db) {
+      throw new Error("Could not connect to the database");
+    }
   }
 
   public async findOne(
@@ -151,7 +154,7 @@ export class MongoStore implements Store {
     const res = await model.create({
       ...props.data,
       createdAt: new Date(),
-      ownerIds: [context?.session.uid],
+      ownerIds: [context?.session?.uid],
     });
     return this.formatOutput(res);
   }

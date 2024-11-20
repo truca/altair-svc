@@ -14,7 +14,12 @@ import { SchemaDirectiveVisitor } from "@graphql-tools/utils";
 import _, { isArray, isPlainObject, merge, mergeWith, pickBy } from "lodash";
 import * as pluralize from "pluralize";
 import { generateFieldNames } from "./generateFieldNames";
-import { cleanNestedObjects, getInputType, hasDirective } from "./util";
+import {
+  cleanNestedObjects,
+  getDirectiveParams,
+  getInputType,
+  hasDirective,
+} from "./util";
 import { validateInputData } from "./validateInputData";
 import { addInputTypesForObjectType } from "./addInputTypesForObjectType";
 import { Store } from "./Store";
@@ -25,6 +30,7 @@ import {
   getEntityTypeFromField,
   getFieldType,
 } from "../GraphQL/utils";
+import { publishMessage } from "../utils/kafka";
 
 export interface ResolverContext {
   directives: {
@@ -136,7 +142,7 @@ export class ModelDirective extends SchemaDirectiveVisitor {
       const value = data[key];
       const field = getNamedType(type.getFields()[key]) as any;
 
-      let fieldType = getNamedType(field.type);
+      let fieldType = getNamedType(field?.type);
 
       if (isPlainObject(value) && hasDirective("model", fieldType)) {
         const info = selectedFieldsHash[key];
@@ -188,6 +194,8 @@ export class ModelDirective extends SchemaDirectiveVisitor {
   }
 
   private pluckModelObjectIds(data) {
+    if (!data) return {};
+
     return Object.keys(data).reduce((res, key) => {
       if (key === "id") {
         return {
@@ -409,6 +417,19 @@ export class ModelDirective extends SchemaDirectiveVisitor {
         context,
         info
       );
+
+      // publish if the model is subscribable
+      // @subscribe(on: "create", topic: "messageAdded")
+      const isSubscribable = hasDirective("subscribe", type);
+      if (isSubscribable) {
+        const params = getDirectiveParams("subscribe", type);
+        if (params) {
+          const { on = [], topic } = params;
+          if (on.includes("create")) {
+            publishMessage(topic, rootObject);
+          }
+        }
+      }
 
       const mergedObjects = {
         ...rootObject,

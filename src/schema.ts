@@ -14,65 +14,7 @@ const typeDefinitions = /* GraphQL */ `
     delete: [String]
   ) on OBJECT | FIELD_DEFINITION
   directive @connection(type: String) on FIELD_DEFINITION
-
-  type Author
-    @model
-    @auth(
-      create: ["public"]
-      read: ["owner"]
-      update: ["owner"]
-      delete: ["owner"]
-    ) {
-    name: String!
-    books: [Book]
-    """
-    The author's favorite book.
-    """
-    favoriteBook: Book
-  }
-
-  type Book @model {
-    avatar: String @file(maxSize: 1000000, types: ["image/jpeg", "image/png"])
-    name: String!
-    authors: [Author]
-  }
-
-  type Chat
-    @model
-    @auth(
-      create: ["public"]
-      read: ["owner", "collaborator"]
-      update: ["owner"]
-      delete: ["owner"]
-    ) {
-    name: String!
-    messages: [Message] @connection(type: "search")
-  }
-
-  type Message
-    @model
-    @auth(
-      create: ["owner|chats:chat", "collaborator|chats:chat"]
-      read: ["owner|chats:chat", "collaborator|chats:chat"]
-      update: [""]
-      delete: [""]
-    ) {
-    text: String!
-    chat: Chat
-  }
-
-  type Profile @model {
-    uid: String
-    displayName: String!
-    email: String!
-    photoURL: String
-    phoneNumber: String
-    emailVerified: Boolean
-    isAnonymous: Boolean
-    lastSignInTime: String
-    creationTime: String
-    roles: [String]
-  }
+  directive @subscribe(on: [String], topic: String) on OBJECT
 
   enum FieldType {
     TEXT
@@ -136,6 +78,67 @@ const typeDefinitions = /* GraphQL */ `
     AUTHOR
     BOOK
     PROFILE
+    CHAT
+  }
+
+  type Author
+    @model
+    @auth(
+      create: ["public"]
+      read: ["owner"]
+      update: ["owner"]
+      delete: ["owner"]
+    ) {
+    name: String!
+    books: [Book]
+    """
+    The author's favorite book.
+    """
+    favoriteBook: Book
+  }
+
+  type Book @model @subscribe(on: ["create"], topic: "bookAdded") {
+    avatar: String @file(maxSize: 1000000, types: ["image/jpeg", "image/png"])
+    name: String!
+    authors: [Author]
+  }
+
+  type Chat
+    @model
+    @auth(
+      create: ["public"]
+      read: ["owner", "collaborator"]
+      update: ["owner"]
+      delete: ["owner"]
+    ) {
+    name: String!
+    messages: [Message] @connection(type: "search")
+  }
+
+  type Message
+    @model
+    @subscribe(on: ["create"], topic: "messageAdded")
+    @auth(
+      create: ["owner|chats:chat", "collaborator|chats:chat"]
+      read: ["owner|chats:chat", "collaborator|chats:chat"]
+      update: [""]
+      delete: [""]
+    ) {
+    text: String!
+    chat: Chat
+  }
+
+  type Profile @model {
+    uid: String
+    displayName: String!
+    email: String!
+    photoURL: String
+    phoneNumber: String
+    emailVerified: Boolean
+    isAnonymous: Boolean
+    lastSignInTime: String
+    creationTime: String
+    roles: [String]
   }
 
   type Query {
@@ -156,6 +159,10 @@ const typeDefinitions = /* GraphQL */ `
       emailVerified: Boolean
       isAnonymous: Boolean
     ): String
+  }
+
+  type Subscription {
+    messageAdded(chatId: ID!): Message!
   }
 `;
 

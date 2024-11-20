@@ -3,9 +3,11 @@ import { createYoga } from "graphql-yoga";
 
 import { schema } from "./schema";
 import { context } from "./context";
-import { config } from "dotenv";
 import { generateTokens, setTokensAsCookies, verifyToken } from "../lib/utils";
 import { CookieStore } from "../lib/types";
+import { connectKafka } from "../lib/utils/kafka";
+
+import { config } from "dotenv";
 config();
 
 const cookie = require("cookie");
@@ -70,7 +72,8 @@ async function getSession(
   return decodedAccessToken.decoded;
 }
 
-function main() {
+async function main() {
+  await connectKafka(schema);
   const yoga = createYoga({
     schema,
     context: async (args) => {

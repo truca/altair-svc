@@ -17,7 +17,7 @@ COPY . .
 RUN npm install --save-dev typescript@5.6.3
 
 # Build the Next.js app
-RUN yarn build
+RUN npm run build
 
 # Expose the app on port 3000
 EXPOSE 3000

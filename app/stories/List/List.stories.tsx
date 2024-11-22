@@ -10,7 +10,6 @@ const meta: Meta<typeof List> = {
 export default meta;
 type Story = StoryObj<typeof List>;
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 const Wrapper = (Story: any) => (
   <ThemeProvider theme={theme}>
     <Story />

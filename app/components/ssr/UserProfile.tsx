@@ -1,7 +1,7 @@
 // here is a server component called UserProfile and here we want to get the user data
 
 import { gql } from "@apollo/client";
-import { getClient } from "@/lib/apollo/client";
+import { getClient } from "@/app/lib/apollo/client";
 import { cookies } from "next/headers";
 
 const USER_QUERY = gql`

@@ -3,12 +3,12 @@ import { Inter } from "next/font/google";
 import "./globals.css";
 import AuthProvider from "./contexts/AuthProvider";
 import ThemeProvider from "./contexts/ThemeProvider";
-import { ApolloWrapper } from "../lib/apollo/apollo-wrapper";
-import { verifyIdToken } from "@/lib/firebase/firebaseAdmin";
+import { ApolloWrapper } from "./lib/apollo/apollo-wrapper";
 import { cookies } from "next/headers";
 import { ReadonlyRequestCookies } from "next/dist/server/web/spec-extension/adapters/request-cookies";
 import { redirect } from "next/navigation";
 import { headers } from "next/headers";
+import { verifyIdToken } from "./lib/firebase/firebaseAdmin";
 
 async function fetchUser(
   cookieStore: ReadonlyRequestCookies,

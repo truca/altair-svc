@@ -1,11 +1,11 @@
 "use client";
 
-import { DashboardLayout, ModalsAndSidebars } from "@/app/components";
+import { DashboardLayout, ModalsAndSidebars } from "./components";
 import {
   PageContext,
   PageState,
   usePageContextReducer,
-} from "@/app/contexts/PageContext";
+} from "./contexts/PageContext";
 
 const initialState: PageState<"sidebar" | "logo" | "user" | "content"> = {
   page: { type: "" },

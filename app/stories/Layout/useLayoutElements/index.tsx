@@ -1,8 +1,8 @@
 import UserData from "@/app/components/UserData";
-import DashboardLayout from "@/stories/DashboardLayout";
-import { Direction } from "@/stories/Form/types";
-import SmartForm from "@/stories/SmartForm";
-import { Text } from "@/stories/Text";
+import DashboardLayout from "../../DashboardLayout";
+import { Direction } from "../../Form/types";
+import SmartForm from "../../SmartForm";
+import { Text } from "../../Text";
 import { Card, Flex, Grid } from "@chakra-ui/react";
 import Image from "next/image";
 import { ReactNode, useMemo } from "react";

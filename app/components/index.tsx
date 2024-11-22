@@ -22,19 +22,19 @@ import {
 import { FaCheckDouble, FaPlus, FaPaperPlane } from "react-icons/fa";
 import { useParams, useRouter } from "next/navigation";
 
+import cn from "classnames";
+import { CHATS, MESSAGES_AND_EXPENSES } from "./constants";
+import { gql, useMutation } from "@apollo/client";
 import {
   IPage,
   ISlot,
   PageContext,
   usePageContext,
-} from "@/app/contexts/PageContext";
-import cn from "classnames";
-import { Form, FormProps } from "@/stories/Form";
-import Sidebar from "@/stories/Sidebar";
-import { Direction, FieldType } from "@/stories/Form/types";
-import SmartListWrapper from "@/stories/SmartList";
-import { CHATS, MESSAGES_AND_EXPENSES } from "./constants";
-import { gql, useMutation } from "@apollo/client";
+} from "../contexts/PageContext";
+import { Form, FormProps } from "../stories/Form";
+import { Direction, FieldType } from "../stories/Form/types";
+import Sidebar from "../stories/Sidebar";
+import SmartListWrapper from "../stories/SmartList";
 
 interface CommonPageProps {
   page: IPage;

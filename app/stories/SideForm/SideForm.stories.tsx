@@ -85,7 +85,6 @@ const meta: Meta<typeof SideFormWrapper> = {
 export default meta;
 type Story = StoryObj<typeof SideFormWrapper>;
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 const Wrapper = (Story: any) => {
   return (
     <ChakraProvider>

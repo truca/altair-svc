@@ -1,12 +1,12 @@
 "use client";
 
-import { increment } from "@/lib/redux/counter/counterSlice";
-import { RootState } from "@/lib/redux/store";
+import { increment } from "@/app/lib/redux/counter/counterSlice";
+import { RootState } from "@/app/lib/redux/store";
 import { useDispatch, useSelector } from "react-redux";
 
 const Counter = () => {
   const counter = useSelector<RootState, number>(
-    (state) => state.counter.value
+    (state) => (state.counter as any).value
   );
   const dispatch = useDispatch();
 

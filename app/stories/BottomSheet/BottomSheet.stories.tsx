@@ -31,7 +31,6 @@ const meta: Meta<typeof BottomSheetWrapper> = {
 export default meta;
 type Story = StoryObj<typeof BottomSheetWrapper>;
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 const Wrapper = (Story: any) => {
   return (
     <ThemeProvider theme={theme}>

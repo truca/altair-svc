@@ -1,8 +1,17 @@
 import { configureStore } from "@reduxjs/toolkit";
-import counterReducer from "./features/counter/counterSlice";
-// import { setupListeners } from "@reduxjs/toolkit/query";
 import { pokemonApi } from "./apis/pokemonApi";
 import logger from "redux-logger";
+
+const counterReducer = (state = { value: 0 }, action: any) => {
+  switch (action.type) {
+    case "counter/increment":
+      return { value: state.value + 1 };
+    case "counter/decrement":
+      return { value: state.value - 1 };
+    default:
+      return state;
+  }
+};
 
 export const makeStore = () => {
   return configureStore({

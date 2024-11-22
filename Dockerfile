@@ -13,6 +13,9 @@ RUN npm ci --prod --no-audit
 # Copy the rest of the application code
 COPY . .
 
+# Install TypeScript
+RUN npm install --save-dev typescript@4.9.5
+
 # Build the Next.js app
 RUN yarn build
 

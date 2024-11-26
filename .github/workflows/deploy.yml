@@ -50,6 +50,6 @@ jobs:
           docker login ghcr.io -u ${{ secrets.GHCR_USERNAME }} --password ${{ secrets.GHCR_TOKEN }}
           docker pull ghcr.io/${{ secrets.GHCR_USERNAME }}/altair-ui:latest
           cd ~
-          docker-compose down
-          docker-compose up -d
+          docker compose down
+          docker compose up -d
           EOF

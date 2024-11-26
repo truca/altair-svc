@@ -25,13 +25,13 @@ jobs:
 
       - name: Build Docker Image
         run: |
-          docker build -t ghcr.io/${{ secrets.GHCR_USERNAME }}/my-app:${{ github.sha }} .
-          docker tag ghcr.io/${{ secrets.GHCR_USERNAME }}/my-app:${{ github.sha }} ghcr.io/${{ secrets.GHCR_USERNAME }}/my-app:latest
+          docker build -t ghcr.io/${{ secrets.GHCR_USERNAME }}/altair-ui:${{ github.sha }} .
+          docker tag ghcr.io/${{ secrets.GHCR_USERNAME }}/altair-ui:${{ github.sha }} ghcr.io/${{ secrets.GHCR_USERNAME }}/altair-ui:latest
 
       - name: Push Docker Image
         run: |
-          docker push ghcr.io/${{ secrets.GHCR_USERNAME }}/my-app:${{ github.sha }}
-          docker push ghcr.io/${{ secrets.GHCR_USERNAME }}/my-app:latest
+          docker push ghcr.io/${{ secrets.GHCR_USERNAME }}/altair-ui:${{ github.sha }}
+          docker push ghcr.io/${{ secrets.GHCR_USERNAME }}/altair-ui:latest
 
   deploy:
     name: Deploy to DigitalOcean
@@ -48,8 +48,8 @@ jobs:
         run: |
           ssh -o StrictHostKeyChecking=no root@${{ secrets.DROPLET_IP }} << 'EOF'
           docker login ghcr.io -u ${{ secrets.GHCR_USERNAME }} --password ${{ secrets.GHCR_TOKEN }}
-          docker pull ghcr.io/${{ secrets.GHCR_USERNAME }}/my-app:latest
-          cd /path/to/your/project
+          docker pull ghcr.io/${{ secrets.GHCR_USERNAME }}/altair-ui:latest
+          cd ~
           docker-compose down
           docker-compose up -d
           EOF

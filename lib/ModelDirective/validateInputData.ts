@@ -38,7 +38,9 @@ export const validateInputData = (props: ValidateInputDataProps) => {
       // OR the field was not provided but is marked as non nullable in the input type
       if (
         (value === null && isNonNullable(field)) ||
-        (!props.data[key] && isNonNullable(field))
+        (value === undefined && isNonNullable(field)) ||
+        (props.data[key] === null && isNonNullable(field)) ||
+        (props.data[key] === undefined && isNonNullable(field))
       ) {
         throw new Error(`${props.type.name}.${field.name} must not be null`);
       }

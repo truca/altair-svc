@@ -5,6 +5,7 @@ import { FORMS } from "./forms";
 const typeDefinitions = /* GraphQL */ `
   scalar ID
   scalar File
+  scalar DateTime
   directive @model on OBJECT
   directive @file(maxSize: Float!, types: [String!]!) on FIELD_DEFINITION
   directive @auth(
@@ -81,64 +82,101 @@ const typeDefinitions = /* GraphQL */ `
     CHAT
   }
 
-  type Author
-    @model
-    @auth(
-      create: ["public"]
-      read: ["owner"]
-      update: ["owner"]
-      delete: ["owner"]
-    ) {
-    name: String!
-    books: [Book]
-    """
-    The author's favorite book.
-    """
-    favoriteBook: Book
-  }
-
-  type Book @model @subscribe(on: ["create"], topic: "bookAdded") {
-    avatar: String @file(maxSize: 1000000, types: ["image/jpeg", "image/png"])
-    name: String!
-    authors: [Author]
-  }
-
-  type Chat
-    @model
-    @auth(
-      create: ["public"]
-      read: ["owner", "collaborator"]
-      update: ["owner"]
-      delete: ["owner"]
-    ) {
-    name: String!
-    messages: [Message] @connection(type: "search")
-  }
-
-  type Message
-    @model
-    @subscribe(on: ["create"], topic: "messageAdded")
-    @auth(
-      create: ["owner|chats:chat", "collaborator|chats:chat"]
-      read: ["owner|chats:chat", "collaborator|chats:chat"]
-      update: [""]
-      delete: [""]
-    ) {
-    text: String!
-    chat: Chat
-  }
-
+  # Represents a user.  Supports: User Registration and Login, Profile Customization, In-App Messaging, Integration with Other Platforms, Notifications and Updates.
   type Profile @model {
     uid: String
-    displayName: String!
-    email: String!
-    photoURL: String
-    phoneNumber: String
-    emailVerified: Boolean
-    isAnonymous: Boolean
-    lastSignInTime: String
-    creationTime: String
-    roles: [String]
+    username: String!
+    profilePicture: String
+    lat: Float
+    lng: Float
+    createdAt: DateTime!
+    updatedAt: DateTime!
+    favoriteWarbands: [Warband]
+    favoriteCards: [Card]
+    collection: Collection
+    participatedEvents: [Event] # Events the user participated in
+    wonMatches: [Match] # Matches this user won
+    wonTournaments: [Tournament] # Tournaments this user won
+  }
+
+  # Represents a warband. Supports: Warband Creation, Warband Sharing, Warband Comparison, Cost Management, Export Feature, Management, Feedback and Rating System.
+  type Warband @model {
+    userId: ID!
+    name: String!
+    totalCost: Float!
+    isPublic: Boolean!
+    createdAt: DateTime!
+    updatedAt: DateTime!
+    cards: [Card]
+    favoritedCount: Float! # Number of times favorited
+    playedCount: Float! # Number of times played
+    comments: [Comment] # Comments about this warband
+  }
+
+  # Represents a single card. Supports: Card Database, Card Filtering and Search, Cost-Building Suggestions, Card Rarity System, Feedback and Rating System.
+  type Card @model {
+    name: String!
+    description: String
+    faction: String
+    cost: Float!
+    image: String @file(maxSize: 1000000, types: ["image/jpeg", "image/png"]) # URL to the card image
+    frequency: Float! # How often added to warbands
+    favoritedCount: Float! # Number of times favorited
+    comments: [Comment]
+  }
+
+  # Represents a comment, used for feedback on cards and warbands. Supports: Feedback and Rating System, In-App Messaging.
+  type Comment @model {
+    userId: ID!
+    warbandId: ID
+    cardId: ID
+    content: String!
+    createdAt: DateTime!
+  }
+
+  # Represents a collection of cards owned by a user. Supports: Management.
+  type Collection @model {
+    userId: ID!
+    name: String!
+    cards: [Card]
+    warbands: [Warband] # To support adding warbands to collections
+    createdAt: DateTime!
+  }
+
+  # Represents a match (single game). Supports: Event Management, Event Scheduling.
+  type Match @model {
+    eventId: ID!
+    warband1Id: ID!
+    warband2Id: ID!
+    player1Id: ID!
+    player2Id: ID!
+    winnerId: ID!
+    createdAt: DateTime!
+    previousMatches: [ID!] # IDs of matches leading to this match
+    nextMatch: ID # ID of the match this one leads to
+  }
+
+  # Represents a tournament. Supports: Event Management, Event Scheduling.
+  type Tournament @model {
+    name: String!
+    matches: [Match] # Keep this for easy access to all matches
+    firstRoundMatches: [ID!] # IDs of the matches in the first round
+    winnerId: ID!
+    createdAt: DateTime!
+  }
+
+  # Represents an event, which can be a single match or a tournament. Supports: Event Management, Event Scheduling, Integration with Other Platforms.
+  type Event @model {
+    name: String!
+    date: DateTime!
+    location: String!
+    latitude: Float!
+    longitude: Float!
+    createdBy: ID!
+    participants: [Profile] # Participants in the event
+    matches: [Match] # If it's a tournament
+    tournament: Tournament # If it's a tournament
+    createdAt: DateTime!
   }
 
   type Query {
@@ -159,10 +197,6 @@ const typeDefinitions = /* GraphQL */ `
       emailVerified: Boolean
       isAnonymous: Boolean
     ): String
-  }
-
-  type Subscription {
-    messageAdded(chatId: ID!): Message!
   }
 `;
 

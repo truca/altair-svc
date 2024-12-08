@@ -114,7 +114,7 @@ const typeDefinitions = /* GraphQL */ `
   }
 
   # Represents a single card. Supports: Card Database, Card Filtering and Search, Cost-Building Suggestions, Card Rarity System, Feedback and Rating System.
-  type Card @model {
+  type Card @model @auth(read: ["public"]) {
     name: String!
     description: String
     faction: String

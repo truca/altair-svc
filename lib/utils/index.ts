@@ -1,5 +1,6 @@
 import { makeExecutableSchema } from "@graphql-tools/schema";
 import { ModelDirective } from "../ModelDirective";
+import { StaticModelDirective } from "../StaticModelDirective";
 import { MongoStore } from "../MongoStore";
 import { CookieStore, FormsHash, Profile } from "../types";
 
@@ -10,7 +11,6 @@ import { createPubSub } from "graphql-yoga";
 const pubSub = createPubSub();
 
 import { config } from "dotenv";
-import { consumeMessages } from "./kafka";
 config();
 
 const jwt = require("jsonwebtoken");
@@ -155,6 +155,16 @@ export function makeSchema({
           fields: [],
         };
       },
+      me: async (_: any, params: { uid: String }, context: any, info: any) => {
+        const profileType = context?.typeMap?.Profile;
+        const args = { where: { uid: params.uid } };
+        return StaticModelDirective.findOneQueryResolver(profileType)(
+          _,
+          args,
+          context,
+          info
+        );
+      },
       ...queries,
     },
     Mutation: {
@@ -176,11 +186,16 @@ export function makeSchema({
         return true;
       },
       authenticate: async (_: any, params: Profile, context: any) => {
-        const secretKey = process.env.JWT_SECRET;
-        let profile = await context.directives.model.store.findOne({
-          where: { uid: params.uid, deletedAt: null },
-          type: { name: "Profile" },
-        });
+        const info = null;
+        let profile = await context.directives.model.store.findOne(
+          {
+            where: { uid: params.uid, deletedAt: null },
+            type: { name: "Profile" },
+          },
+          context,
+          info,
+          true
+        );
         if (profile) {
           const tokens = generateTokens(profile);
           setTokensAsCookies(context.cookieStore, tokens);
@@ -204,35 +219,29 @@ export function makeSchema({
         setTokensAsCookies(context.cookieStore, tokens);
         return tokens.accessToken;
       },
-      ...mutations,
-    },
-    Subscription: {
-      messageAdded: {
-        subscribe: async function* (
-          _: any,
-          { chatId }: { chatId: string }
-        ): AsyncIterable<Message> {
-          const asyncIterator = {
-            async next(): Promise<IteratorResult<Record<string, any>>> {
-              return new Promise((resolve) => {
-                consumeMessages("messageAdded", (message) => {
-                  if (message.chatId === chatId) {
-                    resolve({ value: message, done: false });
-                  }
-                });
-              });
+      updateMe: async (
+        _: any,
+        params: { id: String; profile: Profile },
+        context: any
+      ) => {
+        // update the profile of the user
+        const info = null;
+        let profile = await context.directives.model.store.update(
+          {
+            where: { _id: params.id, deletedAt: null },
+            data: {
+              ...params.profile,
             },
-            async return(): Promise<IteratorResult<Message>> {
-              return { value: undefined as any, done: true };
-            },
-            async throw(error: any): Promise<IteratorResult<Message>> {
-              throw error;
-            },
-          };
-
-          return asyncIterator;
-        },
+            upsert: false,
+            type: { name: "Profile" },
+          },
+          context,
+          info,
+          true
+        );
+        return profile;
       },
+      ...mutations,
     },
   };
 

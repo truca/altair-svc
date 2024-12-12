@@ -83,20 +83,40 @@ const typeDefinitions = /* GraphQL */ `
   }
 
   # Represents a user.  Supports: User Registration and Login, Profile Customization, In-App Messaging, Integration with Other Platforms, Notifications and Updates.
-  type Profile @model {
+  type Profile @model @auth(read: ["public"]) {
     uid: String
-    username: String!
+    username: String
     profilePicture: String
     lat: Float
     lng: Float
     createdAt: DateTime!
-    updatedAt: DateTime!
+    updatedAt: DateTime
     favoriteWarbands: [Warband]
     favoriteCards: [Card]
     collection: Collection
     participatedEvents: [Event] # Events the user participated in
     wonMatches: [Match] # Matches this user won
     wonTournaments: [Tournament] # Tournaments this user won
+  }
+
+  input ObjectId {
+    id: ID!
+  }
+
+  input ProfileInputType2 {
+    uid: String
+    username: String
+    profilePicture: String
+    lat: Float
+    lng: Float
+    createdAt: DateTime
+    updatedAt: DateTime
+    favoriteWarbands: [ObjectId]
+    favoriteCards: [ObjectId]
+    # collection: Collection
+    participatedEvents: [ObjectId] # Events the user participated in
+    wonMatches: [ObjectId] # Matches this user won
+    wonTournaments: [ObjectId] # Tournaments this user won
   }
 
   # Represents a warband. Supports: Warband Creation, Warband Sharing, Warband Comparison, Cost Management, Export Feature, Management, Feedback and Rating System.
@@ -181,6 +201,7 @@ const typeDefinitions = /* GraphQL */ `
 
   type Query {
     _: Boolean
+    me(uid: String): Profile
     form(type: FormType): Form
   }
 
@@ -196,7 +217,9 @@ const typeDefinitions = /* GraphQL */ `
       phoneNumber: String
       emailVerified: Boolean
       isAnonymous: Boolean
+      createCookies: Boolean
     ): String
+    updateMe(id: String, profile: ProfileInputType2): Profile
   }
 `;
 

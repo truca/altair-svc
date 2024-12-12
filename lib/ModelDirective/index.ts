@@ -30,7 +30,6 @@ import {
   getEntityTypeFromField,
   getFieldType,
 } from "../GraphQL/utils";
-import { publishMessage } from "../utils/kafka";
 
 export interface ResolverContext {
   directives: {
@@ -105,7 +104,7 @@ export class ModelDirective extends SchemaDirectiveVisitor {
     });
   }
 
-  private async visitNestedModels({
+  public static async visitNestedModels({
     data: dataParam,
     type,
     modelFunction,
@@ -148,9 +147,9 @@ export class ModelDirective extends SchemaDirectiveVisitor {
         const info = selectedFieldsHash[key];
         const foundObject = await modelFunction(fieldType, value, info);
         res[key] = foundObject;
-        return;
       }
 
+      // Is this still valid?
       const connectionDirective = extractFieldDirectiveParams(
         type.astNode,
         key,
@@ -163,7 +162,7 @@ export class ModelDirective extends SchemaDirectiveVisitor {
         const info = selectedFieldsHash[key];
         const entityType = getEntityTypeFromField(type.astNode, key);
         // const namedType = getNamedType(entityType);
-        fieldType = this.schema.getType(entityType);
+        fieldType = context.schema.getType(entityType);
         const foundObjects = await modelsFunction?.(
           fieldType,
           {
@@ -232,7 +231,7 @@ export class ModelDirective extends SchemaDirectiveVisitor {
     );
   }
 
-  private findQueryResolver(type) {
+  public findQueryResolver(type) {
     return async (
       root,
       args: FindResolverArgs,
@@ -300,7 +299,7 @@ export class ModelDirective extends SchemaDirectiveVisitor {
     };
   }
 
-  private findOneQueryResolver(type) {
+  public findOneQueryResolver(type) {
     return async (
       root,
       args: FindOneResolverArgs,
@@ -325,20 +324,22 @@ export class ModelDirective extends SchemaDirectiveVisitor {
         data: rootObject,
         info,
         context,
-        modelFunction: (localType: any, value: any, infoParam: any = {}) =>
-          this.findOneQueryResolver(localType)(
+        modelFunction: async (localType, value, newInfo = null) => {
+          const found = await this.findOneQueryResolver(localType)(
             root,
             { ...args, where: value },
             context,
-            infoParam
-          ),
+            newInfo ? newInfo : info
+          );
+          return found;
+        },
       });
 
       return { ...rootObject, ...cleanNestedObjects(nestedObjects) };
     };
   }
 
-  private createMutationResolver(type, parentIdsParam = {}) {
+  public createMutationResolver(type, parentIdsParam = {}) {
     return async (
       root,
       args: CreateResolverArgs,
@@ -425,9 +426,6 @@ export class ModelDirective extends SchemaDirectiveVisitor {
         const params = getDirectiveParams("subscribe", type);
         if (params) {
           const { on = [], topic } = params;
-          if (on.includes("create")) {
-            publishMessage(topic, rootObject);
-          }
         }
       }
 
@@ -440,7 +438,7 @@ export class ModelDirective extends SchemaDirectiveVisitor {
     };
   }
 
-  private updateResolver(type) {
+  public updateResolver(type) {
     return async (
       root,
       args: UpdateResolverArgs,

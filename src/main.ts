@@ -5,7 +5,6 @@ import { schema } from "./schema";
 import { context } from "./context";
 import { generateTokens, setTokensAsCookies, verifyToken } from "../lib/utils";
 import { CookieStore } from "../lib/types";
-import { connectKafka } from "../lib/utils/kafka";
 
 import { readFile, stat } from "node:fs/promises";
 import { join, extname } from "node:path";
@@ -125,7 +124,6 @@ async function serveFile(req: any, res: any) {
 }
 
 async function main() {
-  await connectKafka(schema);
   const yoga = createYoga({
     schema,
     context: async (args) => {
@@ -139,6 +137,8 @@ async function main() {
       return {
         ...context,
         ...args,
+        schema,
+        typeMap: schema.getTypeMap(),
         cookies,
         session,
         cookieStore,

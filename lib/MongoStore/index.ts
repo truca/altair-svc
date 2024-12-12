@@ -45,13 +45,15 @@ export class MongoStore implements Store {
   public async findOne(
     props: StoreFindOneProps,
     context: Context,
-    info: any
+    info: any,
+    bypassPermissions?: boolean
   ): Promise<StoreFindOneReturn | null> {
     const directiveParams = extractDirectiveParams(
       props.type.astNode as any,
       "auth"
     );
     const hasNecessaryRolePermissionsToContinue =
+      bypassPermissions ||
       getHasNecessaryRolePermissionsToContinue(
         directiveParams,
         context?.session,
@@ -161,13 +163,15 @@ export class MongoStore implements Store {
   public async update(
     props: StoreUpdateProps,
     context: Context,
-    info: any
+    info: any,
+    bypassPermissions?: boolean
   ): Promise<StoreUpdateReturn> {
     const directiveParams = extractDirectiveParams(
       props.type.astNode as any,
       "auth"
     );
     const hasNecessaryRolePermissionsToContinue =
+      bypassPermissions ||
       getHasNecessaryRolePermissionsToContinue(
         directiveParams,
         context?.session,

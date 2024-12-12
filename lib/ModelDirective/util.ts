@@ -57,20 +57,6 @@ export const getDirectiveParams = (directiveName, type) => {
   }, {});
 };
 
-export const getAllKafkaTopicsFromSchema = (
-  schema: GraphQLSchema
-): string[] => {
-  const types = schema.getTypeMap();
-  return Object.keys(types).reduce((acc, key) => {
-    const type = types[key];
-    const { topic } = getDirectiveParams("subscribe", type);
-    if (topic) {
-      acc.push(topic);
-    }
-    return acc;
-  }, []);
-};
-
 export const cleanNestedObjects = (nestedObjects) => {
   const result = {};
   Object.keys(nestedObjects ?? {}).forEach((key) => {

@@ -65,6 +65,94 @@ export interface RemoveResolverArgs {
   where: any;
 }
 
+export async function visitNestedModels({
+  data: dataParam,
+  type,
+  modelFunction,
+  modelsFunction,
+  context,
+  info,
+  localInfo,
+}) {
+  const res = {};
+  const data = { ...dataParam };
+
+  // move into its own function
+  const selectedFields =
+    localInfo?.selectionSet?.selections ||
+    info?.fieldNodes?.[0]?.selectionSet?.selections ||
+    info?.selectionSet?.selections ||
+    [];
+  const selectedFieldsHash = selectedFields.reduce((res, selection) => {
+    res[selection.name.value] = selection;
+    return res;
+  }, {});
+  Object.keys(selectedFieldsHash).forEach((key) => {
+    if (!data[key]) {
+      const fieldType = getFieldType(type.astNode, key);
+      data[key] =
+        fieldType === "array" ? [] : fieldType === "object" ? {} : undefined;
+    }
+  });
+  // end move
+  for (const key of Object.keys(data)) {
+    if (key === "_id") continue;
+    if (!selectedFieldsHash[key]) continue;
+
+    const value = data[key];
+    const field = getNamedType(type.getFields()[key]) as any;
+
+    let fieldType = getNamedType(field?.type);
+
+    if (isPlainObject(value) && hasDirective("model", fieldType)) {
+      const info = selectedFieldsHash[key];
+      const foundObject = await modelFunction(fieldType, value, info);
+      res[key] = foundObject;
+    }
+
+    // Is this still valid?
+    const connectionDirective = extractFieldDirectiveParams(
+      type.astNode,
+      key,
+      "connection"
+    );
+    const isSearchableArray =
+      Array.isArray(value) && connectionDirective?.type === "search";
+
+    if (isSearchableArray) {
+      const info = selectedFieldsHash[key];
+      const entityType = getEntityTypeFromField(type.astNode, key);
+      // const namedType = getNamedType(entityType);
+      fieldType = context.schema.getType(entityType);
+      const foundObjects = await modelsFunction?.(
+        fieldType,
+        {
+          where: { "chat._id": data.id },
+          page: 1,
+          pageSize: 10,
+        },
+        info
+      );
+      res[key] = foundObjects?.list;
+      continue;
+    }
+
+    if (Array.isArray(value) && value.every((v) => isPlainObject(v))) {
+      const createdObjects: any[] = [];
+
+      for (const v of value) {
+        const info = selectedFieldsHash[key];
+        const foundObject = await modelFunction(fieldType, v, info);
+        createdObjects.push(foundObject);
+      }
+
+      res[key] = createdObjects;
+    }
+  }
+
+  return res;
+}
+
 export class ModelDirective extends SchemaDirectiveVisitor {
   public visitObject(type: GraphQLObjectType) {
     // TODO check that id field does not already exist on type
@@ -102,94 +190,6 @@ export class ModelDirective extends SchemaDirectiveVisitor {
         return field;
       },
     });
-  }
-
-  public static async visitNestedModels({
-    data: dataParam,
-    type,
-    modelFunction,
-    modelsFunction,
-    context,
-    info,
-    localInfo,
-  }) {
-    const res = {};
-    const data = { ...dataParam };
-
-    // move into its own function
-    const selectedFields =
-      localInfo?.selectionSet?.selections ||
-      info?.fieldNodes?.[0]?.selectionSet?.selections ||
-      info?.selectionSet?.selections ||
-      [];
-    const selectedFieldsHash = selectedFields.reduce((res, selection) => {
-      res[selection.name.value] = selection;
-      return res;
-    }, {});
-    Object.keys(selectedFieldsHash).forEach((key) => {
-      if (!data[key]) {
-        const fieldType = getFieldType(type.astNode, key);
-        data[key] =
-          fieldType === "array" ? [] : fieldType === "object" ? {} : undefined;
-      }
-    });
-    // end move
-    for (const key of Object.keys(data)) {
-      if (key === "_id") continue;
-      if (!selectedFieldsHash[key]) continue;
-
-      const value = data[key];
-      const field = getNamedType(type.getFields()[key]) as any;
-
-      let fieldType = getNamedType(field?.type);
-
-      if (isPlainObject(value) && hasDirective("model", fieldType)) {
-        const info = selectedFieldsHash[key];
-        const foundObject = await modelFunction(fieldType, value, info);
-        res[key] = foundObject;
-      }
-
-      // Is this still valid?
-      const connectionDirective = extractFieldDirectiveParams(
-        type.astNode,
-        key,
-        "connection"
-      );
-      const isSearchableArray =
-        Array.isArray(value) && connectionDirective?.type === "search";
-
-      if (isSearchableArray) {
-        const info = selectedFieldsHash[key];
-        const entityType = getEntityTypeFromField(type.astNode, key);
-        // const namedType = getNamedType(entityType);
-        fieldType = context.schema.getType(entityType);
-        const foundObjects = await modelsFunction?.(
-          fieldType,
-          {
-            where: { "chat._id": data.id },
-            page: 1,
-            pageSize: 10,
-          },
-          info
-        );
-        res[key] = foundObjects?.list;
-        continue;
-      }
-
-      if (Array.isArray(value) && value.every((v) => isPlainObject(v))) {
-        const createdObjects: any[] = [];
-
-        for (const v of value) {
-          const info = selectedFieldsHash[key];
-          const foundObject = await modelFunction(fieldType, v, info);
-          createdObjects.push(foundObject);
-        }
-
-        res[key] = createdObjects;
-      }
-    }
-
-    return res;
   }
 
   private pluckModelObjectIds(data) {
@@ -258,7 +258,7 @@ export class ModelDirective extends SchemaDirectiveVisitor {
         maxPages: initialData.maxPages,
         list: await Promise.all(
           initialData.list.map(async (data) => {
-            const nestedObjects = await this.visitNestedModels({
+            const nestedObjects = await visitNestedModels({
               type,
               data,
               info,
@@ -319,7 +319,7 @@ export class ModelDirective extends SchemaDirectiveVisitor {
         return null;
       }
 
-      const nestedObjects = await this.visitNestedModels({
+      const nestedObjects = await visitNestedModels({
         type,
         data: rootObject,
         info,
@@ -360,7 +360,7 @@ export class ModelDirective extends SchemaDirectiveVisitor {
         args.data._id = new mongoose.Types.ObjectId();
       }
 
-      const relatedObjects = await this.visitNestedModels({
+      const relatedObjects = await visitNestedModels({
         type,
         data: args.data,
         info,
@@ -467,7 +467,7 @@ export class ModelDirective extends SchemaDirectiveVisitor {
         args.data._id = currentRootObject.id;
       }
 
-      const relatedObjects = await this.visitNestedModels({
+      const relatedObjects = await visitNestedModels({
         type,
         data: args.data,
         info,
@@ -577,7 +577,7 @@ export class ModelDirective extends SchemaDirectiveVisitor {
         info
       );
 
-      const nestedObjects = await this.visitNestedModels({
+      const nestedObjects = await visitNestedModels({
         type,
         data: rootObject,
         info,

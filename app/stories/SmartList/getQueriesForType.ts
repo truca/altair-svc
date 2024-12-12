@@ -2,6 +2,8 @@ import { gql } from "@apollo/client";
 import axios from "axios";
 import pluralize from "pluralize";
 
+export type Where = { [key: string]: number | string | boolean };
+
 const data = JSON.stringify({
   query:
     "query IntrospectionQuery {__schema {description queryType {name}mutationType {name}subscriptionType {name} types { ...FullType } directives { name description locations args { ...InputValue } } }} fragment FullType on __Type { kind name description fields(includeDeprecated: true) { name description args { ...InputValue } type { ...TypeRef } isDeprecated deprecationReason } inputFields { ...InputValue } interfaces { ...TypeRef } enumValues(includeDeprecated: true) { name description isDeprecated deprecationReason } possibleTypes { ...TypeRef }}fragment InputValue on __InputValue { name description type { ...TypeRef } defaultValue}fragment TypeRef on __Type { kind name ofType { kind name ofType { kind name ofType { kind name ofType { kind name ofType { kind name ofType { kind name ofType { kind name } } } } } } }}",
@@ -85,9 +87,36 @@ export const getFieldnamesForType = async (type: any) => {
   return { fieldNames };
 };
 
-export const getQueryForType = async (type: string) => {
-  const { fieldNames } = await getFieldnamesForType(type);
-  const query = gql`query ${type}($page: Int, $pageSize: Int, $includeMaxPages: Boolean!) { ${type}(page: $page, pageSize: $pageSize, includeMaxPages: $includeMaxPages) { list { ${fieldNames?.join(" ")} } maxPages @include(if: $includeMaxPages) } }`;
+export const getSingleQueryForType = async (
+  type: string,
+  fieldNamesParam?: string[]
+) => {
+  const pluralType = pluralize.isPlural(type) ? type : pluralize(type);
+  const singularType = pluralize.isSingular(type) ? type : pluralize(type, 1);
+  const { fieldNames } = fieldNamesParam
+    ? { fieldNames: fieldNamesParam }
+    : await getFieldnamesForType(pluralType);
+  const query = gql`query ${singularType}($id: ID!) { ${singularType}(id: $id) { ${fieldNames?.join(
+    " "
+  )} } }`;
+  return { query, fieldNames };
+};
+
+export const getQueryForType = async (
+  pluralType: string,
+  singularType: string,
+  where?: Where
+) => {
+  const { fieldNames } = await getFieldnamesForType(pluralType);
+  let query = gql`query ${pluralType}($page: Int, $pageSize: Int, $includeMaxPages: Boolean!) { ${pluralType}(page: $page, pageSize: $pageSize, includeMaxPages: $includeMaxPages) { list { ${fieldNames?.join(
+    " "
+  )} } maxPages @include(if: $includeMaxPages) } }`;
+  if (where) {
+    const type = capitalizeFirstLetter(singularType) + "InputType";
+    query = gql`query ${pluralType}($page: Int, $pageSize: Int, $includeMaxPages: Boolean!, $where: ${type}) { ${pluralType}(page: $page, pageSize: $pageSize, includeMaxPages: $includeMaxPages, where: $where) { list { ${fieldNames?.join(
+      " "
+    )} } maxPages @include(if: $includeMaxPages) } }`;
+  }
   return { query, fieldNames };
 };
 

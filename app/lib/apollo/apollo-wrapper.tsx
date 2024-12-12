@@ -11,7 +11,7 @@ import {
 
 function makeClient() {
   const httpLink = new HttpLink({
-    uri: process.env.GRAPHQL_ENDPOINT,
+    uri: process.env.GRAPHQL_ENDPOINT ?? "http://localhost:4000/graphql",
   });
 
   return new ApolloClient({
@@ -24,7 +24,7 @@ function makeClient() {
             }),
             httpLink,
           ])
-        : httpLink,
+        : ApolloLink.from([httpLink]),
   });
 }
 

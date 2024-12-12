@@ -35,6 +35,11 @@ import { Form, FormProps } from "../stories/Form";
 import { Direction, FieldType } from "../stories/Form/types";
 import Sidebar from "../stories/Sidebar";
 import SmartListWrapper from "../stories/SmartList";
+import Link from "next/link";
+import SmartItemRendererWrapper from "../stories/SmartItemRenderer";
+import { FaIcon } from "../stories/Text/FaIcon";
+import { useAuth } from "../contexts/AuthProvider";
+import { List, QueryList } from "../stories/List";
 
 interface CommonPageProps {
   page: IPage;
@@ -61,7 +66,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
         as="header"
         alignItems="center"
         justifyContent="space-between"
-        bg="blue.500" /* Chakra for color */
+        bg="rgb(34, 34, 34)" /* Chakra for color */
         className="p-4 shadow-md"
       >
         {/* Logo */}
@@ -73,10 +78,20 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
 
       <Flex height="calc(100vh - 60px)">
         {/* Sidebar */}
-        {SectionsHash[sidebar.type]?.({ ...page.ctx, ...sidebar.ctx })}
+        <HStack
+          height="calc(100vh - 60px)"
+          className="w-full justify-between"
+          gap={0}
+        >
+          <VStack height="calc(100vh - 60px)">
+            {SectionsHash[sidebar.type]?.({ ...page.ctx, ...sidebar.ctx })}
+          </VStack>
 
-        {/* Content */}
-        {SectionsHash[content.type]?.({ ...page.ctx, ...content.ctx })}
+          {/* Content */}
+          <VStack height="calc(100vh - 60px)" overflowY="scroll">
+            {SectionsHash[content.type]?.({ ...page.ctx, ...content.ctx })}
+          </VStack>
+        </HStack>
       </Flex>
     </Flex>
   );
@@ -98,21 +113,49 @@ function User() {
   );
 }
 
-function LinkSidebar() {
+interface LinkSidebarProps {
+  sections: {
+    name: string;
+    link?: string;
+    subsections?: { name: string; link: string }[];
+  }[];
+}
+
+function LinkSidebar({ sections = [] }: LinkSidebarProps) {
   return (
-    <Box
+    <VStack
       as="nav"
-      bg="blue.500" /* Same color as header */
+      bg="rgb(34, 34, 34)" /* Same color as header */
       className="w-64 p-4 text-white h-full flex flex-col gap-1"
       position={{ base: "fixed", md: "relative" }}
       left={0}
       zIndex={10}
+      spacing={4}
+      alignItems="flex-start"
     >
-      <Box className="mb-4 font-bold">Sidebar</Box>
-      <Box className="cursor-pointer">Link 1</Box>
-      <Box className="cursor-pointer">Link 2</Box>
-      <Box className="cursor-pointer">Link 3</Box>
-    </Box>
+      {/* Sidebar */}
+      {sections.map((section) => (
+        <VStack key={section.name} spacing={0} alignItems="flex-start">
+          <Box className="mb-4 font-bold" letterSpacing={2}>
+            {section.link ? (
+              <Link href={section.link}>{section.name}</Link>
+            ) : (
+              section.name
+            )}
+          </Box>
+          {section.subsections?.map((subsection) => (
+            <Box
+              key={subsection.name}
+              className="cursor-pointer"
+              fontWeight={200}
+              fontSize="sm"
+            >
+              <Link href={subsection.link}>{subsection.name}</Link>
+            </Box>
+          ))}
+        </VStack>
+      ))}
+    </VStack>
   );
 }
 
@@ -521,6 +564,133 @@ export function ModalsAndSidebars() {
   );
 }
 
+function capitalizeFirstLetter(string: string) {
+  return string.charAt(0).toUpperCase() + string.slice(1);
+}
+
+const addCardToFavoritesMutation = gql`
+  mutation UpdateMe($id: String!, $favoriteCards: [ObjectId]) {
+    updateMe(id: $id, profile: { favoriteCards: $favoriteCards }) {
+      id
+      favoriteCards {
+        id
+      }
+    }
+  }
+`;
+
+interface CardProps {
+  id: string;
+  faction: string;
+  image: string;
+  // the amount of this card owned
+  amount?: number;
+  showAmountControls?: boolean;
+}
+
+function Card({ id, faction, image, amount, showAmountControls }: CardProps) {
+  const { dispatch } = useContext(PageContext);
+  const { profile } = useAuth();
+  const [addCardToFavorites] = useMutation(addCardToFavoritesMutation);
+
+  const baseUrl = process.env.SERVICE
+    ? process.env.SERVICE
+    : "http://localhost:4000";
+
+  const favoriteCards = (profile?.favoriteCards || []).map(
+    (card: { id: string }) => ({
+      id: card.id,
+    })
+  );
+  const isFavorited = Boolean(
+    favoriteCards.find((card: any) => card.id === id)
+  );
+
+  return (
+    <Box
+      key={id}
+      bg="white"
+      className="max-w-xs cursor-pointer"
+      position="relative"
+      onClick={() =>
+        dispatch({
+          type: "showSidebar",
+          section: "SmartItem",
+          ctx: { id, type: "card", omitFields: ["id", "__typename"] },
+        })
+      }
+    >
+      <HStack
+        justify="space-between"
+        padding={2}
+        borderWidth={1}
+        borderRadius="md"
+        borderColor="gray.200"
+        borderBottomWidth={0}
+        borderBottomRadius={0}
+      >
+        <Text fontWeight="bold" letterSpacing={3}>
+          {capitalizeFirstLetter(faction)}
+        </Text>
+      </HStack>
+      <img src={baseUrl + "/" + image} alt={faction} className="w-full" />
+      <HStack
+        position="absolute"
+        style={{
+          bottom: "20px",
+          width: "100%",
+          display: "flex",
+          justifyContent: "center",
+        }}
+      >
+        {showAmountControls ? (
+          <>
+            <Button rounded="full" variant="solid" colorScheme="gray">
+              -
+            </Button>
+            {Boolean(amount) && (
+              <Box
+                rounded="full"
+                className="flex justify-center items-center w-10 h-10 bg-slate-500 text-white"
+              >
+                {amount}
+              </Box>
+            )}
+            <Button rounded="full" variant="solid" colorScheme="green">
+              +
+            </Button>
+          </>
+        ) : null}
+        <Button
+          rounded="full"
+          variant="solid"
+          colorScheme={isFavorited ? "red" : "gray"}
+          padding={0}
+          className={cn(
+            { "!bg-red-400 hover:!bg-red-300": isFavorited },
+            "!bg-red-300 hover:!bg-red-400 !text-white"
+          )}
+          onClick={(e) => {
+            e.stopPropagation();
+            addCardToFavorites({
+              variables: {
+                id: profile?.id,
+                favoriteCards: isFavorited
+                  ? favoriteCards?.filter(
+                      (card: { id: string }) => card.id !== id
+                    )
+                  : [...favoriteCards, { id }],
+              },
+            });
+          }}
+        >
+          <FaIcon icon="FaHeart" />
+        </Button>
+      </HStack>
+    </Box>
+  );
+}
+
 export const SectionsHash: {
   [key: string]: (props: any) => React.JSX.Element;
 } = {
@@ -532,4 +702,8 @@ export const SectionsHash: {
   ChatHistory,
   Form,
   SmartList: SmartListWrapper,
+  SmartItem: SmartItemRendererWrapper,
+  List,
+  QueryList,
+  Card,
 };

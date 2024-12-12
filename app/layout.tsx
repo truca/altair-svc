@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
+import { Lora } from "next/font/google";
 import "./globals.css";
 import AuthProvider from "./contexts/AuthProvider";
 import ThemeProvider from "./contexts/ThemeProvider";
@@ -16,17 +16,18 @@ async function fetchUser(
 ) {
   const token = cookieStore.get("token")?.value;
 
-  if (!token) {
-    return {
-      redirect: {
-        destination:
-          pathname !== "/login" ? `/login?redirect=${pathname}` : "/login",
-        permanent: false,
-      },
-    };
-  }
+  // if (!token) {
+  //   return {
+  //     redirect: {
+  //       destination:
+  //         pathname !== "/login" ? `/login?redirect=${pathname}` : "/login",
+  //       permanent: false,
+  //     },
+  //   };
+  // }
 
   try {
+    if (!token) return;
     const user = await verifyIdToken(token);
     return { props: { user } };
   } catch (error) {
@@ -39,7 +40,7 @@ async function fetchUser(
   }
 }
 
-const inter = Inter({ subsets: ["latin"] });
+const lora = Lora({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
   title: "Create Next App",
@@ -57,10 +58,8 @@ export default async function RootLayout(props: RootLayoutProps) {
   const headersList = headers();
   const currentUrl = headersList.get("referer");
   const pathname = headersList.get("x-next-pathname") || "/";
-  const { redirect: { destination } = {} } = await fetchUser(
-    cookieStore,
-    pathname
-  );
+  const { redirect: { destination } = {} } =
+    (await fetchUser(cookieStore, pathname)) || {};
 
   if (currentUrl && destination && !currentUrl.includes(destination)) {
     redirect(destination);
@@ -68,7 +67,7 @@ export default async function RootLayout(props: RootLayoutProps) {
 
   return (
     <html lang="en">
-      <body className={inter.className}>
+      <body className={lora.className}>
         <ThemeProvider>
           <ApolloWrapper>
             <AuthProvider>{children}</AuthProvider>

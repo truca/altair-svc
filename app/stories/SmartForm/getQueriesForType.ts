@@ -4,14 +4,24 @@ import pluralize from "pluralize";
 
 export const getQueryStringForType = async (type: string) => {
   const { fieldNames } = await getFieldnamesForType(type);
-  const query = `${type}(where: { id: $id }) @include(if: $include) { ${fieldNames?.join(" ")} }`;
+  const query = `${type}(where: { id: $id }) @include(if: $include) { ${fieldNames?.join(
+    " "
+  )} }`;
   return { query, fieldNames };
 };
 
-export async function gerQueryForType(singularType: string) {
+export async function gerQueryForType(
+  singularType: string,
+  omitFields: string[] = []
+) {
   const { fieldNames } = await getFieldnamesForType(singularType);
-  const query = gql`query QueryForType($id: ID) { item: ${singularType}(where: { id: $id }) { ${fieldNames?.join(" ")} }}`;
-  return { query, fieldNames };
+  const filteredFieldNames = fieldNames?.filter(
+    (fieldName) => !omitFields.includes(fieldName)
+  );
+  const query = gql`query QueryForType($id: ID) { item: ${singularType}(where: { id: $id }) { ${filteredFieldNames?.join(
+    " "
+  )} }}`;
+  return { query, fieldNames: filteredFieldNames };
 }
 
 export async function getFormQueryForType(
@@ -68,7 +78,9 @@ export async function getCreateMutationForType(
     )
     .join(", ");
 
-  const createMutation = gql`mutation Create${capitalizedType}(${mutationParamTypesString}) { create${capitalizedType}(data: {${mutationParamsString}}) { ${fieldNames?.join(" ")} } }`;
+  const createMutation = gql`mutation Create${capitalizedType}(${mutationParamTypesString}) { create${capitalizedType}(data: {${mutationParamsString}}) { ${fieldNames?.join(
+    " "
+  )} } }`;
   return createMutation;
 }
 
@@ -90,7 +102,9 @@ export async function getUpdateMutationForType(
     )
     .join(", ");
 
-  const updateMutation = gql`mutation Update${capitalizedType}(${mutationParamTypesString}) { update${capitalizedType}(where: {id: $id}, data: {${mutationParamsString}}) { ${fieldNames?.join(" ")} } }`;
+  const updateMutation = gql`mutation Update${capitalizedType}(${mutationParamTypesString}) { update${capitalizedType}(where: {id: $id}, data: {${mutationParamsString}}) { ${fieldNames?.join(
+    " "
+  )} } }`;
   return updateMutation;
 }
 

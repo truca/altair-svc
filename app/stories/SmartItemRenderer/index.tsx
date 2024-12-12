@@ -8,10 +8,11 @@ import ItemRenderer from "../ItemRenderer";
 interface SmartItemRendererProps {
   id: string;
   viewQuery: DocumentNode;
+  omitFields?: string[];
 }
 
 export function SmartItemRenderer(props: SmartItemRendererProps) {
-  const { id, viewQuery } = props;
+  const { id, viewQuery, omitFields = [] } = props;
 
   const { loading, error, data } = useQuery<any, { id?: string }>(viewQuery, {
     variables: { id },
@@ -20,16 +21,22 @@ export function SmartItemRenderer(props: SmartItemRendererProps) {
   if (loading) return <p>Loading...</p>;
   if (error) return <p>Error: {JSON.stringify(error)}</p>;
 
-  return <ItemRenderer item={data.item} />;
+  const baseItem = data.item;
+  const item = Object.keys(baseItem).reduce((acc: any, key: any) => {
+    if (!omitFields.includes(key)) acc[key] = baseItem[key];
+    return acc;
+  }, {});
+  return <ItemRenderer item={item} />;
 }
 
 interface SmartItemRendererWrapperProps {
   id: string;
-  entityType: string;
+  type: string;
+  omitFields?: string[];
 }
 
 export function SmartItemRendererWrapper(props: SmartItemRendererWrapperProps) {
-  const { id, entityType } = props;
+  const { id, type: entityType, omitFields = [] } = props;
   const [viewQuery, setViewQuery] = useState<DocumentNode | null>(null);
 
   useEffect(() => {
@@ -38,14 +45,19 @@ export function SmartItemRendererWrapper(props: SmartItemRendererWrapperProps) {
       const singularType = pluralize.isSingular(lowercaseEntityType)
         ? lowercaseEntityType
         : pluralize.singular(lowercaseEntityType);
-      const { query: tempQuery } = await gerQueryForType(singularType);
+      const { query: tempQuery } = await gerQueryForType(
+        singularType,
+        omitFields
+      );
       setViewQuery(tempQuery);
     })();
-  }, [id, entityType]);
+  }, [id, entityType, omitFields]);
 
   if (!viewQuery) return <p>Query Loading...</p>;
 
-  return <SmartItemRenderer id={id} viewQuery={viewQuery} />;
+  return (
+    <SmartItemRenderer id={id} viewQuery={viewQuery} omitFields={omitFields} />
+  );
 }
 
 export default SmartItemRendererWrapper;

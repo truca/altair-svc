@@ -1,9 +1,16 @@
 "use client";
 
-import { createContext, ReactNode, useContext, useState } from "react";
+import {
+  createContext,
+  ReactNode,
+  use,
+  useContext,
+  useEffect,
+  useState,
+} from "react";
 import { useHandleAuthStateChange } from "../components/LoginForm";
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
-import { gql, useMutation } from "@apollo/client";
+import { gql, useLazyQuery, useMutation, useQuery } from "@apollo/client";
 import { useCookies } from "../hooks/useCookies";
 
 const authenticationMutation = gql`
@@ -28,24 +35,70 @@ const authenticationMutation = gql`
   }
 `;
 
+const meQuery = gql`
+  query Me($uid: String) {
+    me(uid: $uid) {
+      id
+      uid
+      username
+      profilePicture
+      lat
+      lng
+      createdAt
+      updatedAt
+      favoriteWarbands {
+        id
+      }
+      favoriteCards {
+        id
+      }
+      collection {
+        id
+      }
+      participatedEvents {
+        id
+      }
+      wonMatches {
+        id
+      }
+      wonTournaments {
+        id
+      }
+    }
+  }
+`;
+
 interface AuthContextProps {
   user: any | null; // You can define a better User type
+  profile: any | null;
 }
 
-const AuthContext = createContext<AuthContextProps | undefined>(undefined);
+export const AuthContext = createContext<AuthContextProps | undefined>(
+  undefined
+);
 
-export const AuthProvider = ({ children }: { children: ReactNode }) => {
+export function AuthProvider({ children }: { children: ReactNode }) {
   const router = useRouter();
   const { cookies, setCookie } = useCookies();
-  const [user, setUser] = useState(null);
+  const [user, setUser] = useState<any | null>(null);
   const [mutate] = useMutation(authenticationMutation);
+
   const pathname = usePathname();
   const searchParams = useSearchParams();
 
+  const [getMe, { loading, data, error }] = useLazyQuery(meQuery);
+
+  useEffect(() => {
+    console.log("userr", { user });
+    if (user) {
+      getMe({ variables: { uid: user.uid } });
+    }
+  }, [user]);
+
   useHandleAuthStateChange({
     onLogin: async (user) => {
-      if (cookies?.token) return;
       setUser(user);
+      if (cookies?.token) return;
       const result = await mutate({ variables: { ...user } });
       setCookie("token", result.data.authenticate, 1);
 
@@ -63,9 +116,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   });
 
   return (
-    <AuthContext.Provider value={{ user }}>{children}</AuthContext.Provider>
+    <AuthContext.Provider value={{ user, profile: data?.me }}>
+      {children}
+    </AuthContext.Provider>
   );
-};
+}
 
 export const useAuth = () => {
   const context = useContext(AuthContext);

@@ -2,7 +2,11 @@
 
 import React, { useEffect, useState } from "react";
 import { useQuery, DocumentNode, useMutation } from "@apollo/client";
-import { getQueryForType, getRemoveMutationForType } from "./getQueriesForType";
+import {
+  getQueryForType,
+  getRemoveMutationForType,
+  Where,
+} from "./getQueriesForType";
 import {
   ButtonGroup,
   Button as ChakraButton,
@@ -20,6 +24,7 @@ import {
   useToast,
   Button,
   useDisclosure,
+  Box,
 } from "@chakra-ui/react";
 import {
   ChevronLeftIcon,
@@ -32,6 +37,8 @@ import pluralize from "pluralize";
 import SmartSideForm from "../SmartSideForm";
 import Sidebar from "../Sidebar";
 import SmartItemRenderer from "../SmartItemRenderer";
+import ItemRenderer from "../ItemRenderer";
+import { SectionsHash } from "@/app/components";
 
 export enum ControlType {
   PageSize,
@@ -55,7 +62,12 @@ export interface SmartListProps {
   initialPageSize?: number;
   subFormType?: SubFormType;
 
+  where: Where;
+
+  containerSx?: string;
   itemComponent?: string;
+  listContainerSx?: string;
+  bottomControlSx?: string;
 }
 
 function SmartList({
@@ -67,7 +79,13 @@ function SmartList({
   initialPageSize = 5,
   controls = [ControlType.Create, ControlType.Page, ControlType.PageSize],
   subFormType = SubFormType.Sidebar,
+
+  where,
+
+  containerSx,
   itemComponent,
+  listContainerSx,
+  bottomControlSx,
 }: SmartListProps) {
   const toast = useToast();
   const [page, setPage] = useState(initialPage);
@@ -89,8 +107,10 @@ function SmartList({
   const [hasSetMaxPages, setHasSetMaxPages] = useState(false);
   const { loading, error, data, refetch } = useQuery<
     any,
-    { page: number; pageSize: number; includeMaxPages: boolean }
-  >(query, { variables: { page, pageSize, includeMaxPages: !hasSetMaxPages } });
+    { page: number; pageSize: number; includeMaxPages: boolean; where: Where }
+  >(query, {
+    variables: { page, pageSize, includeMaxPages: !hasSetMaxPages, where },
+  });
   const [removeElement, { data: removeData }] = useMutation(removeMutation); // , { data, loading, error }
 
   useEffect(() => {
@@ -112,8 +132,11 @@ function SmartList({
   const hasCreateControl = controls.includes(ControlType.Create);
   const hasPageControl = controls.includes(ControlType.Page);
   const hasPageSizeControl = controls.includes(ControlType.PageSize);
+
+  const ItemComponent = itemComponent ? SectionsHash[itemComponent] : undefined;
+
   return (
-    <VStack>
+    <VStack style={containerSx}>
       {hasCreateControl && (
         <Button
           alignSelf="flex-end"
@@ -160,89 +183,98 @@ function SmartList({
           entityType={pluralType}
         />
       </Sidebar>
-      <TableContainer w="100%">
-        <Table variant="simple">
-          <Thead>
-            <Tr>
-              {fieldNames.map((fieldName) => (
-                <Th key={fieldName}>{fieldName}</Th>
-              ))}
-              <Th>Actions</Th>
-            </Tr>
-          </Thead>
-          <Tbody>
-            {data[pluralType].list.map((elem: any) => (
-              <Tr key={elem.id}>
+      {itemComponent && ItemComponent && (
+        <Box style={listContainerSx}>
+          {data[pluralType].list.map((elem: any) => (
+            <ItemComponent key={elem.id} {...elem} />
+          ))}
+        </Box>
+      )}
+      {!itemComponent && (
+        <TableContainer w="100%">
+          <Table variant="simple">
+            <Thead>
+              <Tr>
                 {fieldNames.map((fieldName) => (
-                  <Td key={fieldName}>{elem[fieldName]}</Td>
+                  <Th key={fieldName}>{fieldName}</Th>
                 ))}
-                <Td>
-                  <HStack spacing={4}>
-                    <IconButton
-                      size="sm"
-                      variant="outline"
-                      colorScheme="teal"
-                      aria-label="View"
-                      cursor="pointer"
-                      icon={<ViewIcon />}
-                      onClick={() => {
-                        onItemViewOpen();
-                        setSubFormDocumentId(elem.id);
-                      }}
-                    />
-                    <IconButton
-                      size="sm"
-                      variant="outline"
-                      colorScheme="teal"
-                      aria-label="Edit"
-                      cursor="pointer"
-                      icon={<EditIcon />}
-                      onClick={() => {
-                        onItemFormOpen();
-                        setSubFormDocumentId(elem.id);
-                      }}
-                    />
-                    <IconButton
-                      size="sm"
-                      variant="outline"
-                      colorScheme="red"
-                      aria-label="Remove"
-                      cursor="pointer"
-                      icon={<DeleteIcon />}
-                      onClick={async () => {
-                        const res = await removeElement({
-                          variables: { id: elem.id },
-                        });
-                        if (res.data.removed) {
-                          toast({
-                            title: "Element deleted.",
-                            description: "We've deleted the element for you.",
-                            status: "success",
-                            duration: 4000,
-                            isClosable: true,
-                          });
-                        } else {
-                          toast({
-                            title: "Element not deleted.",
-                            description:
-                              "We couldn't delete the element for you.",
-                            status: "error",
-                            duration: 4000,
-                            isClosable: true,
-                          });
-                        }
-                        refetch();
-                      }}
-                    />
-                  </HStack>
-                </Td>
+                <Th>Actions</Th>
               </Tr>
-            ))}
-          </Tbody>
-        </Table>
-      </TableContainer>
+            </Thead>
+            <Tbody>
+              {data[pluralType].list.map((elem: any) => (
+                <Tr key={elem.id}>
+                  {fieldNames.map((fieldName) => (
+                    <Td key={fieldName}>{elem[fieldName]}</Td>
+                  ))}
+                  <Td>
+                    <HStack spacing={4}>
+                      <IconButton
+                        size="sm"
+                        variant="outline"
+                        colorScheme="teal"
+                        aria-label="View"
+                        cursor="pointer"
+                        icon={<ViewIcon />}
+                        onClick={() => {
+                          onItemViewOpen();
+                          setSubFormDocumentId(elem.id);
+                        }}
+                      />
+                      <IconButton
+                        size="sm"
+                        variant="outline"
+                        colorScheme="teal"
+                        aria-label="Edit"
+                        cursor="pointer"
+                        icon={<EditIcon />}
+                        onClick={() => {
+                          onItemFormOpen();
+                          setSubFormDocumentId(elem.id);
+                        }}
+                      />
+                      <IconButton
+                        size="sm"
+                        variant="outline"
+                        colorScheme="red"
+                        aria-label="Remove"
+                        cursor="pointer"
+                        icon={<DeleteIcon />}
+                        onClick={async () => {
+                          const res = await removeElement({
+                            variables: { id: elem.id },
+                          });
+                          if (res.data.removed) {
+                            toast({
+                              title: "Element deleted.",
+                              description: "We've deleted the element for you.",
+                              status: "success",
+                              duration: 4000,
+                              isClosable: true,
+                            });
+                          } else {
+                            toast({
+                              title: "Element not deleted.",
+                              description:
+                                "We couldn't delete the element for you.",
+                              status: "error",
+                              duration: 4000,
+                              isClosable: true,
+                            });
+                          }
+                          refetch();
+                        }}
+                      />
+                    </HStack>
+                  </Td>
+                </Tr>
+              ))}
+            </Tbody>
+          </Table>
+        </TableContainer>
+      )}
       {hasControls && (
-        <HStack spacing={4} alignSelf="flex-end">
+        <HStack spacing={4} alignSelf="flex-end" style={bottomControlSx}>
           {hasPageSizeControl && (
             <Select
               size="sm"
@@ -339,28 +371,32 @@ export interface SmartListWrapperProps
   > {
   // singularType: string;
   entityType: string;
+  fieldNames?: string[];
 }
 
 export function SmartListWrapper(props: SmartListWrapperProps) {
-  const { entityType: singularType } = props;
+  const { entityType: singularType, fieldNames: fieldNamesProp, where } = props;
   const pluralType = pluralize(singularType);
   const [query, setQuery] = useState<DocumentNode | null>(null);
   const [removeMutation, setRemoveMutation] = useState<DocumentNode | null>(
     null
   );
-  const [fieldNames, setFieldNames] = useState<string[]>([]);
+  const [fieldNames, setFieldNames] = useState<string[]>(fieldNamesProp ?? []);
 
   useEffect(() => {
     (async () => {
-      const { query: tempQuery, fieldNames } =
-        await getQueryForType(pluralType);
-      setQuery(tempQuery);
-      setFieldNames(fieldNames ?? []);
+      const { query: tempQuery, fieldNames } = await getQueryForType(
+        pluralType,
+        singularType,
+        where
+      );
+      setQuery(tempQuery as any);
+      if (!fieldNamesProp) setFieldNames(fieldNames ?? []);
       const { removeMutation: tempRemoveMutation } =
         getRemoveMutationForType(singularType);
       setRemoveMutation(tempRemoveMutation);
     })();
-  }, [pluralType, singularType]);
+  }, [pluralType, singularType, fieldNamesProp, where]);
 
   if (!query || !removeMutation) return <p>Query Loading...</p>;
 

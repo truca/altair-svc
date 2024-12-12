@@ -44,6 +44,16 @@ const initialState = (
       ctx: {
         query: meQuery,
         type: "horizontal",
+        style: {
+          width: "calc(100vw - 256px)",
+          margin: "20px 0 40px",
+          display: "flex",
+          gap: 6,
+          flexFlow: "wrap",
+          padding: 8,
+          justifyContent: "center",
+          alignItems: "center",
+        },
         itemsSelector: "me.favoriteCards",
         component: "Card",
         variables: { uid },

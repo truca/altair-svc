@@ -51,7 +51,6 @@ export function QueryList<Item>(props: QueryListProps<Item>) {
     variables ? { variables } : undefined
   );
 
-  console.log({ data, variables, loading, error });
   if (loading) return <div>Loading...</div>;
   if (error) return <div>Error: {error.message}</div>;
 

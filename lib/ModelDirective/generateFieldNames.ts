@@ -2,10 +2,7 @@
 import * as pluralize from "pluralize";
 
 const pascalCase = (name: string) => {
-  return name.replace(
-    /(\w)(\w*)/g,
-    (g0, g1, g2) => g1.toUpperCase() + g2.toLowerCase()
-  );
+  return name.replace(/(\w)(\w*)/g, (g0, g1, g2) => g1.toUpperCase() + g2);
 };
 
 function camelCase(name: string) {

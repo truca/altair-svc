@@ -124,8 +124,10 @@ const typeDefinitions = /* GraphQL */ `
     userId: ID!
     name: String!
     totalCost: Float!
-    isPublic: Boolean!
-    isFinished: Boolean!
+    isPublic: Boolean
+    isFinished: Boolean
+    guildUpgradePoints: Float
+    guildUpgrades: [WarbandGuildUpgrade]
     isDraftWarband: Boolean! # If the warband was created through the draft system
     clonedFrom: ID # ID of the warband this one was cloned from
     createdAt: DateTime!
@@ -141,11 +143,27 @@ const typeDefinitions = /* GraphQL */ `
     count: Float
   }
 
+  type GuildUpgrade @model {
+    name: String!
+    isUnique: Boolean
+    allowsTags: [String] # Tags that can be added to the warband
+    allowsTagsLimited: Boolean # If it can add a single card with the tag or infinite
+    description: String
+    cost: Float!
+    image: String @file(maxSize: 1000000, types: ["image/jpeg", "image/png"]) # URL to the upgrade image
+  }
+
+  type WarbandGuildUpgrade {
+    guildUpgrade: GuildUpgrade
+    count: Float
+  }
+
   # Represents a single card. Supports: Card Database, Card Filtering and Search, Cost-Building Suggestions, Card Rarity System, Feedback and Rating System.
   type Card @model @auth(read: ["public"]) {
     name: String!
     description: String
     faction: String
+    tags: [String] # Tags for filtering: cavalry, hero, glorious hero, beast, spell, spell type and rank ("animancy 3") etc.
     cost: Float!
     image: String @file(maxSize: 1000000, types: ["image/jpeg", "image/png"]) # URL to the card image
     frequency: Float! # How often added to warbands

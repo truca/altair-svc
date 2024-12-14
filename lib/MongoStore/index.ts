@@ -272,8 +272,15 @@ export class MongoStore implements Store {
   private handleCommaFilters(filters: any) {
     return Object.keys(filters).forEach((key) => {
       if (key === "id" || key === "_id") return;
-      if (typeof filters[key] === "string" && filters[key].includes(",")) {
+      const hasComma =
+        typeof filters[key] === "string" && filters[key].includes(",");
+      if (hasComma) {
         filters[key] = { $in: filters[key].split(",") };
+      }
+      const hasCodifiedComma =
+        typeof filters[key] === "string" && filters[key].includes("%2C");
+      if (hasCodifiedComma) {
+        filters[key] = { $in: filters[key].split("%2C") };
       }
     });
   }

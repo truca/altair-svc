@@ -29,6 +29,8 @@ export function ItemRenderer({ isCard, item }: Props) {
     ? { borderWidth: "1px", borderRadius: "lg", boxShadow: "md" }
     : { borderWidth: "0", borderRadius: "0", boxShadow: "none" };
 
+  if (!item || typeof item !== "object") return null;
+
   return (
     <Box maxW="md" overflow="hidden" p="6" {...styles}>
       <VStack

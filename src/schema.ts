@@ -125,12 +125,20 @@ const typeDefinitions = /* GraphQL */ `
     name: String!
     totalCost: Float!
     isPublic: Boolean!
+    isFinished: Boolean!
+    isDraftWarband: Boolean! # If the warband was created through the draft system
+    clonedFrom: ID # ID of the warband this one was cloned from
     createdAt: DateTime!
-    updatedAt: DateTime!
-    cards: [Card]
+    updatedAt: DateTime
+    cards: [WarbandCard] # Cards in the warband
     favoritedCount: Float! # Number of times favorited
     playedCount: Float! # Number of times played
     comments: [Comment] # Comments about this warband
+  }
+
+  type WarbandCard {
+    card: Card
+    count: Float
   }
 
   # Represents a single card. Supports: Card Database, Card Filtering and Search, Cost-Building Suggestions, Card Rarity System, Feedback and Rating System.
@@ -146,7 +154,7 @@ const typeDefinitions = /* GraphQL */ `
   }
 
   # Represents a comment, used for feedback on cards and warbands. Supports: Feedback and Rating System, In-App Messaging.
-  type Comment @model {
+  type Comment @model @auth(create: ["public"], read: ["public"]) {
     userId: ID!
     warbandId: ID
     cardId: ID

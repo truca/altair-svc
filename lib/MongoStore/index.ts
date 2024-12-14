@@ -256,14 +256,25 @@ export class MongoStore implements Store {
       return null;
     }
     if (!object.id) {
-      return object;
+      const clonedObject = cloneDeep(object);
+      this.handleCommaFilters(clonedObject);
+      return clonedObject;
     }
     const clonedObject = cloneDeep(object);
+    this.handleCommaFilters(clonedObject);
     clonedObject._id = new mongoose.Types.ObjectId(clonedObject.id);
     delete clonedObject.id;
     return clonedObject;
   }
   private getModel(modelName: string) {
     return this.db.model(modelName, schema);
+  }
+  private handleCommaFilters(filters: any) {
+    return Object.keys(filters).forEach((key) => {
+      if (key === "id" || key === "_id") return;
+      if (typeof filters[key] === "string" && filters[key].includes(",")) {
+        filters[key] = { $in: filters[key].split(",") };
+      }
+    });
   }
 }

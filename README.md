@@ -71,4 +71,7 @@ AuthZ has 2 components: static and entity based. static is when the permission d
 
 it has 2 expirations: one for the cookie, and another in the expiresIn param, which is the one that matters because it can't be modified by the user. We just added the cookie expiration so that in most cases where the access token is expired, we're simply going to not receive it, so there's less things to check
 
-###
+### Features
+
+- Multi value filter:
+  - { faction: "chaos,corruption" }: filter with either of these values

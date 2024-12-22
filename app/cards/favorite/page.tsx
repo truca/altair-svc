@@ -7,7 +7,7 @@ import {
   PageState,
   usePageContextReducer,
 } from "../../contexts/PageContext";
-import { sidebarCtx, smartListCtx } from "../constants";
+import { sidebarCtx } from "../../constants";
 import { gql } from "@apollo/client";
 
 const meQuery = gql`

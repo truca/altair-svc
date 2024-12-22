@@ -103,8 +103,9 @@ export async function visitNestedModels({
     const field = getNamedType(type.getFields()[key]) as any;
 
     let fieldType = getNamedType(field?.type);
+    const hasModelDirective = hasDirective("model", fieldType);
 
-    if (isPlainObject(value) && hasDirective("model", fieldType)) {
+    if (hasModelDirective && isPlainObject(value)) {
       const info = selectedFieldsHash[key];
       const foundObject = await modelFunction(fieldType, value, info);
       res[key] = foundObject;
@@ -142,7 +143,10 @@ export async function visitNestedModels({
 
       for (const v of value) {
         const info = selectedFieldsHash[key];
-        const foundObject = await modelFunction(fieldType, v, info);
+        let foundObject = v;
+        if (hasModelDirective) {
+          foundObject = await modelFunction(fieldType, v, info);
+        }
         createdObjects.push(foundObject);
       }
 

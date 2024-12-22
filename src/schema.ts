@@ -143,14 +143,24 @@ const typeDefinitions = /* GraphQL */ `
     count: Float
   }
 
-  type GuildUpgrade @model {
+  type GuildUpgrade @model @auth(read: ["public"]) {
     name: String!
     isUnique: Boolean
     allowsTags: [String] # Tags that can be added to the warband
-    allowsTagsLimited: Boolean # If it can add a single card with the tag or infinite
+    allowsTagsMax: Float # Max amount of tags that can be added
     description: String
+    options: [GuildUpgradeOption]
     cost: Float!
     image: String @file(maxSize: 1000000, types: ["image/jpeg", "image/png"]) # URL to the upgrade image
+    isExclusiveToCampaigns: Boolean
+  }
+
+  type GuildUpgradeOption {
+    name: String!
+    allowsTags: [String] # Tags that can be added to the warband
+    allowsTagsMax: Float # Max amount of tags that can be added
+    description: String
+    cost: Float
   }
 
   type WarbandGuildUpgrade {

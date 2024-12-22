@@ -38,6 +38,10 @@ Commands:
 
 ## File transfer
 
+### Create card
+
+curl -X POST -F 'operations={"query":"mutation CreateCard($faction: String, $file: File!) { createCard( data: {name: \"card\", description: \"description\", faction: $faction, cost: 7, image: $file, frequency: 0, favoritedCount: 0, comments: []} ) { id } }","variables":{"faction":"chaos","file":null}}' -F 'map={"0":["variables.file"]}' -F '0=@uploads/Chaos_AG_Units000_card_0_0_resized_400_50.png' http://localhost:4000/graphql
+
 ### Read file
 
 curl localhost:4000/graphql \
@@ -75,3 +79,8 @@ it has 2 expirations: one for the cookie, and another in the expiresIn param, wh
 
 - Multi value filter:
   - { faction: "chaos,corruption" }: filter with either of these values
+
+### Python
+
+python3 resize.py
+python3 utils/upload.py

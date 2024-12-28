@@ -111,6 +111,13 @@ export class MongoStore implements Store {
 
     let maxPages: number | null = null;
     if (includeMaxPages) {
+      console.log({
+        match: JSON.stringify({
+          ...findOneParams,
+          ...permissionFilters,
+          deletedAt: null,
+        }),
+      });
       const count = await model.aggregate([
         {
           $match: { ...findOneParams, ...permissionFilters, deletedAt: null },
@@ -124,6 +131,13 @@ export class MongoStore implements Store {
       console.log({ count: results, pageSize, maxPages });
     }
 
+    console.log({
+      match: JSON.stringify({
+        ...findOneParams,
+        ...permissionFilters,
+        deletedAt: null,
+      }),
+    });
     const res = await model
       .find({ ...findOneParams, ...permissionFilters, deletedAt: null })
       .skip((page - 1) * pageSize)

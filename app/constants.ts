@@ -2,6 +2,10 @@ export const noop = () => {};
 
 import { SmartFormWrapperProps } from "./stories/SmartForm";
 
+export const baseUrl = process.env.SERVICE
+  ? process.env.SERVICE
+  : "http://localhost:4000";
+
 export const smartListCtx: any = {
   entityType: "card",
   fieldNames: ["id", "faction", "image"],
@@ -26,6 +30,10 @@ export const smartListCtx: any = {
   bottomControlSx: {
     alignSelf: "center",
   },
+  itemMap: (option: any) => ({
+    ...option,
+    image: baseUrl + "/" + option.image,
+  }),
 };
 
 export const sidebarCtx = {
@@ -50,6 +58,7 @@ export const sidebarCtx = {
     {
       name: "Warbands",
       subsections: [
+        { name: "Create", link: "/warbands/create" },
         { name: "Favorites", link: "/warbands/favorite" },
         { name: "Personal", link: "/warbands/personal" },
         { name: "Public", link: "/warbands/public" },

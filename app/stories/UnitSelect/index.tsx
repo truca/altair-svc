@@ -1,7 +1,7 @@
 import React, { useCallback, useMemo, useState } from "react";
 import { Card, VStack } from "@chakra-ui/react";
 import { UseFormGetValues } from "react-hook-form";
-import { smartListCtx } from "@/app/constants";
+import { baseUrl, smartListCtx } from "@/app/constants";
 import { SectionsHash } from "@/app/components";
 
 interface TagsWithTimes {
@@ -168,10 +168,6 @@ function UnitSelect({
   );
 
   const SmartList = SectionsHash["SmartList"];
-
-  const baseUrl = process.env.SERVICE
-    ? process.env.SERVICE
-    : "http://localhost:4000";
 
   return (
     <VStack spacing={5}>

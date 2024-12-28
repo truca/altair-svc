@@ -37,27 +37,27 @@ export const GUs = [
       "Choose an adjacent Force; from now on you are allowed to recruit from this Force.",
     options: [
       {
-        name: "Diplomatic Deal: Chaos",
+        name: "Diplomatic Deal (Chaos)",
         allowsTags: ["chaos"],
         cost: 1,
       },
       {
-        name: "Diplomatic Deal: Order",
+        name: "Diplomatic Deal (Order)",
         allowsTags: ["order"],
         cost: 1,
       },
       {
-        name: "Diplomatic Deal: Wild",
+        name: "Diplomatic Deal (Wild)",
         allowsTags: ["wild"],
         cost: 1,
       },
       {
-        name: "Diplomatic Deal: Fortitude",
+        name: "Diplomatic Deal (Fortitude)",
         allowsTags: ["fortitude"],
         cost: 1,
       },
       {
-        name: "Diplomatic Deal: Corruption",
+        name: "Diplomatic Deal (Corruption)",
         allowsTags: ["corruption"],
         cost: 1,
       },

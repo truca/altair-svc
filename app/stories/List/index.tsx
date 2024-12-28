@@ -8,6 +8,8 @@ import _ from "lodash";
 export interface ListProps<Item> extends StackProps {
   type: "horizontal" | "vertical";
   items: Item[];
+  itemProps?: any;
+  itemMap?: (item: Item) => any;
   component: string | React.FunctionComponent<Item & { key: string | number }>;
 }
 
@@ -55,5 +57,6 @@ export function QueryList<Item>(props: QueryListProps<Item>) {
   if (error) return <div>Error: {error.message}</div>;
 
   const items = _.get(data, props.itemsSelector);
-  return <List {...props} items={items} />;
+  const itemsMapped = props.itemMap ? items.map(props.itemMap) : items;
+  return <List {...props} items={itemsMapped} {...props.itemProps} />;
 }

@@ -39,6 +39,7 @@ import SmartItemRendererWrapper from "../stories/SmartItemRenderer";
 import { FaIcon } from "../stories/Text/FaIcon";
 import { useAuth } from "../contexts/AuthProvider";
 import { List, QueryList } from "../stories/List";
+import { baseUrl } from "../constants";
 
 interface CommonPageProps {
   page: IPage;
@@ -448,10 +449,6 @@ function Card({
   const { dispatch } = useContext(PageContext);
   const { profile } = useAuth();
   const [addCardToFavorites] = useMutation(addCardToFavoritesMutation);
-
-  const baseUrl = process.env.SERVICE
-    ? process.env.SERVICE
-    : "http://localhost:4000";
 
   const favoriteCards = (profile?.favoriteCards || []).map(
     (card: { id: string }) => ({

@@ -7,7 +7,7 @@ import {
   PageState,
   usePageContextReducer,
 } from "../../contexts/PageContext";
-import { sidebarCtx } from "../../constants";
+import { baseUrl, sidebarCtx } from "../../constants";
 import { gql } from "@apollo/client";
 
 const meQuery = gql`
@@ -57,6 +57,10 @@ const initialState = (
         itemsSelector: "me.favoriteCards",
         component: "Card",
         variables: { uid },
+        itemMap: (option: any) => ({
+          ...option,
+          image: baseUrl + "/" + option.image,
+        }),
       },
     },
   },

@@ -126,7 +126,7 @@ function SmartList({
     if (itemMap) {
       return data?.[pluralType]?.list?.map(itemMap);
     }
-    return data[pluralType].list;
+    return data?.[pluralType]?.list;
   }, [data, itemMap, pluralType]);
 
   if (loading) return <p>Loading...</p>;

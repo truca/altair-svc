@@ -103,17 +103,19 @@ function UnitSelect({
   }, [selectedUnits]);
 
   const maxGloryPoints = values.glory_points || 0;
-  const hasReachedLimit = usedGloryPoints >= maxGloryPoints;
-  const availableGuildUpgrades = maxGloryPoints - usedGloryPoints;
+  // const hasReachedLimit = usedGloryPoints >= maxGloryPoints;
+  // const availableGuildUpgrades = maxGloryPoints - usedGloryPoints;
 
-  // const allowedTags = getAllowedTagsAndTimesFromSelectedGuildUpgrades(
-  //   values.guild_upgrades,
-  //   allOptions
-  // );
-  const allowedTags = getTagsAndTimesFromSelectedGuildUpgrades(
+  const tagsWithTimes = getTagsAndTimesFromSelectedGuildUpgrades(
     values.guild_upgrades
   );
-  console.log({ values, allowedTags });
+  const faction = values.faction;
+  const baseTags = [...tagsWithTimes.map((t) => t.tags).flat()];
+  const baseTagsMapped = baseTags.map((tag) =>
+    tag === "hero" ? `hero,${faction}` : tag
+  );
+  const tagsFilter = [...baseTagsMapped, faction];
+  console.log({ values, tagsWithTimes, faction });
 
   const onIncrease = useCallback(
     (id: string, cost: number) => {
@@ -196,7 +198,9 @@ function UnitSelect({
           onIncrease,
           onDecrease,
         }}
-        where={{}}
+        where={{
+          tags: tagsFilter,
+        }}
       />
     </VStack>
   );

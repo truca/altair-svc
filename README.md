@@ -3,9 +3,12 @@
 ## Mongo
 
 - Use docker to install and run mongodb: https://www.mongodb.com/docs/manual/tutorial/install-mongodb-community-with-docker/
+
   - start docker container: docker run --name mongodb -p 27017:27017 -d mongodb/mongodb-community-server:latest
   - check if docker started: docker container ls
   - connect to docker: mongosh --port 27017
+
+- For arrays filters in where, they're used as "OR", unless you send an element like ["hero,wild"], then it's going to join them as an AND
 
 ## Kafka
 

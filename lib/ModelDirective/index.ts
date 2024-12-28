@@ -298,7 +298,7 @@ export class ModelDirective extends SchemaDirectiveVisitor {
         ),
       };
 
-      console.log({ results });
+      console.log({ results, where: args.where });
       return results;
     };
   }

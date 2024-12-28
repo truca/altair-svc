@@ -40,11 +40,7 @@ import SmartItemRenderer from "../SmartItemRenderer";
 import ItemRenderer from "../ItemRenderer";
 import { SectionsHash } from "@/app/components";
 
-export enum ControlType {
-  PageSize,
-  Page,
-  Create,
-}
+export type ControlType = "page" | "pageSize" | "create";
 
 export enum SubFormType {
   Sidebar = "sidebar",
@@ -62,12 +58,14 @@ export interface SmartListProps {
   initialPageSize?: number;
   subFormType?: SubFormType;
 
-  where: Where;
+  where?: Where;
 
-  containerSx?: string;
+  itemProps?: any;
+
+  containerSx?: React.CSSProperties | undefined;
   itemComponent?: string;
-  listContainerSx?: string;
-  bottomControlSx?: string;
+  listContainerSx?: React.CSSProperties | undefined;
+  bottomControlSx?: React.CSSProperties | undefined;
 }
 
 function SmartList({
@@ -77,10 +75,12 @@ function SmartList({
   fieldNames,
   initialPage = 1,
   initialPageSize = 5,
-  controls = [ControlType.Create, ControlType.Page, ControlType.PageSize],
+  controls = ["create", "page", "pageSize"],
   subFormType = SubFormType.Sidebar,
 
-  where,
+  where = {},
+
+  itemProps,
 
   containerSx,
   itemComponent,
@@ -129,9 +129,9 @@ function SmartList({
   const isSecondLastOrLastPage = page >= maxPages - 1;
 
   const hasControls = Boolean(controls.length);
-  const hasCreateControl = controls.includes(ControlType.Create);
-  const hasPageControl = controls.includes(ControlType.Page);
-  const hasPageSizeControl = controls.includes(ControlType.PageSize);
+  const hasCreateControl = controls.includes("create");
+  const hasPageControl = controls.includes("page");
+  const hasPageSizeControl = controls.includes("pageSize");
 
   const ItemComponent = itemComponent ? SectionsHash[itemComponent] : undefined;
 
@@ -178,15 +178,12 @@ function SmartList({
         }}
       />
       <Sidebar isOpen={isItemViewOpen} onClose={onItemViewClose}>
-        <SmartItemRenderer
-          id={subFormDocumentId as any}
-          entityType={pluralType}
-        />
+        <SmartItemRenderer id={subFormDocumentId as any} type={pluralType} />
       </Sidebar>
       {itemComponent && ItemComponent && (
         <Box style={listContainerSx}>
           {data[pluralType].list.map((elem: any) => (
-            <ItemComponent key={elem.id} {...elem} />
+            <ItemComponent key={elem.id} {...itemProps} {...elem} />
           ))}
         </Box>
       )}

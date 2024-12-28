@@ -20,7 +20,6 @@ import {
   ModalContent,
 } from "@chakra-ui/react";
 import { FaCheckDouble, FaPlus, FaPaperPlane } from "react-icons/fa";
-import { useParams, useRouter } from "next/navigation";
 
 import cn from "classnames";
 import { CHATS, MESSAGES_AND_EXPENSES } from "./constants";
@@ -284,167 +283,6 @@ const chatList: Chat[] = [
   },
 ];
 
-function ChatList() {
-  const router = useRouter();
-  const params = useParams();
-  const selectedChatId = params.chatId;
-
-  const handleChatClick = (id: string) => {
-    router.push(`/chats/${id}`); // Update URL with selected chat ID
-  };
-
-  return (
-    <VStack
-      spacing={0}
-      className="w-full max-w-md mx-auto bg-white shadow-md overflow-hidden"
-    >
-      {chatList.map((chat, index) => (
-        <React.Fragment key={chat.id}>
-          <Box
-            onClick={() => handleChatClick(chat.id)}
-            className="w-full cursor-pointer"
-            _hover={{ bg: "gray.100" }}
-            bg={selectedChatId === chat.id ? "blue.50" : "white"}
-            p={4}
-          >
-            <HStack spacing={4} className="flex w-full items-center">
-              <Avatar name={chat.name} src={chat.avatarUrl} size="md" />
-              <Box flex="1" className="flex flex-col space-y-1">
-                <HStack justify="space-between">
-                  <Text
-                    fontSize="md"
-                    fontWeight="bold"
-                    color={selectedChatId === chat.id ? "blue.600" : "black"}
-                  >
-                    {chat.name}
-                  </Text>
-                  <Text fontSize="sm" color="gray.500">
-                    {chat.time}
-                  </Text>
-                </HStack>
-                <HStack>
-                  {chat.isRead && <FaCheckDouble color="green" />}
-                  <Text
-                    fontSize="sm"
-                    color={selectedChatId === chat.id ? "blue.600" : "gray.600"}
-                    noOfLines={1}
-                  >
-                    {chat.message}
-                  </Text>
-                </HStack>
-              </Box>
-            </HStack>
-          </Box>
-          {index < chatList.length - 1 && <Divider />}
-        </React.Fragment>
-      ))}
-    </VStack>
-  );
-}
-
-function ChatHistory() {
-  const params = useParams();
-  const selectedChatId = params.chatId as string;
-
-  const currentUserId = "123e4567-e89b-12d3-a456-426614174001";
-  const messages = CHATS[selectedChatId] || MESSAGES_AND_EXPENSES;
-
-  const chatContainerRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (chatContainerRef.current) {
-      // Scroll to the bottom of the chat container
-      chatContainerRef.current.scrollTop =
-        chatContainerRef.current.scrollHeight;
-    }
-  }, [selectedChatId]);
-
-  return (
-    <VStack className="w-full !gap-0 bg-white shadow-md">
-      {/* Messages, Expenses, and Payments Display */}
-      <VStack
-        ref={chatContainerRef}
-        spacing={2}
-        className="w-full p-4 overflow-y-scroll"
-        align="stretch"
-      >
-        {messages.map((item) => {
-          if ("content" in item) {
-            // It's a Message
-            return (
-              <Box
-                key={item.id}
-                bg="gray.100"
-                p={3}
-                borderRadius="md"
-                boxShadow="sm"
-                className={cn("max-w-xl", "min-w-80", {
-                  ["self-end"]: item.senderId === currentUserId,
-                })}
-              >
-                <HStack spacing={3}>
-                  <Avatar name={item.sender} size="sm" />
-                  <VStack align="start">
-                    <Text fontWeight="bold">{item.sender}</Text>
-                    <Text fontSize="sm" color="gray.500">
-                      {new Date(item.timestamp).toLocaleString()}
-                    </Text>
-                    <Text>{item.content}</Text>
-                  </VStack>
-                </HStack>
-              </Box>
-            );
-          } else if ("name" in item) {
-            // It's an Expense
-            return (
-              <Box
-                key={item.id}
-                p={4}
-                borderWidth={1}
-                borderRadius="md"
-                borderColor="gray.200"
-                bg="yellow.50"
-                className="max-w-xl"
-              >
-                <HStack justify="space-between">
-                  <Text fontWeight="bold">{item.name}</Text>
-                  <Text color="green.500">${item.amount.toFixed(2)}</Text>
-                </HStack>
-                <Text color="gray.500">
-                  Created by: {item.sender} on{" "}
-                  {new Date(item.timestamp).toLocaleDateString()}
-                </Text>
-                <Button mt={2} colorScheme="teal" size="sm">
-                  View Details
-                </Button>
-              </Box>
-            );
-          } else {
-            // It's a Payment Event
-            return (
-              <Box
-                key={item.id}
-                p={1}
-                borderRadius="md"
-                bg="gray.200" // Light gray background
-                mb={1}
-                width="fit-content" // Restrict width to content
-                mx="auto" // Center the box
-              >
-                <Text fontSize="xs" textAlign="center" color="gray.600">
-                  {item.user} paid ${item.amount.toFixed(2)} on{" "}
-                  {new Date(item.timestamp).toLocaleDateString()}
-                </Text>
-              </Box>
-            );
-          }
-        })}
-      </VStack>
-      <MessageInput chatId={selectedChatId} />
-    </VStack>
-  );
-}
-
 const createMessageMutation = gql`
   mutation createMessage($text: String, $chatId: ID) {
     createMessage(data: { text: $text, chat: { id: $chatId } }) {
@@ -586,9 +424,17 @@ interface CardProps {
   // the amount of this card owned
   amount?: number;
   showAmountControls?: boolean;
+  showHeart?: boolean;
 }
 
-function Card({ id, faction, image, amount, showAmountControls }: CardProps) {
+function Card({
+  id,
+  faction,
+  image,
+  amount,
+  showAmountControls,
+  showHeart = true,
+}: CardProps) {
   const { dispatch } = useContext(PageContext);
   const { profile } = useAuth();
   const [addCardToFavorites] = useMutation(addCardToFavoritesMutation);
@@ -661,31 +507,33 @@ function Card({ id, faction, image, amount, showAmountControls }: CardProps) {
             </Button>
           </>
         ) : null}
-        <Button
-          rounded="full"
-          variant="solid"
-          colorScheme={isFavorited ? "red" : "gray"}
-          padding={0}
-          className={cn(
-            { "!bg-red-400 hover:!bg-red-300": isFavorited },
-            "!bg-red-300 hover:!bg-red-400 !text-white"
-          )}
-          onClick={(e) => {
-            e.stopPropagation();
-            addCardToFavorites({
-              variables: {
-                id: profile?.id,
-                favoriteCards: isFavorited
-                  ? favoriteCards?.filter(
-                      (card: { id: string }) => card.id !== id
-                    )
-                  : [...favoriteCards, { id }],
-              },
-            });
-          }}
-        >
-          <FaIcon icon="FaHeart" />
-        </Button>
+        {showHeart && (
+          <Button
+            rounded="full"
+            variant="solid"
+            colorScheme={isFavorited ? "red" : "gray"}
+            padding={0}
+            className={cn(
+              { "!bg-red-400 hover:!bg-red-300": isFavorited },
+              "!bg-red-300 hover:!bg-red-400 !text-white"
+            )}
+            onClick={(e) => {
+              e.stopPropagation();
+              addCardToFavorites({
+                variables: {
+                  id: profile?.id,
+                  favoriteCards: isFavorited
+                    ? favoriteCards?.filter(
+                        (card: { id: string }) => card.id !== id
+                      )
+                    : [...favoriteCards, { id }],
+                },
+              });
+            }}
+          >
+            <FaIcon icon="FaHeart" />
+          </Button>
+        )}
       </HStack>
     </Box>
   );
@@ -698,8 +546,6 @@ export const SectionsHash: {
   User,
   Content,
   LinkSidebar,
-  ChatList,
-  ChatHistory,
   Form,
   SmartList: SmartListWrapper,
   SmartItem: SmartItemRendererWrapper,

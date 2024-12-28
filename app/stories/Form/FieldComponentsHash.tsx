@@ -11,6 +11,10 @@ import {
   FormControl,
 } from "@chakra-ui/react";
 import { FieldType, InternalField } from "./types";
+import GuildUpgradesSelect from "../GuildUpgradesSelect";
+import { GUs } from "../GuildUpgradesSelect/GuildUpgradesSelect.stories";
+import { Control, Controller, UseFormGetValues } from "react-hook-form";
+import UnitSelect from "../UnitSelect";
 
 export const createSyntheticEvent = <T extends Element, E extends Event>(
   event: E
@@ -46,10 +50,72 @@ export const createSyntheticEvent = <T extends Element, E extends Event>(
 
 interface FieldComponentProps {
   field: InternalField;
+  control?: Control<{}, any>;
+  getValues?: UseFormGetValues<{}>;
 }
 export const FieldComponentsHash: {
-  [key in FieldType]: React.FunctionComponent<FieldComponentProps>;
+  [key in FieldType | string]: React.FunctionComponent<FieldComponentProps>;
 } = {
+  GuildUpgradesSelect: ({ field, control, getValues }: FieldComponentProps) => {
+    return (
+      <FormControl
+        isInvalid={Boolean(field.error?.message)}
+        sx={field.sx}
+        alignItems="flex-start"
+      >
+        <Controller
+          name={field.id as never}
+          control={control}
+          render={({ field: { onChange, value } }) => (
+            <GuildUpgradesSelect
+              id={field.id}
+              getValues={getValues}
+              values={{ guild_upgrade_points: 5 }}
+              options={GUs.map((gu) => ({
+                label: gu.name,
+                value: gu.name,
+                base: gu,
+              }))}
+              {...field.register(field.id)}
+              {...field.inputProps}
+              onChange={onChange}
+              value={value}
+            />
+          )}
+        />
+      </FormControl>
+    );
+  },
+  UnitSelect: ({ field, control, getValues }: FieldComponentProps) => {
+    return (
+      <FormControl
+        isInvalid={Boolean(field.error?.message)}
+        sx={field.sx}
+        alignItems="flex-start"
+      >
+        <Controller
+          name={field.id as never}
+          control={control}
+          render={({ field: { onChange, value } }) => (
+            <UnitSelect
+              id={field.id}
+              getValues={getValues}
+              values={{ guild_upgrade_points: 5 }}
+              options={GUs.map((gu) => ({
+                label: gu.name,
+                value: gu.name,
+                base: gu,
+              }))}
+              {...field.register(field.id)}
+              {...field.inputProps}
+              onChange={onChange}
+              value={value}
+            />
+          )}
+        />
+      </FormControl>
+    );
+  },
   [FieldType.TEXT]: ({ field }: FieldComponentProps) => (
     <FormControl
       isInvalid={Boolean(field.error?.message)}

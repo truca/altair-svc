@@ -1,7 +1,7 @@
 import React from "react";
 import type { Meta, StoryObj } from "@storybook/react";
 import { ThemeProvider, theme } from "@chakra-ui/react";
-import { ControlType, SmartListWrapper as SmartList } from "./index";
+import { SmartListWrapper as SmartList } from "./index";
 import { ApolloClient, ApolloProvider, InMemoryCache } from "@apollo/client";
 
 const meta: Meta<typeof SmartList> = {
@@ -36,7 +36,7 @@ export const BaseSmartList: Story = {
 export const SmartListWithControls: Story = {
   args: {
     entityType: "book",
-    controls: [ControlType.Page],
+    controls: ["page"],
   },
   decorators: [Wrapper],
 };
@@ -46,7 +46,7 @@ export const SmartListWithInitialPageAndPageSize: Story = {
     entityType: "book",
     initialPage: 2,
     initialPageSize: 10,
-    controls: [ControlType.Page, ControlType.PageSize],
+    controls: ["page", "pageSize"],
   },
   decorators: [Wrapper],
 };

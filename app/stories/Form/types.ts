@@ -12,6 +12,7 @@ export enum FieldType {
   CHECKBOX = "checkbox",
   RADIO = "radio",
 
+  MULTISELECT = "multiselect",
   FILE = "file",
 
   HIDDEN = "hidden",
@@ -37,7 +38,7 @@ export enum Direction {
 }
 
 export interface FieldValidation {
-  type: ["string" | "number" | "mixed" | "date", string];
+  type: ["array" | "string" | "number" | "mixed" | "date", string];
   format?: ["email" | "url", string];
   matches?: [string | RegExp, string];
   enum?: [string[], string];
@@ -65,8 +66,8 @@ export interface FieldValidation {
   // lessThan (exclusiveMaximum)
   positive?: [string];
   negative?: [string];
-  min?: [string, string];
-  max?: [string, string];
+  min?: [number, string];
+  max?: [number, string];
   // truncate?: [];
   // round?: []; // will force user to input an integer
 
@@ -89,9 +90,10 @@ export interface Field {
   type: FieldType;
   validation?: FieldValidation;
   label: string;
+  // field?: string; // TODO, for when the shown label is different from the field name
   hasTitle?: boolean; // specific for radio button
   placeholder?: string;
-  defaultValue?: string | number | boolean;
+  defaultValue?: string | number | boolean | string[] | number[];
   options?: { value: string; label: string; defaultChecked?: boolean }[];
   direction?: Direction;
   spacing?: number; // radio
@@ -100,7 +102,7 @@ export interface Field {
   sx?: StackProps;
   optionSx?: StackProps;
   inputProps?: any;
-  component?: React.FC<{ field: InternalField }>;
+  component?: React.FC<{ field: InternalField }> | string;
 }
 
 export interface InternalField extends Field {

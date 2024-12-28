@@ -6,15 +6,15 @@ import {
   ThemeProvider,
   theme,
 } from "@chakra-ui/react";
-import { Form } from "./index";
+import { BasicForm } from "./BasicForm";
 import { Direction, FieldType } from "./types";
 
-const meta: Meta<typeof Form> = {
-  component: Form,
-  title: "molecules/Form",
+const meta: Meta<typeof BasicForm> = {
+  component: BasicForm,
+  title: "molecules/BasicForm",
 };
 export default meta;
-type Story = StoryObj<typeof Form>;
+type Story = StoryObj<typeof BasicForm>;
 
 const Wrapper = (Story: any) => (
   <ChakraProvider>
@@ -22,7 +22,7 @@ const Wrapper = (Story: any) => (
   </ChakraProvider>
 );
 
-export const SimpleDebugForm: Story = {
+export const SimpleDebugBasicForm: Story = {
   args: {
     debug: true,
     direction: Direction.COLUMN,
@@ -133,7 +133,7 @@ export const SimpleDebugForm: Story = {
   decorators: [Wrapper],
 };
 
-export const SimpleFormWithCustomComponent: Story = {
+export const SimpleBasicFormWithCustomComponent: Story = {
   args: {
     debug: true,
     direction: Direction.COLUMN,
@@ -255,7 +255,7 @@ export const SimpleFormWithCustomComponent: Story = {
   decorators: [Wrapper],
 };
 
-// export const FormWithAllTypes: Story = {
+// export const BasicFormWithAllTypes: Story = {
 //   args: {
 //     direction: Direction.COLUMN,
 //     commonFieldProps: {

@@ -1,12 +1,12 @@
 export const noop = () => {};
 
-import { ControlType } from "./stories/SmartList";
+import { SmartFormWrapperProps } from "./stories/SmartForm";
 
-export const smartListCtx = {
+export const smartListCtx: any = {
   entityType: "card",
   fieldNames: ["id", "faction", "image"],
   initialPageSize: 50,
-  controls: [ControlType.Page, ControlType.PageSize],
+  controls: ["page", "pageSize"],
   itemComponent: "Card",
   containerSx: {
     gap: 8,

@@ -8,11 +8,13 @@ import ItemRenderer from "../ItemRenderer";
 interface SmartItemRendererProps {
   id: string;
   viewQuery: DocumentNode;
+  itemProps?: Record<string, any>;
+  itemMap?: (item: Record<string, any>) => Record<string, any>;
   omitFields?: string[];
 }
 
 export function SmartItemRenderer(props: SmartItemRendererProps) {
-  const { id, viewQuery, omitFields = [] } = props;
+  const { id, viewQuery, omitFields = [], itemMap, itemProps } = props;
 
   const { loading, error, data } = useQuery<any, { id?: string }>(viewQuery, {
     variables: { id },
@@ -26,17 +28,16 @@ export function SmartItemRenderer(props: SmartItemRendererProps) {
     if (!omitFields.includes(key)) acc[key] = baseItem[key];
     return acc;
   }, {});
-  return <ItemRenderer item={item} />;
+  return <ItemRenderer item={item} itemMap={itemMap} itemProps={itemProps} />;
 }
 
-interface SmartItemRendererWrapperProps {
-  id: string;
+interface SmartItemRendererWrapperProps
+  extends Omit<SmartItemRendererProps, "viewQuery"> {
   type: string;
-  omitFields?: string[];
 }
 
 export function SmartItemRendererWrapper(props: SmartItemRendererWrapperProps) {
-  const { id, type: entityType, omitFields = [] } = props;
+  const { id, type: entityType, omitFields = [], itemMap, itemProps } = props;
   const [viewQuery, setViewQuery] = useState<DocumentNode | null>(null);
 
   useEffect(() => {
@@ -56,7 +57,13 @@ export function SmartItemRendererWrapper(props: SmartItemRendererWrapperProps) {
   if (!viewQuery) return <p>Query Loading...</p>;
 
   return (
-    <SmartItemRenderer id={id} viewQuery={viewQuery} omitFields={omitFields} />
+    <SmartItemRenderer
+      id={id}
+      viewQuery={viewQuery}
+      omitFields={omitFields}
+      itemMap={itemMap}
+      itemProps={itemProps}
+    />
   );
 }
 

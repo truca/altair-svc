@@ -106,25 +106,13 @@ const initialState = (
             label: "Guild Upgrades",
             type: FieldType.MULTISELECT,
             component: "GuildUpgradesSelect",
-            defaultValue: ["Guildhall"],
+            defaultValue: ["Guildhall:1:hero:1"],
             validation: {
               type: ["array", "should be an array of strings"],
               required: [true, "this is required"],
             },
             step: 1,
           },
-          //   {
-          //     id: "guild_upgrades_2",
-          //     label: "Guild Upgrades",
-          //     type: FieldType.MULTISELECT,
-          //     component: "GuildUpgradesSelect",
-          //     defaultValue: ["Guildhall"],
-          //     validation: {
-          //       type: ["array", "should be an array of strings"],
-          //       required: [true, "this is required"],
-          //     },
-          //     step: 2,
-          //   },
           {
             id: "units",
             label: "Units",
@@ -143,7 +131,7 @@ const initialState = (
           faction: "wild",
           glory_points: 80,
           guild_upgrade_points: 6,
-          guild_upgrades: ["Guildhall"],
+          guild_upgrades: ["Guildhall:1:hero:1"],
         },
         steps: [
           { title: "General Info", description: "Define warband general info" },
@@ -160,7 +148,7 @@ const initialState = (
   sidebars: [],
 });
 
-export default function Chats() {
+export default function Page() {
   const params = useParams();
   const faction = params.faction as string;
   const state = usePageContextReducer(initialState(faction));

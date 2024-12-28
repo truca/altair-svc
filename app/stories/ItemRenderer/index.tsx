@@ -4,9 +4,18 @@ import { Box, Text, Heading, VStack, StackDivider } from "@chakra-ui/react";
 interface Props {
   isCard?: boolean;
   item: Record<string, any>;
+  itemProps?: Record<string, any>;
+  itemMap?: (item: Record<string, any>) => Record<string, any>;
 }
 
-export function ItemRenderer({ isCard, item }: Props) {
+export function ItemRenderer(props: Props) {
+  const { isCard, item: itemParam, itemProps, itemMap } = props;
+  const item = itemMap
+    ? { ...itemMap(itemParam), ...itemProps }
+    : { ...itemParam, ...itemProps };
+
+  console.log("item", item);
+
   const renderValue = (value: any) => {
     if (typeof value === "object" && !Array.isArray(value)) {
       return <ItemRenderer item={value} isCard />;
@@ -20,6 +29,10 @@ export function ItemRenderer({ isCard, item }: Props) {
           ))}
         </VStack>
       );
+    } else if (typeof value === "boolean") {
+      return <Text fontSize="md">{value ? "True" : "False"}</Text>;
+    } else if (typeof value === "string" && value.includes("http")) {
+      return <img src={value} alt="img" />;
     } else {
       return <Text fontSize="md">{String(value)}</Text>;
     }

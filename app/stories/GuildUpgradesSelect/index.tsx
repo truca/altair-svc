@@ -80,6 +80,9 @@ interface GuildUpgradeOption {
 
 type OptionWithBase = Option<string> & { base: GuildUpgrade; parent?: string };
 
+// value format: guildUpgrade:cost:tags:amount
+// example: "Elemental Arcanum III:3:elemental 1,elemental 2,elemental 3:1"
+
 export interface GuildUpgradesSelectProps {
   defaultValue: string[];
   options: OptionWithBase[];
@@ -88,8 +91,43 @@ export interface GuildUpgradesSelectProps {
   getValues: UseFormGetValues<any>;
 }
 
-// TODO: Add a way to handle unique accross options
-// TODO: Filter diplomatic deals by faction
+interface SelectedGuildUpgrade {
+  name: string;
+  cost: number;
+  tags: string[];
+  amount: number;
+}
+
+function getSelectedGuildUpgradesFromDefaultValue(
+  defaultValue: string[]
+): SelectedGuildUpgrade[] {
+  if (!defaultValue) {
+    return [];
+  }
+  return defaultValue.map((value) => {
+    const [name, cost, tags, amount] = value.split(":");
+    return {
+      name,
+      cost: parseInt(cost),
+      tags: tags?.includes(",") ? tags.split(",") : [tags],
+      amount: parseInt(amount),
+    };
+  });
+}
+
+function getDefaultValueFromSelectedGuildUpgrades(
+  selectedGuildUpgrades: SelectedGuildUpgrade[]
+): string[] {
+  if (!selectedGuildUpgrades) {
+    return [];
+  }
+  return selectedGuildUpgrades.map((guildUpgrade) => {
+    return `${guildUpgrade.name}:${guildUpgrade.cost}:${
+      Array.isArray(guildUpgrade?.tags) ? guildUpgrade?.tags.join(",") : ""
+    }:${guildUpgrade.amount}`;
+  });
+}
+
 function GuildUpgradesSelect({
   value,
   defaultValue,
@@ -97,9 +135,15 @@ function GuildUpgradesSelect({
   onChange: onChangeProp,
   getValues,
 }: GuildUpgradesSelectProps) {
-  const [selectedValues, setSelectedValues] = useState(
-    value || defaultValue || []
-  );
+  const formSelectedGuildUpgrades = useMemo(() => {
+    return getSelectedGuildUpgradesFromDefaultValue(value);
+  }, [value]);
+  const defaultSelectedGuildUpgrades = useMemo(() => {
+    return getSelectedGuildUpgradesFromDefaultValue(defaultValue);
+  }, [defaultValue]);
+  const [selectedGuildUpgrades, setSelectedGuildUpgrades] = useState<
+    SelectedGuildUpgrade[]
+  >(formSelectedGuildUpgrades || defaultSelectedGuildUpgrades || []);
   const [selectKey, setSelectKey] = useState(1);
 
   const values = useMemo(() => {
@@ -136,12 +180,23 @@ function GuildUpgradesSelect({
   }, [baseOptions]);
 
   const selectedOptions = useMemo(() => {
-    return selectedValues
-      .map((value) => {
-        return allOptions.find((option) => option.value === value);
+    return selectedGuildUpgrades
+      .map((selectedGuildUpgrade) => {
+        const option = allOptions.find(
+          (option) => option.value === selectedGuildUpgrade.name
+        );
+        if (
+          !selectedGuildUpgrade?.amount ||
+          selectedGuildUpgrade?.amount < 0 ||
+          !option
+        )
+          return null;
+        return new Array(selectedGuildUpgrade.amount).fill(option);
       })
+      .filter(Boolean)
+      .flat()
       .filter((v) => !!v) as OptionWithBase[];
-  }, [selectedValues, allOptions]);
+  }, [selectedGuildUpgrades, allOptions]);
 
   const usedGuildUpgradePoints = useMemo(() => {
     return selectedOptions.reduce(
@@ -181,7 +236,9 @@ function GuildUpgradesSelect({
         })
         .filter((option) => {
           const shouldKeepNormalOption =
-            selectedValues.includes(option.value) && option.base.isUnique;
+            selectedGuildUpgrades
+              .map((sgu) => sgu.name)
+              .includes(option.value) && option.base.isUnique;
           const shouldKeepOptionWithChildren =
             option.base.isUnique &&
             selectedParentOptions.includes(option.parent);
@@ -191,15 +248,50 @@ function GuildUpgradesSelect({
           return option.base.cost <= availableGuildUpgrades;
         })
     );
-  }, [selectedValues, allOptions, availableGuildUpgrades, values]);
+  }, [selectedGuildUpgrades, allOptions, availableGuildUpgrades, values]);
 
-  const onChange = useCallback(
+  const onAdd = useCallback(
     (e: React.ChangeEvent<HTMLSelectElement>) => {
       e.preventDefault();
       e.stopPropagation();
-      setSelectedValues((values) => {
-        const newValue = [...values, e.target.value];
-        onChangeProp(newValue);
+      setSelectedGuildUpgrades((sgus: any) => {
+        const name = e.target.value;
+        const isElementAlreadySelected = sgus.find(
+          (sgu: SelectedGuildUpgrade) => sgu.name === name
+        );
+        if (isElementAlreadySelected) {
+          const newGUs = sgus.map((sgu: SelectedGuildUpgrade) => {
+            if (sgu.name === name) {
+              return {
+                ...sgu,
+                amount: sgu.amount + 1,
+              };
+            }
+            return sgu;
+          });
+          onChangeProp(
+            getDefaultValueFromSelectedGuildUpgrades(
+              newGUs as SelectedGuildUpgrade[]
+            )
+          );
+
+          return newGUs;
+        }
+        const guildUpgrade = allOptions.find((option) => option.value === name);
+        const newValue: SelectedGuildUpgrade[] = [
+          ...sgus,
+          {
+            name: guildUpgrade?.value,
+            cost: guildUpgrade?.base.cost,
+            tags: guildUpgrade?.base.allowsTags,
+            amount: 1,
+          },
+        ];
+        onChangeProp(
+          getDefaultValueFromSelectedGuildUpgrades(
+            newValue as SelectedGuildUpgrade[]
+          )
+        );
         return newValue;
       });
       setSelectKey((key) => key + 1);
@@ -208,14 +300,41 @@ function GuildUpgradesSelect({
   );
 
   const onRemove = useCallback(
-    (value: string) => {
-      setSelectedValues((values) => values.filter((v) => v !== value));
+    (name: string) => {
+      setSelectedGuildUpgrades((prevGUs) => {
+        const selectedElement = prevGUs.find(
+          (value: SelectedGuildUpgrade) => value.name === name
+        );
+        if (!selectedElement) {
+          return prevGUs;
+        }
+        if (selectedElement.amount === 1) {
+          const newGUs = prevGUs.filter(
+            (value: SelectedGuildUpgrade) => value.name !== name
+          );
+          onChangeProp(
+            getDefaultValueFromSelectedGuildUpgrades(
+              newGUs as SelectedGuildUpgrade[]
+            )
+          );
+          return newGUs;
+        }
+        const newGUs = prevGUs.map((value: SelectedGuildUpgrade) =>
+          value.name === name ? { ...value, amount: value.amount - 1 } : value
+        );
+        onChangeProp(
+          getDefaultValueFromSelectedGuildUpgrades(
+            newGUs as SelectedGuildUpgrade[]
+          )
+        );
+        return newGUs;
+      });
     },
-    [setSelectedValues]
+    [setSelectedGuildUpgrades]
   );
 
   const allowedTags = getAllowedTagsAndTimesFromSelectedGuildUpgrades(
-    selectedValues,
+    selectedGuildUpgrades.map((sgu) => sgu.name),
     allOptions
   );
   console.log({ allowedTags, value });
@@ -265,11 +384,7 @@ function GuildUpgradesSelect({
           variant="elevated"
         >
           <label>Select upgrade</label>
-          <Select
-            key={selectKey}
-            onChange={onChange}
-            placeholder="Select upgrade"
-          >
+          <Select key={selectKey} onChange={onAdd} placeholder="Select upgrade">
             {options.map((option) => (
               <option key={option.value} value={option.value}>
                 {option.label}

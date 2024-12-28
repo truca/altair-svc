@@ -19,7 +19,7 @@ import { Text } from "../Text";
 import { BasicForm, FormProps } from "./BasicForm";
 import { Direction } from "./types";
 
-function debounce(func: (...args: any[]) => void, wait: number) {
+export function debounce(func: (...args: any[]) => void, wait: number) {
   let timeout: NodeJS.Timeout;
   return function executedFunction(...args: any[]) {
     const later = () => {
@@ -71,7 +71,7 @@ export const MultiStepForm: React.FC<MultiStepFormProps> = (
 
   const handleSubmit = useCallback(
     (submitValues: any) => {
-      if (currentStep === totalSteps) {
+      if (currentStep === totalSteps - 1) {
         onSubmit(submitValues as any);
       } else {
         goToNext();
@@ -117,7 +117,7 @@ export const MultiStepForm: React.FC<MultiStepFormProps> = (
             fields={stepFields}
             initialValues={values}
             direction={Direction.COLUMN}
-            submitText={currentStep === totalSteps ? "Submit" : "Next"}
+            submitText={currentStep === totalSteps - 1 ? "Submit" : "Next"}
             containerSx={props.formSx}
             onSubmit={(v) => {
               const newValues = { ...values, ...v };

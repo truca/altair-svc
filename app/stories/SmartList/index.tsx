@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { useQuery, DocumentNode, useMutation } from "@apollo/client";
 import {
   getQueryForType,
@@ -61,6 +61,7 @@ export interface SmartListProps {
   where?: Where;
 
   itemProps?: any;
+  itemMap?: (elem: any) => any;
 
   containerSx?: React.CSSProperties | undefined;
   itemComponent?: string;
@@ -81,6 +82,7 @@ function SmartList({
   where = {},
 
   itemProps,
+  itemMap,
 
   containerSx,
   itemComponent,
@@ -119,6 +121,13 @@ function SmartList({
       setMaxPages(data?.[pluralType]?.maxPages || 10);
     }
   }, [data, hasSetMaxPages, pluralType]);
+
+  const items = useMemo(() => {
+    if (itemMap) {
+      return data?.[pluralType]?.list?.map(itemMap);
+    }
+    return data[pluralType].list;
+  }, [data, itemMap, pluralType]);
 
   if (loading) return <p>Loading...</p>;
   if (error && !data) return <p>Error : {error.message}</p>;
@@ -182,7 +191,7 @@ function SmartList({
       </Sidebar>
       {itemComponent && ItemComponent && (
         <Box style={listContainerSx}>
-          {data[pluralType].list.map((elem: any) => (
+          {items.map((elem: any) => (
             <ItemComponent key={elem.id} {...itemProps} {...elem} />
           ))}
         </Box>
@@ -199,7 +208,7 @@ function SmartList({
               </Tr>
             </Thead>
             <Tbody>
-              {data[pluralType].list.map((elem: any) => (
+              {items.map((elem: any) => (
                 <Tr key={elem.id}>
                   {fieldNames.map((fieldName) => (
                     <Td key={fieldName}>{elem[fieldName]}</Td>

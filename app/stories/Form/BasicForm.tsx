@@ -90,6 +90,7 @@ const useYupValidationResolver = (
           errors: {},
         };
       } catch (errors: any) {
+        console.log({ errors });
         return {
           values: {},
           errors: errors.inner.reduce(

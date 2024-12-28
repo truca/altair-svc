@@ -421,8 +421,14 @@ interface CardProps {
   id: string;
   faction: string;
   image: string;
+  cost: number;
+
   // the amount of this card owned
   amount?: number;
+  onIncrease?: (id: string, cost: number) => void;
+  onSetAmount?: (id: string, cost: number, amount: number) => void;
+  onDecrease?: (id: string, cost: number) => void;
+
   showAmountControls?: boolean;
   showHeart?: boolean;
 }
@@ -432,6 +438,10 @@ function Card({
   faction,
   image,
   amount,
+  cost,
+  onIncrease,
+  onSetAmount,
+  onDecrease,
   showAmountControls,
   showHeart = true,
 }: CardProps) {
@@ -462,7 +472,15 @@ function Card({
         dispatch({
           type: "showSidebar",
           section: "SmartItem",
-          ctx: { id, type: "card", omitFields: ["id", "__typename"] },
+          ctx: {
+            id,
+            type: "card",
+            omitFields: ["id", "__typename"],
+            itemMap: (item: any) => ({
+              ...item,
+              image: baseUrl + "/" + item.image,
+            }),
+          },
         })
       }
     >
@@ -479,7 +497,7 @@ function Card({
           {capitalizeFirstLetter(faction)}
         </Text>
       </HStack>
-      <img src={baseUrl + "/" + image} alt={faction} className="w-full" />
+      <img src={image} alt={faction} className="w-full" />
       <HStack
         position="absolute"
         style={{
@@ -491,18 +509,42 @@ function Card({
       >
         {showAmountControls ? (
           <>
-            <Button rounded="full" variant="solid" colorScheme="gray">
+            <Button
+              rounded="full"
+              variant="solid"
+              colorScheme="gray"
+              {...(onDecrease
+                ? {
+                    onClick: (e) => {
+                      e.stopPropagation();
+                      onDecrease(id, cost);
+                    },
+                  }
+                : {})}
+            >
               -
             </Button>
-            {Boolean(amount) && (
-              <Box
-                rounded="full"
-                className="flex justify-center items-center w-10 h-10 bg-slate-500 text-white"
-              >
-                {amount}
-              </Box>
-            )}
-            <Button rounded="full" variant="solid" colorScheme="green">
+
+            <Box
+              rounded="full"
+              className="flex justify-center items-center w-10 h-10 bg-slate-500 text-white"
+            >
+              {amount}
+            </Box>
+
+            <Button
+              rounded="full"
+              variant="solid"
+              colorScheme="gray"
+              {...(onIncrease
+                ? {
+                    onClick: (e) => {
+                      e.stopPropagation();
+                      onIncrease(id, cost);
+                    },
+                  }
+                : {})}
+            >
               +
             </Button>
           </>

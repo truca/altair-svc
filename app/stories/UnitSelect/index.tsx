@@ -1,229 +1,175 @@
-import React, { useCallback, useEffect, useMemo, useState } from "react";
-import { Select, Card, Button, VStack, HStack } from "@chakra-ui/react";
-import { Option } from "@/app/types";
-import { capitalizeFirstLetter } from "@/app/utils";
-import { FaIcon } from "../Text/FaIcon";
+import React, { useCallback, useMemo, useState } from "react";
+import { Card, VStack } from "@chakra-ui/react";
 import { UseFormGetValues } from "react-hook-form";
-// import SmartList from "../SmartList";
 import { smartListCtx } from "@/app/constants";
 import { SectionsHash } from "@/app/components";
-
-type Faction = "chaos" | "corruption" | "wild" | "order" | "fortitude";
-
-const FACTIONS = ["chaos", "corruption", "wild", "order", "fortitude"];
-
-const WHEEL_OF_FORCES: { [key in Faction]: Faction[] } = {
-  chaos: ["fortitude", "corruption"],
-  corruption: ["chaos", "wild"],
-  wild: ["corruption", "order"],
-  order: ["wild", "fortitude"],
-  fortitude: ["order", "chaos"],
-};
-
-const CAMPAIGN_UPGRADES = [
-  "Armory",
-  "Training Halls",
-  "Temple",
-  "Mercenary Outpost",
-];
 
 interface TagsWithTimes {
   tags?: string[];
   times?: number;
 }
 
-function getAllowedTagsAndTimesFromSelectedGuildUpgrades(
-  selectedValues: string[],
-  allOptions: OptionWithBase[]
+// selectedGuildUpgrade format: name:cost:tags:amount
+function getTagsAndTimesFromSelectedGuildUpgrades(
+  selectedGuildUpgrades: string[]
 ): TagsWithTimes[] {
-  return selectedValues.reduce((acc, value) => {
-    const option = allOptions.find((option) => option.value === value);
-    if (!option) {
-      return acc;
-    }
-    // if there's an element already in the array with the exact same tags and has times, increment the times
-    const hasAllowsTagsMax = Boolean(option.base.allowsTagsMax);
-    const existingElement = acc.find(
-      (element) =>
-        element.times &&
-        JSON.stringify(element.tags) === JSON.stringify(option.base.allowsTags)
-    );
-    if (hasAllowsTagsMax && existingElement) {
-      existingElement.times = existingElement.times
-        ? existingElement.times + (option.base.allowsTagsMax as number)
-        : existingElement.times;
+  if (!selectedGuildUpgrades) {
+    return [];
+  }
+  return selectedGuildUpgrades.reduce((acc, value) => {
+    const [_, __, tags, amount] = value.split(":");
+    if (!tags) return acc;
+    const tagsArr = tags.includes(",") ? tags.split(",") : [tags];
 
+    // if tag already exists, increment the times
+    const existingElement = acc.find(
+      (element) => JSON.stringify(element.tags) === JSON.stringify(tagsArr)
+    );
+    if (existingElement) {
+      existingElement.times = existingElement.times
+        ? existingElement.times + parseInt(amount)
+        : parseInt(amount);
       return acc;
     }
-    return acc.concat([
-      { tags: option.base.allowsTags, times: option.base.allowsTagsMax },
-    ]);
+
+    return acc.concat([{ tags: tagsArr, times: parseInt(amount) }]);
   }, [] as TagsWithTimes[]);
 }
 
-interface GuildUpgrade {
-  name: string;
-  isUnique?: boolean;
-  allowsTags?: string[];
-  allowsTagsMax?: number;
-  description?: string;
-  options?: GuildUpgradeOption[];
+interface SelectedUnit {
+  id: string;
   cost: number;
-  image?: string;
-  isExclusiveToCampaigns?: boolean;
+  amount: number;
 }
-
-interface GuildUpgradeOption {
-  name: string;
-  allowsTags: string[];
-  allowsTagsMax: number;
-  description: string;
-  cost: number;
-}
-
-type OptionWithBase = Option<string> & { base: GuildUpgrade; parent?: string };
 
 export interface UnitSelectProps {
-  defaultValue: string[];
-  options: OptionWithBase[];
   value: string[];
+  defaultValue: string[];
   onChange: (values: string[]) => void;
   getValues: UseFormGetValues<any>;
 }
 
-// TODO: Add a way to handle unique accross options
-// TODO: Filter diplomatic deals by faction
+const getSelectedUnitsFromDefaultValue = (defaultValue: string[]) => {
+  if (!defaultValue) {
+    return [];
+  }
+  return defaultValue.map((value) => {
+    const [id, cost, amount] = value.split(":");
+    return {
+      id,
+      cost: parseInt(cost),
+      amount: parseInt(amount),
+    };
+  });
+};
+
+const getDefaultValueFromSelectedUnits = (selectedUnits: SelectedUnit[]) => {
+  if (!selectedUnits) {
+    return [];
+  }
+  return selectedUnits.map((unit) => {
+    return `${unit.id}:${unit.cost}:${unit.amount}`;
+  });
+};
+
 function UnitSelect({
   value,
   defaultValue,
-  options: baseOptions,
   onChange: onChangeProp,
   getValues,
 }: UnitSelectProps) {
-  const [selectedValues, setSelectedValues] = useState(
-    value || defaultValue || []
+  const formSelectedUnits = useMemo(() => {
+    return getSelectedUnitsFromDefaultValue(value);
+  }, [value]);
+
+  const defaultSelectedUnits = useMemo(() => {
+    return getSelectedUnitsFromDefaultValue(defaultValue);
+  }, [defaultValue]);
+
+  const [selectedUnits, setSelectedUnits] = useState<SelectedUnit[]>(
+    formSelectedUnits || defaultSelectedUnits || []
   );
-  const [selectKey, setSelectKey] = useState(1);
+  console.log({ selectedUnits });
 
   const values = useMemo(() => {
     return getValues();
   }, [getValues]);
 
-  const allOptions: OptionWithBase[] = useMemo(() => {
-    return baseOptions.reduce((acc, option) => {
-      const options = Array.isArray(option.base.options)
-        ? option.base.options.map((childOption) => ({
-            ...option,
-            ...childOption,
-            base: { ...option.base, ...childOption },
-            label: `${childOption.name} (${
-              childOption.cost ? childOption.cost : option.base.cost
-            })`,
-            parent: option.base.name,
-            value: childOption.name,
-          }))
-        : undefined;
-      return [
-        ...acc,
-        ...(options
-          ? options
-          : [
-              {
-                ...option,
-                label: `${option.base.name} (${option.base.cost})`,
-                value: option.base.name,
-              },
-            ]),
-      ];
-    }, [] as OptionWithBase[]);
-  }, [baseOptions]);
-
-  const selectedOptions = useMemo(() => {
-    return selectedValues
-      .map((value) => {
-        return allOptions.find((option) => option.value === value);
-      })
-      .filter((v) => !!v) as OptionWithBase[];
-  }, [selectedValues, allOptions]);
-
   const usedGloryPoints = useMemo(() => {
-    return selectedOptions.reduce(
-      (acc, option) => acc + (option?.base.cost || 0),
+    return selectedUnits.reduce(
+      (acc, unit) => acc + unit.cost * unit.amount,
       0
     );
-  }, [selectedOptions]);
+  }, [selectedUnits]);
 
   const maxGloryPoints = values.glory_points || 0;
   const hasReachedLimit = usedGloryPoints >= maxGloryPoints;
   const availableGuildUpgrades = maxGloryPoints - usedGloryPoints;
 
-  const options: Option<string>[] = useMemo(() => {
-    const faction = values.faction;
-    const selectedParentOptions = selectedOptions
-      .map((o) => o.parent)
-      .filter(Boolean);
-    return (
-      allOptions
-        // filter non-campaign upgrades if guild is non campaign
-        .filter((option) => {
-          const isCampaignUpgrade = CAMPAIGN_UPGRADES.includes(
-            option.base.name
-          );
-          return values.isCampaign ? true : !isCampaignUpgrade;
-        })
-        // filter diplomatic deals not available to the faction
-        .filter((option) => {
-          const isFactionOption = option.base.allowsTags?.some((tag) =>
-            FACTIONS.includes(tag)
-          );
-          if (!isFactionOption) return true;
-          const allowedFactions = WHEEL_OF_FORCES[faction as Faction];
-          return allowedFactions.includes(
-            option.base.allowsTags?.[0] as Faction
-          );
-        })
-        .filter((option) => {
-          const shouldKeepNormalOption =
-            selectedValues.includes(option.value) && option.base.isUnique;
-          const shouldKeepOptionWithChildren =
-            option.base.isUnique &&
-            selectedParentOptions.includes(option.parent);
-          return !shouldKeepNormalOption && !shouldKeepOptionWithChildren;
-        })
-        .filter((option) => {
-          return option.base.cost <= availableGuildUpgrades;
-        })
-    );
-  }, [selectedValues, allOptions, availableGuildUpgrades, values]);
+  // const allowedTags = getAllowedTagsAndTimesFromSelectedGuildUpgrades(
+  //   values.guild_upgrades,
+  //   allOptions
+  // );
+  const allowedTags = getTagsAndTimesFromSelectedGuildUpgrades(
+    values.guild_upgrades
+  );
+  console.log({ values, allowedTags });
 
-  const onChange = useCallback(
-    (e: React.ChangeEvent<HTMLSelectElement>) => {
-      e.preventDefault();
-      e.stopPropagation();
-      setSelectedValues((values) => {
-        const newValue = [...values, e.target.value];
-        onChangeProp(newValue);
-        return newValue;
+  const onIncrease = useCallback(
+    (id: string, cost: number) => {
+      setSelectedUnits((prev) => {
+        const unit = prev.find((unit) => unit.id === id);
+        if (!unit) {
+          const newSelectedUnits = prev.concat([
+            {
+              id,
+              cost,
+              amount: 1,
+            },
+          ]);
+          onChangeProp(getDefaultValueFromSelectedUnits(newSelectedUnits));
+          return newSelectedUnits;
+        }
+        const newSelectedUnits = prev.map((unit) =>
+          unit.id === id ? { ...unit, amount: unit.amount + 1 } : unit
+        );
+        onChangeProp(getDefaultValueFromSelectedUnits(newSelectedUnits));
+        return newSelectedUnits;
       });
-      setSelectKey((key) => key + 1);
     },
-    [onChangeProp, setSelectKey]
+    [selectedUnits, setSelectedUnits]
   );
 
-  const onRemove = useCallback(
-    (value: string) => {
-      setSelectedValues((values) => values.filter((v) => v !== value));
-    },
-    [setSelectedValues]
-  );
+  const onDecrease = useCallback(
+    (id: string) => {
+      setSelectedUnits((prev) => {
+        const unit = prev.find((unit) => unit.id === id);
 
-  const allowedTags = getAllowedTagsAndTimesFromSelectedGuildUpgrades(
-    values.guild_upgrades,
-    allOptions
+        if (!unit) {
+          return prev;
+        }
+        if (unit.amount === 1) {
+          const newSelectedUnits = prev.filter((unit) => unit.id !== id);
+          onChangeProp(getDefaultValueFromSelectedUnits(newSelectedUnits));
+          return newSelectedUnits;
+        }
+        const newSelectedUnits = prev.map((unit) =>
+          unit.id === id ? { ...unit, amount: unit.amount - 1 } : unit
+        );
+        onChangeProp(getDefaultValueFromSelectedUnits(newSelectedUnits));
+        return prev.map((unit) =>
+          unit.id === id ? { ...unit, amount: unit.amount - 1 } : unit
+        );
+      });
+    },
+    [selectedUnits, setSelectedUnits]
   );
-  console.log({ values });
 
   const SmartList = SectionsHash["SmartList"];
+
+  const baseUrl = process.env.SERVICE
+    ? process.env.SERVICE
+    : "http://localhost:4000";
 
   return (
     <VStack spacing={5}>
@@ -239,7 +185,17 @@ function UnitSelect({
           overflow: "scroll",
           height: "calc(100vh - 280px)",
         }}
-        itemProps={{ showAmountControls: true, showHeart: false }}
+        itemMap={(option: any) => ({
+          ...option,
+          image: baseUrl + "/" + option.image,
+          amount: selectedUnits.find((unit) => unit.id === option.id)?.amount,
+        })}
+        itemProps={{
+          showAmountControls: true,
+          showHeart: false,
+          onIncrease,
+          onDecrease,
+        }}
         where={{}}
       />
     </VStack>

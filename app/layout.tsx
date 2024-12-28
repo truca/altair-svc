@@ -31,12 +31,12 @@ async function fetchUser(
     const user = await verifyIdToken(token);
     return { props: { user } };
   } catch (error) {
-    return {
-      redirect: {
-        destination: "/login",
-        permanent: false,
-      },
-    };
+    // return {
+    //   redirect: {
+    //     destination: "/login",
+    //     permanent: false,
+    //   },
+    // };
   }
 }
 

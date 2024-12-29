@@ -74,7 +74,6 @@ interface FavoriteCardsProps {
 
 export function FavoriteCards({ uid }: FavoriteCardsProps) {
   const state = usePageContextReducer(initialState(uid));
-  console.log({ uid, state });
 
   return (
     <PageContext.Provider key={uid} value={state}>
@@ -86,7 +85,6 @@ export function FavoriteCards({ uid }: FavoriteCardsProps) {
 
 export default function FavoriteCardsWrapper() {
   const { profile } = useAuth();
-  console.log({ profile });
 
   if (!profile?.uid) return null;
   return <FavoriteCards uid={profile?.uid} />;

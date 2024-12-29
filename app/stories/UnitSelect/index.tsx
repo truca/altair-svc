@@ -177,6 +177,7 @@ function UnitSelect({
       <SmartList
         // SUPER specific to this context
         {...smartListCtx}
+        fieldNames={["id", "faction", "image", "cost"]}
         containerSx={{
           ...smartListCtx.containerSx,
           margin: 0,

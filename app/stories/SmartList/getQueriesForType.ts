@@ -105,9 +105,16 @@ export const getSingleQueryForType = async (
 export const getQueryForType = async (
   pluralType: string,
   singularType: string,
-  where?: Where
+  where?: Where,
+  fieldNamesParam?: string[]
 ) => {
-  const { fieldNames } = await getFieldnamesForType(pluralType);
+  const { fieldNames: fieldNamesResponse } = await getFieldnamesForType(
+    pluralType
+  );
+  const fieldNames = fieldNamesParam
+    ? // to prevent making a query with wrong params
+      fieldNamesParam.filter((field) => fieldNamesResponse?.includes(field))
+    : fieldNamesResponse;
   let query = gql`query ${pluralType}($page: Int, $pageSize: Int, $includeMaxPages: Boolean!) { ${pluralType}(page: $page, pageSize: $pageSize, includeMaxPages: $includeMaxPages) { list { ${fieldNames?.join(
     " "
   )} } maxPages @include(if: $includeMaxPages) } }`;

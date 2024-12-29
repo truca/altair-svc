@@ -9,9 +9,10 @@ import {
 } from "../../contexts/PageContext";
 import { sidebarCtx } from "../../constants";
 import { FieldType } from "@/app/stories/Form/types";
+import { gql, useMutation } from "@apollo/client";
 
 const initialState = (
-  faction: string
+  createWarband: any
 ): PageState<"sidebar" | "logo" | "user" | "content"> => ({
   page: { type: "" },
   slots: {
@@ -138,8 +139,10 @@ const initialState = (
           { title: "Guild Upgrades", description: "Select guild upgrades" },
           { title: "Units", description: "Select Units" },
         ],
-        onSubmit: (values: Record<string, string>) => {
+        onSubmit: (values: FormValue) => {
           console.log("Form submitted:", values);
+          const warbandInput = getMutationInputFromFormValues(values);
+          createWarband({ variables: warbandInput });
         },
       },
     },
@@ -148,10 +151,96 @@ const initialState = (
   sidebars: [],
 });
 
+interface FormValue {
+  name: string;
+  faction: string;
+  glory_points: number | string;
+  guild_upgrade_points: number | string;
+  guild_upgrades: string[];
+  isCampaign: boolean;
+  isPublic: boolean;
+  units: string[];
+}
+
+interface MutationInput {
+  name: string;
+  userId: string;
+  faction: string;
+  isDraftWarband: boolean;
+  gloryPoints: number;
+  isPublic: boolean;
+  isFinished: boolean;
+  guildUpgradePoints: number;
+  guildUpgrades: { guildUpgrade: { id: string }; count: number }[];
+  units: { unit: { id: string }; count: number }[];
+}
+
+function getMutationInputFromFormValues(values: FormValue): MutationInput {
+  console.log({ type: typeof values.guild_upgrade_points });
+  const { glory_points, guild_upgrade_points } = values;
+  return {
+    name: values.name,
+    userId: "userId",
+    isDraftWarband: false,
+    faction: values.faction,
+    isFinished: true,
+    gloryPoints:
+      typeof glory_points === "string" ? parseInt(glory_points) : glory_points,
+    isPublic: values.isPublic,
+    guildUpgradePoints:
+      typeof guild_upgrade_points === "string"
+        ? parseInt(guild_upgrade_points)
+        : guild_upgrade_points,
+    guildUpgrades: values.guild_upgrades.map((value) => {
+      const [id, cost, tags, amount] = value.split(":");
+      return {
+        guildUpgrade: { id },
+        count: parseInt(amount),
+      };
+    }),
+    units: values.units.map((value) => {
+      const [id, cost, amount] = value.split(":");
+      return {
+        unit: { id },
+        count: parseInt(amount),
+      };
+    }),
+  };
+}
+
+const createWarbandMutation = gql`
+  mutation CreateWarband(
+    $name: String!
+    $userId: ID!
+    $isDraftWarband: Boolean!
+    $gloryPoints: Float!
+    $isPublic: Boolean!
+    $guildUpgradePoints: Float!
+    $guildUpgrades: [WarbandGuildUpgradeInputType!]!
+    $units: [WarbandUnitInputType!]!
+    $faction: String!
+  ) {
+    createWarband(
+      data: {
+        name: $name
+        userId: $userId
+        isDraftWarband: $isDraftWarband
+        gloryPoints: $gloryPoints
+        isPublic: $isPublic
+        guildUpgradePoints: $guildUpgradePoints
+        guildUpgrades: $guildUpgrades
+        units: $units
+        faction: $faction
+      }
+    ) {
+      id
+    }
+  }
+`;
+
 export default function Page() {
-  const params = useParams();
-  const faction = params.faction as string;
-  const state = usePageContextReducer(initialState(faction));
+  const [createWarband] = useMutation(createWarbandMutation);
+  const state = usePageContextReducer(initialState(createWarband));
 
   return (
     <PageContext.Provider value={state}>

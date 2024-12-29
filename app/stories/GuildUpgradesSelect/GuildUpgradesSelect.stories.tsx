@@ -326,6 +326,37 @@ export const GUs = [
   },
 ];
 
+type ALL_ALLOWED_TAGS =
+  | "hero"
+  | "chaos"
+  | "order"
+  | "wild"
+  | "fortitude"
+  | "corruption"
+  | "cavalry"
+  | "construct"
+  | "heroic beast"
+  | "heroic mount"
+  | "elemental 1"
+  | "elemental 2"
+  | "elemental 3"
+  | "druidcraft 1"
+  | "druidcraft 2"
+  | "druidcraft 3"
+  | "animancy 1"
+  | "animancy 2"
+  | "animancy 3"
+  | "necromancy 1"
+  | "necromancy 2"
+  | "necromancy 3"
+  | "sacramancy 1"
+  | "sacramancy 2"
+  | "sacramancy 3"
+  | "potion 1"
+  | "potion 2"
+  | "potion 3"
+  | "glorious hero";
+
 export const BottomSheetWithText: Story = {
   args: {
     defaultValue: ["Guildhall"],

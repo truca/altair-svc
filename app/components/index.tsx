@@ -40,6 +40,7 @@ import { FaIcon } from "../stories/Text/FaIcon";
 import { useAuth } from "../contexts/AuthProvider";
 import { List, QueryList } from "../stories/List";
 import { baseUrl } from "../constants";
+import ItemRenderer from "../stories/ItemRenderer";
 
 interface CommonPageProps {
   page: IPage;
@@ -77,18 +78,18 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
       </Flex>
 
       <Flex height="calc(100vh - 60px)">
-        {/* Sidebar */}
         <HStack
           height="calc(100vh - 60px)"
           className="w-full justify-between"
           gap={0}
         >
+          {/* Sidebar */}
           <VStack height="calc(100vh - 60px)">
             {SectionsHash[sidebar.type]?.({ ...page.ctx, ...sidebar.ctx })}
           </VStack>
 
           {/* Content */}
-          <VStack height="calc(100vh - 60px)" overflowY="scroll">
+          <VStack height="calc(100vh - 60px)" flex={1} overflowY="scroll">
             {SectionsHash[content.type]?.({ ...page.ctx, ...content.ctx })}
           </VStack>
         </HStack>
@@ -588,6 +589,7 @@ export const SectionsHash: {
   Form,
   SmartList: SmartListWrapper,
   SmartItem: SmartItemRendererWrapper,
+  ItemRenderer: ItemRenderer as any,
   List,
   QueryList,
   Card,

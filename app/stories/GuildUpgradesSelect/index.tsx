@@ -333,12 +333,6 @@ function GuildUpgradesSelect({
     [setSelectedGuildUpgrades]
   );
 
-  const allowedTags = getAllowedTagsAndTimesFromSelectedGuildUpgrades(
-    selectedGuildUpgrades.map((sgu) => sgu.name),
-    allOptions
-  );
-  console.log({ allowedTags, value });
-
   return (
     <VStack spacing={5}>
       <Card style={{ alignSelf: "flex-end", padding: 8 }} variant="elevated">

@@ -123,11 +123,19 @@ function SmartList({
   }, [data, hasSetMaxPages, pluralType]);
 
   const items = useMemo(() => {
+    const itemsWithFilteredFields = data?.[pluralType]?.list?.map(
+      (item: Record<string, any>) =>
+        fieldNames.reduce((acc, fieldName) => {
+          if (typeof item[fieldName] !== "undefined")
+            acc[fieldName] = item[fieldName];
+          return acc;
+        }, {} as Record<string, any>)
+    );
     if (itemMap) {
-      return data?.[pluralType]?.list?.map(itemMap);
+      return itemsWithFilteredFields?.map(itemMap);
     }
-    return data?.[pluralType]?.list;
-  }, [data, itemMap, pluralType]);
+    return itemsWithFilteredFields;
+  }, [data, itemMap, pluralType, fieldNames]);
 
   if (loading) return <p>Loading...</p>;
   if (error && !data) return <p>Error : {error.message}</p>;
@@ -394,7 +402,8 @@ export function SmartListWrapper(props: SmartListWrapperProps) {
       const { query: tempQuery, fieldNames } = await getQueryForType(
         pluralType,
         singularType,
-        where
+        where,
+        fieldNamesProp
       );
       setQuery(tempQuery as any);
       if (!fieldNamesProp) setFieldNames(fieldNames ?? []);

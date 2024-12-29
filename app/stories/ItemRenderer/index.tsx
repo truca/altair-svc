@@ -14,10 +14,8 @@ export function ItemRenderer(props: Props) {
     ? { ...itemMap(itemParam), ...itemProps }
     : { ...itemParam, ...itemProps };
 
-  console.log("item", item);
-
   const renderValue = (value: any) => {
-    if (typeof value === "object" && !Array.isArray(value)) {
+    if (value && typeof value === "object" && !Array.isArray(value)) {
       return <ItemRenderer item={value} isCard />;
     } else if (Array.isArray(value)) {
       return (

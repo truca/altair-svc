@@ -85,8 +85,6 @@ export const MultiStepForm: React.FC<MultiStepFormProps> = (
     [fields, currentStep]
   );
 
-  console.log(currentStep, totalSteps);
-
   return (
     <VStack spacing={4} style={props.containerSx}>
       <Stepper index={currentStep} style={{ width: "100%" }}>

@@ -36,6 +36,38 @@ export const smartListCtx: any = {
   }),
 };
 
+export const smartListCtxWarbands = {
+  entityType: "warband",
+  fieldNames: ["id", "faction", "name", "guildUpgradePoints", "gloryPoints"],
+  initialPageSize: 50,
+  controls: ["page", "pageSize"],
+  itemComponent: "ItemRenderer",
+  itemProps: {
+    isCard: true,
+  },
+  containerSx: {
+    gap: 8,
+    alignContent: "center",
+    margin: "20px 0 40px",
+  },
+  listContainerSx: {
+    display: "flex",
+    gap: 6,
+    flexDirection: "row",
+    padding: 8,
+    justifyContent: "center",
+    flexWrap: "wrap",
+    margin: "0 auto",
+    alignItems: "center",
+  },
+  bottomControlSx: {
+    alignSelf: "center",
+  },
+  itemMap: (option: any) => ({
+    item: { ...option },
+  }),
+};
+
 export const sidebarCtx = {
   sections: [
     {

@@ -1,6 +1,10 @@
 export const noop = () => {};
 
+import { Button, HStack } from "@chakra-ui/react";
 import { SmartFormWrapperProps } from "./stories/SmartForm";
+import { FaIcon } from "./stories/Text/FaIcon";
+import cn from "classnames";
+import { useAuth } from "./contexts/AuthProvider";
 
 export const baseUrl = process.env.SERVICE
   ? process.env.SERVICE
@@ -36,7 +40,11 @@ export const smartListCtx: any = {
   }),
 };
 
-export const smartListCtxWarbands = {
+export const smartListCtxWarbands = (
+  addWarbandToFavorites: (args: any) => {},
+  profileId: string,
+  favoriteWarbandIds: string[]
+) => ({
   entityType: "warband",
   fieldNames: ["id", "faction", "name", "guildUpgradePoints", "gloryPoints"],
   initialPageSize: 50,
@@ -44,6 +52,8 @@ export const smartListCtxWarbands = {
   itemComponent: "ItemRenderer",
   itemProps: {
     isCard: true,
+    profileId,
+    favoriteWarbandIds,
   },
   containerSx: {
     gap: 8,
@@ -65,8 +75,57 @@ export const smartListCtxWarbands = {
   },
   itemMap: (option: any) => ({
     item: { ...option },
+    // open sidebar through dispatch
+    onClick: () => {},
+    containerSx: {
+      cursor: "pointer",
+    },
+    ChildComponent: (props: any) => {
+      const {
+        item: { id },
+        profileId,
+      } = props;
+      const { profile } = useAuth();
+      const { favoriteWarbands } = profile || {};
+      const favoriteWarbandIds: string[] = (favoriteWarbands || []).map(
+        (warband: { id: string }) => warband.id
+      );
+      const isFavorited = favoriteWarbandIds.includes(id);
+
+      return (
+        <HStack
+          style={{ width: "100%", marginTop: 15, justifyContent: "center" }}
+        >
+          <Button
+            rounded="full"
+            variant="solid"
+            colorScheme={isFavorited ? "red" : "gray"}
+            padding={0}
+            className={cn(
+              { "!bg-red-400 hover:!bg-red-300": isFavorited },
+              "!bg-red-300 hover:!bg-red-400 !text-white"
+            )}
+            onClick={(e) => {
+              e.stopPropagation();
+              addWarbandToFavorites({
+                variables: {
+                  id: profileId,
+                  favoriteWarbands: isFavorited
+                    ? favoriteWarbands?.filter(
+                        (card: { id: string }) => card.id !== id
+                      )
+                    : [...favoriteWarbands, { id }],
+                },
+              });
+            }}
+          >
+            <FaIcon icon="FaHeart" />
+          </Button>
+        </HStack>
+      );
+    },
   }),
-};
+});
 
 export const sidebarCtx = {
   sections: [

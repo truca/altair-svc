@@ -1,15 +1,25 @@
 import React from "react";
 import { Box, Text, Heading, VStack, StackDivider } from "@chakra-ui/react";
+import { SectionsHash } from "@/app/components";
 
 interface Props {
+  containerSx?: any;
   isCard?: boolean;
   item: Record<string, any>;
+  ChildComponent: React.FC<Props>;
   itemProps?: Record<string, any>;
   itemMap?: (item: Record<string, any>) => Record<string, any>;
 }
 
 export function ItemRenderer(props: Props) {
-  const { isCard, item: itemParam, itemProps, itemMap } = props;
+  const {
+    isCard,
+    item: itemParam,
+    itemProps,
+    itemMap,
+    containerSx,
+    ...others
+  } = props;
   const item = itemMap
     ? { ...itemMap(itemParam), ...itemProps }
     : { ...itemParam, ...itemProps };
@@ -37,13 +47,27 @@ export function ItemRenderer(props: Props) {
   };
 
   const styles = isCard
-    ? { borderWidth: "1px", borderRadius: "lg", boxShadow: "md" }
-    : { borderWidth: "0", borderRadius: "0", boxShadow: "none" };
+    ? {
+        borderWidth: "1px",
+        borderRadius: "lg",
+        boxShadow: "md",
+        ...containerSx,
+      }
+    : {
+        borderWidth: "0",
+        borderRadius: "0",
+        boxShadow: "none",
+        ...containerSx,
+      };
 
   if (!item || typeof item !== "object") return null;
 
+  const ChildComponent =
+    typeof props.ChildComponent === "string"
+      ? SectionsHash[props.ChildComponent]
+      : props.ChildComponent || null;
   return (
-    <Box maxW="md" overflow="hidden" p="6" {...styles}>
+    <Box maxW="md" overflow="hidden" p="6" {...styles} {...others}>
       <VStack
         align="start"
         spacing={0}
@@ -57,6 +81,7 @@ export function ItemRenderer(props: Props) {
             {renderValue(value)}
           </Box>
         ))}
+        {ChildComponent && <ChildComponent {...props} />}
       </VStack>
     </Box>
   );

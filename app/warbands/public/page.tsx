@@ -7,8 +7,14 @@ import {
   usePageContextReducer,
 } from "../../contexts/PageContext";
 import { sidebarCtx, smartListCtxWarbands } from "../../constants";
+import { gql, useMutation } from "@apollo/client";
+import { useAuth } from "@/app/contexts/AuthProvider";
 
-const initialState: PageState<"sidebar" | "logo" | "user" | "content"> = {
+const initialState = (
+  addWarbandToFavorites: any,
+  profileId: string,
+  favoriteWarbandIds: string[]
+): PageState<"sidebar" | "logo" | "user" | "content"> => ({
   page: { type: "" },
   slots: {
     sidebar: {
@@ -19,15 +25,38 @@ const initialState: PageState<"sidebar" | "logo" | "user" | "content"> = {
     user: { type: "User" },
     content: {
       type: "SmartList",
-      ctx: smartListCtxWarbands,
+      ctx: smartListCtxWarbands(
+        addWarbandToFavorites,
+        profileId,
+        favoriteWarbandIds
+      ),
     },
   },
   modals: [],
   sidebars: [],
-};
+});
 
-export default function Chats() {
-  const state = usePageContextReducer(initialState);
+const addWarbandToFavoritesMutation = gql`
+  mutation UpdateMe($id: String!, $favoriteWarbands: [ObjectId]) {
+    updateMe(id: $id, profile: { favoriteWarbands: $favoriteWarbands }) {
+      id
+      favoriteWarbands {
+        id
+      }
+    }
+  }
+`;
+
+function PublicWarbands() {
+  const { profile } = useAuth();
+  const { id: profileId, favoriteWarbands } = profile || {};
+  const favoriteWarbandIds: string[] = (favoriteWarbands || []).map(
+    (warband: { id: string }) => warband.id
+  );
+  const [addWarbandToFavorites] = useMutation(addWarbandToFavoritesMutation);
+  const state = usePageContextReducer(
+    initialState(addWarbandToFavorites, profileId, favoriteWarbandIds)
+  );
 
   return (
     <PageContext.Provider value={state}>
@@ -35,4 +64,11 @@ export default function Chats() {
       <ModalsAndSidebars />
     </PageContext.Provider>
   );
+}
+
+export default function PublicWarbandsPage() {
+  const { profile } = useAuth();
+  if (!profile) return null;
+
+  return <PublicWarbands />;
 }

@@ -120,26 +120,27 @@ const typeDefinitions = /* GraphQL */ `
   }
 
   # Represents a warband. Supports: Warband Creation, Warband Sharing, Warband Comparison, Cost Management, Export Feature, Management, Feedback and Rating System.
-  type Warband @model {
+  type Warband @model @auth(read: ["public"]) {
     userId: ID!
     name: String!
-    totalCost: Float!
+    faction: String
     isPublic: Boolean
+    clonedFrom: ID # ID of the warband this one was cloned from
     isFinished: Boolean
+    isDraftWarband: Boolean # If the warband was created through the draft system
     guildUpgradePoints: Float
     guildUpgrades: [WarbandGuildUpgrade]
-    isDraftWarband: Boolean! # If the warband was created through the draft system
-    clonedFrom: ID # ID of the warband this one was cloned from
-    createdAt: DateTime!
-    updatedAt: DateTime
-    cards: [WarbandCard] # Cards in the warband
-    favoritedCount: Float! # Number of times favorited
-    playedCount: Float! # Number of times played
+    gloryPoints: Float # !
+    units: [WarbandUnit] # Unit in the warband
+    favoritedCount: Float # Number of times favorited
+    playedCount: Float # Number of times played
     comments: [Comment] # Comments about this warband
+    createdAt: DateTime
+    updatedAt: DateTime
   }
 
-  type WarbandCard {
-    card: Card
+  type WarbandUnit {
+    unit: Card
     count: Float
   }
 

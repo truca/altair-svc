@@ -329,11 +329,6 @@ export const GUs = [
 export const BottomSheetWithText: Story = {
   args: {
     defaultValue: ["Guildhall"],
-    options: GUs.map((gu) => ({
-      label: gu.name,
-      value: gu.name,
-      base: gu,
-    })) as any,
   },
   decorators: [Wrapper],
 };

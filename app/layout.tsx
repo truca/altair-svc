@@ -13,7 +13,9 @@ import { verifyIdToken } from "./lib/firebase/firebaseAdmin";
 async function fetchUser(
   cookieStore: ReadonlyRequestCookies,
   pathname: string
-) {
+): Promise<
+  { props: { user: any } } | { redirect: { destination: string } } | undefined
+> {
   const token = cookieStore.get("token")?.value;
 
   // if (!token) {
@@ -58,8 +60,11 @@ export default async function RootLayout(props: RootLayoutProps) {
   const headersList = headers();
   const currentUrl = headersList.get("referer");
   const pathname = headersList.get("x-next-pathname") || "/";
-  const { redirect: { destination } = {} } =
-    (await fetchUser(cookieStore, pathname)) || {};
+  const response: any = (await fetchUser(cookieStore, pathname)) || {
+    redirect: undefined,
+  };
+
+  const destination = response?.redirect?.destination;
 
   if (currentUrl && destination && !currentUrl.includes(destination)) {
     redirect(destination);

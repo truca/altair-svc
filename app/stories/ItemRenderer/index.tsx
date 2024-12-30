@@ -6,7 +6,7 @@ interface Props {
   containerSx?: any;
   isCard?: boolean;
   item: Record<string, any>;
-  ChildComponent: React.FC<Props>;
+  ChildComponent?: React.FC<Props>;
   itemProps?: Record<string, any>;
   itemMap?: (item: Record<string, any>) => Record<string, any>;
 }

@@ -40,40 +40,8 @@ export const smartListCtx: any = {
   }),
 };
 
-export const smartListCtxWarbands = (
-  addWarbandToFavorites: (args: any) => {},
-  profileId: string,
-  favoriteWarbandIds: string[]
-) => ({
-  entityType: "warband",
-  fieldNames: ["id", "faction", "name", "guildUpgradePoints", "gloryPoints"],
-  initialPageSize: 50,
-  controls: ["page", "pageSize"],
-  itemComponent: "ItemRenderer",
-  itemProps: {
-    isCard: true,
-    profileId,
-    favoriteWarbandIds,
-  },
-  containerSx: {
-    gap: 8,
-    alignContent: "center",
-    margin: "20px 0 40px",
-  },
-  listContainerSx: {
-    display: "flex",
-    gap: 6,
-    flexDirection: "row",
-    padding: 8,
-    justifyContent: "center",
-    flexWrap: "wrap",
-    margin: "0 auto",
-    alignItems: "center",
-  },
-  bottomControlSx: {
-    alignSelf: "center",
-  },
-  itemMap: (option: any) => ({
+export const warbandsItemMap =
+  (addWarbandToFavorites: (args: any) => {}) => (option: any) => ({
     item: { ...option },
     // open sidebar through dispatch
     onClick: () => {},
@@ -86,7 +54,9 @@ export const smartListCtxWarbands = (
         profileId,
       } = props;
       const { profile } = useAuth();
-      const { favoriteWarbands } = profile || {};
+      const { favoriteWarbands: favoriteWarbandsBase } = profile || {};
+      const favoriteWarbands =
+        favoriteWarbandsBase?.map((w: { id: string }) => ({ id: w.id })) || [];
       const favoriteWarbandIds: string[] = (favoriteWarbands || []).map(
         (warband: { id: string }) => warband.id
       );
@@ -124,7 +94,40 @@ export const smartListCtxWarbands = (
         </HStack>
       );
     },
-  }),
+  });
+
+export const smartListCtxWarbands = (
+  addWarbandToFavorites: (args: any) => {},
+  profileId: string
+) => ({
+  entityType: "warband",
+  fieldNames: ["id", "faction", "name", "guildUpgradePoints", "gloryPoints"],
+  initialPageSize: 50,
+  controls: ["page", "pageSize"],
+  itemComponent: "ItemRenderer",
+  containerSx: {
+    gap: 8,
+    alignContent: "center",
+    margin: "20px 0 40px",
+  },
+  listContainerSx: {
+    display: "flex",
+    gap: 6,
+    flexDirection: "row",
+    padding: 8,
+    justifyContent: "center",
+    flexWrap: "wrap",
+    margin: "0 auto",
+    alignItems: "center",
+  },
+  bottomControlSx: {
+    alignSelf: "center",
+  },
+  itemProps: {
+    isCard: true,
+    profileId,
+  },
+  itemMap: warbandsItemMap(addWarbandToFavorites),
 });
 
 export const sidebarCtx = {

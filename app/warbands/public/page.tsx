@@ -1,19 +1,15 @@
 "use client";
 
 import { DashboardLayout, ModalsAndSidebars } from "../../components";
-import {
-  PageContext,
-  PageState,
-  usePageContextReducer,
-} from "../../contexts/PageContext";
-import { sidebarCtx, smartListCtxWarbands } from "../../constants";
-import { gql, useMutation } from "@apollo/client";
+import { PageContext, usePageContextReducer } from "../../contexts/PageContext";
 import { useAuth } from "@/app/contexts/AuthProvider";
+import { useFavoriteWarbands } from "../hooks";
+import { PageState } from "../../contexts/PageContext";
+import { sidebarCtx, smartListCtxWarbands } from "../../constants";
 
-const initialState = (
+export const initialStateForPublicWarbands = (
   addWarbandToFavorites: any,
-  profileId: string,
-  favoriteWarbandIds: string[]
+  profileId: string
 ): PageState<"sidebar" | "logo" | "user" | "content"> => ({
   page: { type: "" },
   slots: {
@@ -25,37 +21,18 @@ const initialState = (
     user: { type: "User" },
     content: {
       type: "SmartList",
-      ctx: smartListCtxWarbands(
-        addWarbandToFavorites,
-        profileId,
-        favoriteWarbandIds
-      ),
+      ctx: smartListCtxWarbands(addWarbandToFavorites, profileId),
     },
   },
   modals: [],
   sidebars: [],
 });
 
-const addWarbandToFavoritesMutation = gql`
-  mutation UpdateMe($id: String!, $favoriteWarbands: [ObjectId]) {
-    updateMe(id: $id, profile: { favoriteWarbands: $favoriteWarbands }) {
-      id
-      favoriteWarbands {
-        id
-      }
-    }
-  }
-`;
-
 function PublicWarbands() {
-  const { profile } = useAuth();
-  const { id: profileId, favoriteWarbands } = profile || {};
-  const favoriteWarbandIds: string[] = (favoriteWarbands || []).map(
-    (warband: { id: string }) => warband.id
-  );
-  const [addWarbandToFavorites] = useMutation(addWarbandToFavoritesMutation);
+  const { addWarbandToFavorites, profileId } = useFavoriteWarbands();
+
   const state = usePageContextReducer(
-    initialState(addWarbandToFavorites, profileId, favoriteWarbandIds)
+    initialStateForPublicWarbands(addWarbandToFavorites, profileId)
   );
 
   return (

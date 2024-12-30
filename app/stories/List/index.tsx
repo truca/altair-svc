@@ -14,7 +14,7 @@ export interface ListProps<Item> extends StackProps {
 }
 
 export function List<Item>(props: ListProps<Item>) {
-  const { type, children, items, component, ...extraProps } = props;
+  const { type, children, items, component, itemProps, ...extraProps } = props;
   const ItemComponent =
     typeof component === "string" ? SectionsHash[component] : component;
 
@@ -24,7 +24,7 @@ export function List<Item>(props: ListProps<Item>) {
     return (
       <HStack gap={2} {...extraProps}>
         {items?.map((item: Item) => (
-          <ItemComponent key={(item as any).id} {...item} />
+          <ItemComponent key={(item as any).id} {...item} {...itemProps} />
         ))}
       </HStack>
     );
@@ -33,7 +33,7 @@ export function List<Item>(props: ListProps<Item>) {
   return (
     <VStack w="100%" gap={2} {...extraProps}>
       {items?.map((item: Item) => (
-        <ItemComponent key={(item as any).id} {...item} />
+        <ItemComponent key={(item as any).id} {...item} {...itemProps} />
       ))}
     </VStack>
   );
@@ -58,5 +58,5 @@ export function QueryList<Item>(props: QueryListProps<Item>) {
 
   const items = _.get(data, props.itemsSelector);
   const itemsMapped = props.itemMap ? items.map(props.itemMap) : items;
-  return <List {...props} items={itemsMapped} {...props.itemProps} />;
+  return <List {...props} items={itemsMapped} itemProps={props.itemProps} />;
 }

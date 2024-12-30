@@ -73,7 +73,7 @@ interface FavoriteWarbandsProps {
   uid: string;
 }
 
-export function FavoriteWarbands({ uid }: FavoriteWarbandsProps) {
+function FavoriteWarbands({ uid }: FavoriteWarbandsProps) {
   const { addWarbandToFavorites, profileId } = useFavoriteWarbands();
   const state = usePageContextReducer(
     initialWarbandsState(uid, addWarbandToFavorites, profileId)

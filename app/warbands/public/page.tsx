@@ -7,7 +7,7 @@ import { useFavoriteWarbands } from "../hooks";
 import { PageState } from "../../contexts/PageContext";
 import { sidebarCtx, smartListCtxWarbands } from "../../constants";
 
-export const initialStateForPublicWarbands = (
+const initialStateForPublicWarbands = (
   addWarbandToFavorites: any,
   profileId: string
 ): PageState<"sidebar" | "logo" | "user" | "content"> => ({

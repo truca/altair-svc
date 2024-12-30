@@ -72,7 +72,7 @@ interface FavoriteCardsProps {
   uid: string;
 }
 
-export function FavoriteCards({ uid }: FavoriteCardsProps) {
+function FavoriteCards({ uid }: FavoriteCardsProps) {
   const state = usePageContextReducer(initialState(uid));
 
   return (

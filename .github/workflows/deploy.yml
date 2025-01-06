@@ -23,6 +23,7 @@ jobs:
           echo "FIREBASE_PROJECT_ID=${{ secrets.FIREBASE_PROJECT_ID }}" >> .env
           echo "FIREBASE_CLIENT_EMAIL=${{ secrets.FIREBASE_CLIENT_EMAIL }}" >> .env
           echo "GRAPHQL_ENDPOINT=https://tripdivider.com/graphql" >> .env
+          echo "SERVICE=https://tripdivider.com" >> .env
 
       - name: Build Docker Image
         run: |

@@ -42,7 +42,8 @@ async function uploadFile(
     console.log({ e });
     return undefined;
   }
-  return filePath;
+  // return filePath;
+  return fileName.replace("../../", "");
 }
 
 export async function uploadFiles(type: any, data: Record<string, any>) {

@@ -3,9 +3,12 @@
 ## Mongo
 
 - Use docker to install and run mongodb: https://www.mongodb.com/docs/manual/tutorial/install-mongodb-community-with-docker/
+
   - start docker container: docker run --name mongodb -p 27017:27017 -d mongodb/mongodb-community-server:latest
   - check if docker started: docker container ls
   - connect to docker: mongosh --port 27017
+
+- For arrays filters in where, they're used as "OR", unless you send an element like ["hero,wild"], then it's going to join them as an AND
 
 ## Kafka
 
@@ -37,6 +40,10 @@ Commands:
 - Agregar list y maxPages a children entities (Ej: mensajes dentro de chats)
 
 ## File transfer
+
+### Create card
+
+curl -X POST -F 'operations={"query":"mutation CreateCard($faction: String, $file: File!) { createCard( data: {name: \"card\", description: \"description\", faction: $faction, cost: 7, image: $file, frequency: 0, favoritedCount: 0, comments: []} ) { id } }","variables":{"faction":"chaos","file":null}}' -F 'map={"0":["variables.file"]}' -F '0=@uploads/Chaos_AG_Units000_card_0_0_resized_400_50.png' http://localhost:4000/graphql
 
 ### Read file
 
@@ -71,4 +78,12 @@ AuthZ has 2 components: static and entity based. static is when the permission d
 
 it has 2 expirations: one for the cookie, and another in the expiresIn param, which is the one that matters because it can't be modified by the user. We just added the cookie expiration so that in most cases where the access token is expired, we're simply going to not receive it, so there's less things to check
 
-###
+### Features
+
+- Multi value filter:
+  - { faction: "chaos,corruption" }: filter with either of these values
+
+### Python
+
+python3 resize.py
+python3 utils/upload.py

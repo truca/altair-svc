@@ -30,7 +30,6 @@ import {
   getEntityTypeFromField,
   getFieldType,
 } from "../GraphQL/utils";
-import { publishMessage } from "../utils/kafka";
 
 export interface ResolverContext {
   directives: {
@@ -64,6 +63,98 @@ export interface UpdateResolverArgs {
 
 export interface RemoveResolverArgs {
   where: any;
+}
+
+export async function visitNestedModels({
+  data: dataParam,
+  type,
+  modelFunction,
+  modelsFunction,
+  context,
+  info,
+  localInfo,
+}) {
+  const res = {};
+  const data = { ...dataParam };
+
+  // move into its own function
+  const selectedFields =
+    localInfo?.selectionSet?.selections ||
+    info?.fieldNodes?.[0]?.selectionSet?.selections ||
+    info?.selectionSet?.selections ||
+    [];
+  const selectedFieldsHash = selectedFields.reduce((res, selection) => {
+    res[selection.name.value] = selection;
+    return res;
+  }, {});
+  Object.keys(selectedFieldsHash).forEach((key) => {
+    if (!data[key]) {
+      const fieldType = getFieldType(type.astNode, key);
+      data[key] =
+        fieldType === "array" ? [] : fieldType === "object" ? {} : undefined;
+    }
+  });
+  // end move
+  for (const key of Object.keys(data)) {
+    if (key === "_id") continue;
+    if (!selectedFieldsHash[key]) continue;
+
+    const value = data[key];
+    const field = getNamedType(type.getFields()[key]) as any;
+
+    let fieldType = getNamedType(field?.type);
+    const hasModelDirective = hasDirective("model", fieldType);
+
+    if (hasModelDirective && isPlainObject(value)) {
+      const info = selectedFieldsHash[key];
+      const foundObject = await modelFunction(fieldType, value, info);
+      res[key] = foundObject;
+    }
+
+    // Is this still valid?
+    const connectionDirective = extractFieldDirectiveParams(
+      type.astNode,
+      key,
+      "connection"
+    );
+    const isSearchableArray =
+      Array.isArray(value) && connectionDirective?.type === "search";
+
+    if (isSearchableArray) {
+      const info = selectedFieldsHash[key];
+      const entityType = getEntityTypeFromField(type.astNode, key);
+      // const namedType = getNamedType(entityType);
+      fieldType = context.schema.getType(entityType);
+      const foundObjects = await modelsFunction?.(
+        fieldType,
+        {
+          where: { "chat._id": data.id },
+          page: 1,
+          pageSize: 10,
+        },
+        info
+      );
+      res[key] = foundObjects?.list;
+      continue;
+    }
+
+    if (Array.isArray(value) && value.every((v) => isPlainObject(v))) {
+      const createdObjects: any[] = [];
+
+      for (const v of value) {
+        const info = selectedFieldsHash[key];
+        let foundObject = v;
+        if (hasModelDirective) {
+          foundObject = await modelFunction(fieldType, v, info);
+        }
+        createdObjects.push(foundObject);
+      }
+
+      res[key] = createdObjects;
+    }
+  }
+
+  return res;
 }
 
 export class ModelDirective extends SchemaDirectiveVisitor {
@@ -105,94 +196,6 @@ export class ModelDirective extends SchemaDirectiveVisitor {
     });
   }
 
-  private async visitNestedModels({
-    data: dataParam,
-    type,
-    modelFunction,
-    modelsFunction,
-    context,
-    info,
-    localInfo,
-  }) {
-    const res = {};
-    const data = { ...dataParam };
-
-    // move into its own function
-    const selectedFields =
-      localInfo?.selectionSet?.selections ||
-      info?.fieldNodes?.[0]?.selectionSet?.selections ||
-      info?.selectionSet?.selections ||
-      [];
-    const selectedFieldsHash = selectedFields.reduce((res, selection) => {
-      res[selection.name.value] = selection;
-      return res;
-    }, {});
-    Object.keys(selectedFieldsHash).forEach((key) => {
-      if (!data[key]) {
-        const fieldType = getFieldType(type.astNode, key);
-        data[key] =
-          fieldType === "array" ? [] : fieldType === "object" ? {} : undefined;
-      }
-    });
-    // end move
-    for (const key of Object.keys(data)) {
-      if (key === "_id") continue;
-      if (!selectedFieldsHash[key]) continue;
-
-      const value = data[key];
-      const field = getNamedType(type.getFields()[key]) as any;
-
-      let fieldType = getNamedType(field?.type);
-
-      if (isPlainObject(value) && hasDirective("model", fieldType)) {
-        const info = selectedFieldsHash[key];
-        const foundObject = await modelFunction(fieldType, value, info);
-        res[key] = foundObject;
-        return;
-      }
-
-      const connectionDirective = extractFieldDirectiveParams(
-        type.astNode,
-        key,
-        "connection"
-      );
-      const isSearchableArray =
-        Array.isArray(value) && connectionDirective?.type === "search";
-
-      if (isSearchableArray) {
-        const info = selectedFieldsHash[key];
-        const entityType = getEntityTypeFromField(type.astNode, key);
-        // const namedType = getNamedType(entityType);
-        fieldType = this.schema.getType(entityType);
-        const foundObjects = await modelsFunction?.(
-          fieldType,
-          {
-            where: { "chat._id": data.id },
-            page: 1,
-            pageSize: 10,
-          },
-          info
-        );
-        res[key] = foundObjects?.list;
-        continue;
-      }
-
-      if (Array.isArray(value) && value.every((v) => isPlainObject(v))) {
-        const createdObjects: any[] = [];
-
-        for (const v of value) {
-          const info = selectedFieldsHash[key];
-          const foundObject = await modelFunction(fieldType, v, info);
-          createdObjects.push(foundObject);
-        }
-
-        res[key] = createdObjects;
-      }
-    }
-
-    return res;
-  }
-
   private pluckModelObjectIds(data) {
     if (!data) return {};
 
@@ -232,7 +235,7 @@ export class ModelDirective extends SchemaDirectiveVisitor {
     );
   }
 
-  private findQueryResolver(type) {
+  public findQueryResolver(type) {
     return async (
       root,
       args: FindResolverArgs,
@@ -259,7 +262,7 @@ export class ModelDirective extends SchemaDirectiveVisitor {
         maxPages: initialData.maxPages,
         list: await Promise.all(
           initialData.list.map(async (data) => {
-            const nestedObjects = await this.visitNestedModels({
+            const nestedObjects = await visitNestedModels({
               type,
               data,
               info,
@@ -295,12 +298,12 @@ export class ModelDirective extends SchemaDirectiveVisitor {
         ),
       };
 
-      console.log({ results });
+      console.log({ results, where: args.where });
       return results;
     };
   }
 
-  private findOneQueryResolver(type) {
+  public findOneQueryResolver(type) {
     return async (
       root,
       args: FindOneResolverArgs,
@@ -320,25 +323,27 @@ export class ModelDirective extends SchemaDirectiveVisitor {
         return null;
       }
 
-      const nestedObjects = await this.visitNestedModels({
+      const nestedObjects = await visitNestedModels({
         type,
         data: rootObject,
         info,
         context,
-        modelFunction: (localType: any, value: any, infoParam: any = {}) =>
-          this.findOneQueryResolver(localType)(
+        modelFunction: async (localType, value, newInfo = null) => {
+          const found = await this.findOneQueryResolver(localType)(
             root,
             { ...args, where: value },
             context,
-            infoParam
-          ),
+            newInfo ? newInfo : info
+          );
+          return found;
+        },
       });
 
       return { ...rootObject, ...cleanNestedObjects(nestedObjects) };
     };
   }
 
-  private createMutationResolver(type, parentIdsParam = {}) {
+  public createMutationResolver(type, parentIdsParam = {}) {
     return async (
       root,
       args: CreateResolverArgs,
@@ -359,7 +364,7 @@ export class ModelDirective extends SchemaDirectiveVisitor {
         args.data._id = new mongoose.Types.ObjectId();
       }
 
-      const relatedObjects = await this.visitNestedModels({
+      const relatedObjects = await visitNestedModels({
         type,
         data: args.data,
         info,
@@ -425,9 +430,6 @@ export class ModelDirective extends SchemaDirectiveVisitor {
         const params = getDirectiveParams("subscribe", type);
         if (params) {
           const { on = [], topic } = params;
-          if (on.includes("create")) {
-            publishMessage(topic, rootObject);
-          }
         }
       }
 
@@ -440,7 +442,7 @@ export class ModelDirective extends SchemaDirectiveVisitor {
     };
   }
 
-  private updateResolver(type) {
+  public updateResolver(type) {
     return async (
       root,
       args: UpdateResolverArgs,
@@ -469,7 +471,7 @@ export class ModelDirective extends SchemaDirectiveVisitor {
         args.data._id = currentRootObject.id;
       }
 
-      const relatedObjects = await this.visitNestedModels({
+      const relatedObjects = await visitNestedModels({
         type,
         data: args.data,
         info,
@@ -579,7 +581,7 @@ export class ModelDirective extends SchemaDirectiveVisitor {
         info
       );
 
-      const nestedObjects = await this.visitNestedModels({
+      const nestedObjects = await visitNestedModels({
         type,
         data: rootObject,
         info,

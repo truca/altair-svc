@@ -5,7 +5,9 @@ import { schema } from "./schema";
 import { context } from "./context";
 import { generateTokens, setTokensAsCookies, verifyToken } from "../lib/utils";
 import { CookieStore } from "../lib/types";
-import { connectKafka } from "../lib/utils/kafka";
+
+import { readFile, stat } from "node:fs/promises";
+import { join, extname } from "node:path";
 
 import { config } from "dotenv";
 config();
@@ -72,8 +74,56 @@ async function getSession(
   return decodedAccessToken.decoded;
 }
 
+// Function to determine Content-Type based on file extension
+const getContentType = (filePath: string) => {
+  const ext = extname(filePath).toLowerCase();
+  switch (ext) {
+    case ".html":
+      return "text/html";
+    case ".js":
+      return "text/javascript";
+    case ".css":
+      return "text/css";
+    case ".json":
+      return "application/json";
+    case ".png":
+      return "image/png";
+    case ".jpg":
+      return "image/jpg";
+    case ".gif":
+      return "image/gif";
+    case ".svg":
+      return "image/svg+xml";
+    case ".ico":
+      return "image/x-icon";
+    default:
+      return "application/octet-stream";
+  }
+};
+
+async function serveFile(req: any, res: any) {
+  let filePath = "/../" + (req.url === "/" ? "index.html" : req.url);
+
+  try {
+    const absolutePath = join(__dirname, filePath);
+    const fileStat = await stat(absolutePath);
+
+    if (!fileStat.isFile()) {
+      res.writeHead(404, { "Content-Type": "text/plain" });
+      res.end("404 Not Found");
+      return;
+    }
+
+    res.writeHead(200, { "Content-Type": getContentType(absolutePath) });
+    const fileContent = await readFile(absolutePath);
+    res.end(fileContent);
+  } catch (err) {
+    res.writeHead(404, { "Content-Type": "text/plain" });
+    res.end("404 Not Found");
+  }
+}
+
 async function main() {
-  await connectKafka(schema);
   const yoga = createYoga({
     schema,
     context: async (args) => {
@@ -87,13 +137,25 @@ async function main() {
       return {
         ...context,
         ...args,
+        schema,
+        typeMap: schema.getTypeMap(),
         cookies,
         session,
         cookieStore,
       };
     },
   });
-  const server = createServer(yoga);
+
+  const server = createServer(async (req, res) => {
+    // Serve static files first
+    if (req.url?.startsWith("/uploads") || req.url === "/") {
+      await serveFile(req, res);
+    } else {
+      // Delegate to the GraphQL Yoga server
+      yoga.handle(req, res);
+    }
+  });
+
   server.listen(process.env.PORT, () => {
     console.info(
       `Server is running on http://localhost:${process.env.PORT}/graphql`

@@ -8,6 +8,7 @@ export enum ValueType {
 
 export enum FieldType {
   TEXT = "TEXT",
+  TEXT_ARRAY = "TEXT_ARRAY",
   TEXTAREA = "TEXTAREA",
   NUMBER = "NUMBER",
   EMAIL = "EMAIL",
@@ -48,8 +49,16 @@ export interface Field {
   // In case label doesnt match the field name
   field?: string;
   type: FieldType;
-  options?: FieldOption[];
+  defaultValue?: string | number | boolean | string[] | number[];
+  // String is for when the options exist in a model.
+  // The model can also have an options attribute for nested options
+  options?: FieldOption[] | string;
+  // When the options exist in a model, what attribute use as label and value
+  optionsMap?: { label: string; value: string } & Record<string, string>;
   validation?: FieldValidation[];
+  maxValue?: string;
+  valuePerOption?: string;
+  component?: string;
 }
 
 export interface Profile {

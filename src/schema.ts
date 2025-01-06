@@ -83,14 +83,14 @@ const typeDefinitions = /* GraphQL */ `
   }
 
   # Represents a user.  Supports: User Registration and Login, Profile Customization, In-App Messaging, Integration with Other Platforms, Notifications and Updates.
-  type Profile @model {
+  type Profile @model @auth(read: ["public"]) {
     uid: String
-    username: String!
+    username: String
     profilePicture: String
     lat: Float
     lng: Float
     createdAt: DateTime!
-    updatedAt: DateTime!
+    updatedAt: DateTime
     favoriteWarbands: [Warband]
     favoriteCards: [Card]
     collection: Collection
@@ -99,25 +99,82 @@ const typeDefinitions = /* GraphQL */ `
     wonTournaments: [Tournament] # Tournaments this user won
   }
 
+  input ObjectId {
+    id: ID!
+  }
+
+  input ProfileInputType2 {
+    uid: String
+    username: String
+    profilePicture: String
+    lat: Float
+    lng: Float
+    createdAt: DateTime
+    updatedAt: DateTime
+    favoriteWarbands: [ObjectId]
+    favoriteCards: [ObjectId]
+    # collection: Collection
+    participatedEvents: [ObjectId] # Events the user participated in
+    wonMatches: [ObjectId] # Matches this user won
+    wonTournaments: [ObjectId] # Tournaments this user won
+  }
+
   # Represents a warband. Supports: Warband Creation, Warband Sharing, Warband Comparison, Cost Management, Export Feature, Management, Feedback and Rating System.
-  type Warband @model {
+  type Warband @model @auth(read: ["public"]) {
     userId: ID!
     name: String!
-    totalCost: Float!
-    isPublic: Boolean!
-    createdAt: DateTime!
-    updatedAt: DateTime!
-    cards: [Card]
-    favoritedCount: Float! # Number of times favorited
-    playedCount: Float! # Number of times played
+    faction: String
+    isPublic: Boolean
+    clonedFrom: ID # ID of the warband this one was cloned from
+    isFinished: Boolean
+    isDraftWarband: Boolean # If the warband was created through the draft system
+    guildUpgradePoints: Float
+    guildUpgrades: [WarbandGuildUpgrade]
+    gloryPoints: Float # !
+    units: [WarbandUnit] # Unit in the warband
+    favoritedCount: Float # Number of times favorited
+    playedCount: Float # Number of times played
     comments: [Comment] # Comments about this warband
+    createdAt: DateTime
+    updatedAt: DateTime
+  }
+
+  type WarbandUnit {
+    unit: Card
+    count: Float
+  }
+
+  type GuildUpgrade @model @auth(read: ["public"]) {
+    name: String!
+    isUnique: Boolean
+    allowsTags: [String] # Tags that can be added to the warband
+    allowsTagsMax: Float # Max amount of tags that can be added
+    description: String
+    options: [GuildUpgradeOption]
+    cost: Float!
+    image: String @file(maxSize: 1000000, types: ["image/jpeg", "image/png"]) # URL to the upgrade image
+    isExclusiveToCampaigns: Boolean
+  }
+
+  type GuildUpgradeOption {
+    name: String!
+    allowsTags: [String] # Tags that can be added to the warband
+    allowsTagsMax: Float # Max amount of tags that can be added
+    description: String
+    cost: Float
+  }
+
+  type WarbandGuildUpgrade {
+    guildUpgrade: GuildUpgrade
+    count: Float
   }
 
   # Represents a single card. Supports: Card Database, Card Filtering and Search, Cost-Building Suggestions, Card Rarity System, Feedback and Rating System.
-  type Card @model {
+  type Card @model @auth(read: ["public"]) {
     name: String!
     description: String
     faction: String
+    tags: [String] # Tags for filtering: cavalry, hero, glorious hero, beast, spell, spell type and rank ("animancy 3") etc.
     cost: Float!
     image: String @file(maxSize: 1000000, types: ["image/jpeg", "image/png"]) # URL to the card image
     frequency: Float! # How often added to warbands
@@ -126,7 +183,7 @@ const typeDefinitions = /* GraphQL */ `
   }
 
   # Represents a comment, used for feedback on cards and warbands. Supports: Feedback and Rating System, In-App Messaging.
-  type Comment @model {
+  type Comment @model @auth(create: ["public"], read: ["public"]) {
     userId: ID!
     warbandId: ID
     cardId: ID
@@ -181,6 +238,7 @@ const typeDefinitions = /* GraphQL */ `
 
   type Query {
     _: Boolean
+    me(uid: String): Profile
     form(type: FormType): Form
   }
 
@@ -196,7 +254,9 @@ const typeDefinitions = /* GraphQL */ `
       phoneNumber: String
       emailVerified: Boolean
       isAnonymous: Boolean
+      createCookies: Boolean
     ): String
+    updateMe(id: String, profile: ProfileInputType2): Profile
   }
 `;
 

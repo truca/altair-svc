@@ -24,6 +24,7 @@
     "typescript": "5.1.6"
   },
   "dependencies": {
+    "@google-cloud/firestore": "^7.11.0",
     "@graphql-tools/schema": "^7.1.5",
     "@graphql-tools/utils": "^7.1.5",
     "camel-case": "^5.0.0",

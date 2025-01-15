@@ -22,13 +22,25 @@ import {
 } from "../AuthDirective";
 import { extractDirectiveParams } from "../GraphQL/utils";
 
-import { Firestore } from "@google-cloud/firestore";
+import { Firestore, Settings } from "@google-cloud/firestore";
+import admin from "firebase-admin";
 
-class FirestoreStore implements Store {
+export type FirestoreOptions = admin.ServiceAccount;
+
+export class FirestoreStore implements Store {
   public db: Firestore;
 
-  constructor() {
-    this.db = new Firestore();
+  constructor(serviceAccount: FirestoreOptions) {
+    console.log({ serviceAccount });
+    const app = admin.initializeApp({
+      credential: admin.credential.cert(serviceAccount),
+    });
+
+    this.db = app.firestore();
+
+    this.db.settings({
+      ignoreUndefinedProperties: true,
+    });
   }
 
   public async findOne(
@@ -63,7 +75,7 @@ class FirestoreStore implements Store {
 
     const snapshot = await query.limit(1).get();
     const doc = snapshot.docs[0];
-    return doc ? this.formatOutput(doc.data()) : null;
+    return doc ? this.formatOutput({ id: doc.id, ...doc.data() }) : null;
   }
 
   public async find(
@@ -96,7 +108,9 @@ class FirestoreStore implements Store {
     const pageSize = props.pageSize || 10;
     const snapshot = await query.limit(pageSize).get();
 
-    const list = snapshot.docs.map((doc) => this.formatOutput(doc.data()));
+    const list = snapshot.docs.map((doc) =>
+      this.formatOutput({ id: doc.id, ...doc.data() })
+    );
     const countQuerySnapshot = await collectionRef.get();
     const totalCount = countQuerySnapshot.size;
     const maxPages = Math.ceil(totalCount / pageSize);
@@ -133,7 +147,7 @@ class FirestoreStore implements Store {
     const docRef = await collectionRef.add(data);
     const snapshot = await docRef.get();
 
-    return this.formatOutput(snapshot.data());
+    return this.formatOutput({ id: snapshot.id, ...snapshot.data() });
   }
 
   public async update(
@@ -170,7 +184,10 @@ class FirestoreStore implements Store {
     if (doc) {
       await doc.ref.update(props.data);
       const updatedSnapshot = await doc.ref.get();
-      return this.formatOutput(updatedSnapshot.data());
+      return this.formatOutput({
+        id: formattedInput.id,
+        ...updatedSnapshot.data(),
+      });
     }
 
     return false;

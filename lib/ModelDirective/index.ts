@@ -31,6 +31,9 @@ import {
   getFieldType,
 } from "../GraphQL/utils";
 
+import { config } from "dotenv";
+config();
+
 export interface ResolverContext {
   directives: {
     model: {
@@ -158,6 +161,8 @@ export async function visitNestedModels({
 }
 
 export class ModelDirective extends SchemaDirectiveVisitor {
+  public isFirestore = process.env.DB_TYPE === "firestore";
+
   public visitObject(type: GraphQLObjectType) {
     // TODO check that id field does not already exist on type
     // Add an "id" field to the object type.
@@ -360,8 +365,13 @@ export class ModelDirective extends SchemaDirectiveVisitor {
       await uploadFiles(type, args.data);
 
       // add _id to the object if it doesn't exist
-      if (!args.data._id) {
+      if (!args.data._id && !this.isFirestore) {
         args.data._id = new mongoose.Types.ObjectId();
+      }
+
+      if (this.isFirestore) {
+        // TODO: do this only if the model has soft delete
+        args.data.deletedAt = null;
       }
 
       const relatedObjects = await visitNestedModels({

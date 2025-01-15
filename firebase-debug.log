@@ -1,0 +1,87 @@
+[debug] [2025-01-14T15:56:32.531Z] ----------------------------------------------------------------------
+[debug] [2025-01-14T15:56:32.532Z] Command:       /Users/iureta/.nvm/versions/node/v18.18.2/bin/node /Users/iureta/.nvm/versions/node/v18.18.2/bin/firebase login
+[debug] [2025-01-14T15:56:32.532Z] CLI Version:   13.29.1
+[debug] [2025-01-14T15:56:32.532Z] Platform:      darwin
+[debug] [2025-01-14T15:56:32.532Z] Node Version:  v18.18.2
+[debug] [2025-01-14T15:56:32.534Z] Time:          Tue Jan 14 2025 12:56:32 GMT-0300 (hora de verano de Chile)
+[debug] [2025-01-14T15:56:32.534Z] ----------------------------------------------------------------------
+[debug] 
+[debug] [2025-01-14T15:56:32.537Z] >>> [apiv2][query] GET https://firebase-public.firebaseio.com/cli.json [none]
+[info] i  Firebase optionally collects CLI and Emulator Suite usage and error reporting information to help improve our products. Data is collected in accordance with Google's privacy policy (https://policies.google.com/privacy) and is not used to identify you.
+ 
+[debug] [2025-01-14T15:56:33.006Z] <<< [apiv2][status] GET https://firebase-public.firebaseio.com/cli.json 200
+[debug] [2025-01-14T15:56:33.006Z] <<< [apiv2][body] GET https://firebase-public.firebaseio.com/cli.json {"cloudBuildErrorAfter":1594252800000,"cloudBuildWarnAfter":1590019200000,"defaultNode10After":1594252800000,"minVersion":"3.0.5","node8DeploysDisabledAfter":1613390400000,"node8RuntimeDisabledAfter":1615809600000,"node8WarnAfter":1600128000000}
+[info] i  To change your data collection preference at any time, run `firebase logout` and log in again. 
+[info] 
+[info] Visit this URL on this device to log in:
+[info] https://accounts.google.com/o/oauth2/auth?client_id=563584335869-fgrhgmd47bqnekij5i8b5pr03ho849e6.apps.googleusercontent.com&scope=email%20openid%20https%3A%2F%2Fwww.googleapis.com%2Fauth%2Fcloudplatformprojects.readonly%20https%3A%2F%2Fwww.googleapis.com%2Fauth%2Ffirebase%20https%3A%2F%2Fwww.googleapis.com%2Fauth%2Fcloud-platform&response_type=code&state=27903255&redirect_uri=http%3A%2F%2Flocalhost%3A9005
+[info] 
+[info] Waiting for authentication...
+[debug] [2025-01-14T15:56:45.137Z] >>> [apiv2][query] POST https://accounts.google.com/o/oauth2/token [none]
+[debug] [2025-01-14T15:56:45.137Z] >>> [apiv2][body] POST https://accounts.google.com/o/oauth2/token [omitted]
+[debug] [2025-01-14T15:56:45.162Z] *** [apiv2] error from fetch(https://accounts.google.com/o/oauth2/token, {"headers":{},"method":"POST","body":{"_overheadLength":543,"_valueLength":208,"_valuesToMeasure":[],"writable":false,"readable":true,"dataSize":0,"maxDataSize":2097152,"pauseStreams":true,"_released":true,"_streams":[],"_currentStream":null,"_insideLoop":false,"_pendingNext":false,"_boundary":"--------------------------919510933370882593492698","_events":{},"_eventsCount":1}}): FetchError: request to https://accounts.google.com/o/oauth2/token failed, reason: self-signed certificate in certificate chain
+[debug] [2025-01-14T15:56:45.163Z] Token Fetch Error: FirebaseError: Failed to make request to https://accounts.google.com/o/oauth2/token
+    at RetryOperation._fn (/Users/iureta/.nvm/versions/node/v18.18.2/lib/node_modules/firebase-tools/lib/apiv2.js:261:31)
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+[error] Authentication Error: Your credentials are no longer valid. Please run firebase login --reauth
+
+For CI servers and headless environments, generate a new token with firebase login:ci
+[debug] [2025-01-14T15:56:45.167Z] >>> [apiv2][query] POST https://auth.firebase.tools/attest [none]
+[debug] [2025-01-14T15:56:45.167Z] >>> [apiv2][body] POST https://auth.firebase.tools/attest {"session_id":"aa1543f5-8463-4d35-9721-4a975619085c"}
+[debug] [2025-01-14T15:56:45.613Z] <<< [apiv2][status] POST https://auth.firebase.tools/attest 200
+[debug] [2025-01-14T15:56:45.613Z] <<< [apiv2][body] POST https://auth.firebase.tools/attest {"token":"Kt1Nk-n3EWQ-NQp-8RMuRN0bxWnfJnpQwPgNvm5aRT8"}
+[info] 
+[info] To sign in to the Firebase CLI:
+[info] 
+[info] 1. Take note of your session ID:
+[info] 
+[info]    AA154
+[info] 
+[info] 2. Visit the URL below on any device and follow the instructions to get your code:
+[info] 
+[info]    https://auth.firebase.tools/login?code_challenge=JzDdUcYvKKGdoL3i7ou8dNaCjKsPxnibLWhGtIeeSa0&session=aa1543f5-8463-4d35-9721-4a975619085c&attest=Kt1Nk-n3EWQ-NQp-8RMuRN0bxWnfJnpQwPgNvm5aRT8
+[info] 
+[info] 3. Paste or enter the authorization code below once you have it:
+[info] 
+[debug] [2025-01-14T15:57:16.997Z] ----------------------------------------------------------------------
+[debug] [2025-01-14T15:57:16.999Z] Command:       /Users/iureta/.nvm/versions/node/v18.18.2/bin/node /Users/iureta/.nvm/versions/node/v18.18.2/bin/firebase login --reauth
+[debug] [2025-01-14T15:57:16.999Z] CLI Version:   13.29.1
+[debug] [2025-01-14T15:57:16.999Z] Platform:      darwin
+[debug] [2025-01-14T15:57:16.999Z] Node Version:  v18.18.2
+[debug] [2025-01-14T15:57:17.000Z] Time:          Tue Jan 14 2025 12:57:16 GMT-0300 (hora de verano de Chile)
+[debug] [2025-01-14T15:57:17.001Z] ----------------------------------------------------------------------
+[debug] 
+[debug] [2025-01-14T15:57:17.003Z] >>> [apiv2][query] GET https://firebase-public.firebaseio.com/cli.json [none]
+[info] 
+[info] Visit this URL on this device to log in:
+[info] https://accounts.google.com/o/oauth2/auth?client_id=563584335869-fgrhgmd47bqnekij5i8b5pr03ho849e6.apps.googleusercontent.com&scope=email%20openid%20https%3A%2F%2Fwww.googleapis.com%2Fauth%2Fcloudplatformprojects.readonly%20https%3A%2F%2Fwww.googleapis.com%2Fauth%2Ffirebase%20https%3A%2F%2Fwww.googleapis.com%2Fauth%2Fcloud-platform&response_type=code&state=266633947&redirect_uri=http%3A%2F%2Flocalhost%3A9005
+[info] 
+[info] Waiting for authentication...
+[debug] [2025-01-14T15:57:17.463Z] <<< [apiv2][status] GET https://firebase-public.firebaseio.com/cli.json 200
+[debug] [2025-01-14T15:57:17.464Z] <<< [apiv2][body] GET https://firebase-public.firebaseio.com/cli.json {"cloudBuildErrorAfter":1594252800000,"cloudBuildWarnAfter":1590019200000,"defaultNode10After":1594252800000,"minVersion":"3.0.5","node8DeploysDisabledAfter":1613390400000,"node8RuntimeDisabledAfter":1615809600000,"node8WarnAfter":1600128000000}
+[debug] [2025-01-14T15:57:24.374Z] >>> [apiv2][query] POST https://accounts.google.com/o/oauth2/token [none]
+[debug] [2025-01-14T15:57:24.375Z] >>> [apiv2][body] POST https://accounts.google.com/o/oauth2/token [omitted]
+[debug] [2025-01-14T15:57:24.402Z] *** [apiv2] error from fetch(https://accounts.google.com/o/oauth2/token, {"headers":{},"method":"POST","body":{"_overheadLength":543,"_valueLength":208,"_valuesToMeasure":[],"writable":false,"readable":true,"dataSize":0,"maxDataSize":2097152,"pauseStreams":true,"_released":true,"_streams":[],"_currentStream":null,"_insideLoop":false,"_pendingNext":false,"_boundary":"--------------------------075367713169185551376696","_events":{},"_eventsCount":1}}): FetchError: request to https://accounts.google.com/o/oauth2/token failed, reason: self-signed certificate in certificate chain
+[debug] [2025-01-14T15:57:24.402Z] Token Fetch Error: FirebaseError: Failed to make request to https://accounts.google.com/o/oauth2/token
+    at RetryOperation._fn (/Users/iureta/.nvm/versions/node/v18.18.2/lib/node_modules/firebase-tools/lib/apiv2.js:261:31)
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+[error] Authentication Error: Your credentials are no longer valid. Please run firebase login --reauth
+
+For CI servers and headless environments, generate a new token with firebase login:ci
+[debug] [2025-01-14T15:57:24.405Z] >>> [apiv2][query] POST https://auth.firebase.tools/attest [none]
+[debug] [2025-01-14T15:57:24.405Z] >>> [apiv2][body] POST https://auth.firebase.tools/attest {"session_id":"2bd8c394-0452-4897-9488-9041595683ee"}
+[debug] [2025-01-14T15:57:24.846Z] <<< [apiv2][status] POST https://auth.firebase.tools/attest 200
+[debug] [2025-01-14T15:57:24.846Z] <<< [apiv2][body] POST https://auth.firebase.tools/attest {"token":"k3MmrMiJavCS27a7O3GWuaqQOpauLwL0YGHa3-yOJkY"}
+[info] 
+[info] To sign in to the Firebase CLI:
+[info] 
+[info] 1. Take note of your session ID:
+[info] 
+[info]    2BD8C
+[info] 
+[info] 2. Visit the URL below on any device and follow the instructions to get your code:
+[info] 
+[info]    https://auth.firebase.tools/login?code_challenge=LGhB7ypCX7HHgYi2Fb89pq4tn2U17RiJhTo8UtyXg-U&session=2bd8c394-0452-4897-9488-9041595683ee&attest=k3MmrMiJavCS27a7O3GWuaqQOpauLwL0YGHa3-yOJkY
+[info] 
+[info] 3. Paste or enter the authorization code below once you have it:
+[info] 

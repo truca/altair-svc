@@ -87,3 +87,7 @@ it has 2 expirations: one for the cookie, and another in the expiresIn param, wh
 
 python3 resize.py
 python3 utils/upload.py
+
+### Firestore emulator
+
+Add serviceAccountKey.json file from FireStore

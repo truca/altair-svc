@@ -87,16 +87,8 @@ const typeDefinitions = /* GraphQL */ `
     uid: String
     username: String
     profilePicture: String
-    lat: Float
-    lng: Float
     createdAt: DateTime!
     updatedAt: DateTime
-    favoriteWarbands: [Warband]
-    favoriteCards: [Card]
-    collection: Collection
-    participatedEvents: [Event] # Events the user participated in
-    wonMatches: [Match] # Matches this user won
-    wonTournaments: [Tournament] # Tournaments this user won
   }
 
   input ObjectId {
@@ -119,121 +111,39 @@ const typeDefinitions = /* GraphQL */ `
     wonTournaments: [ObjectId] # Tournaments this user won
   }
 
-  # Represents a warband. Supports: Warband Creation, Warband Sharing, Warband Comparison, Cost Management, Export Feature, Management, Feedback and Rating System.
-  type Warband @model @auth(read: ["public"]) {
-    userId: ID!
+  type ProductManager @model @auth(read: ["public"]) {
+    externalId: ID!
     name: String!
-    faction: String
-    isPublic: Boolean
-    clonedFrom: ID # ID of the warband this one was cloned from
-    isFinished: Boolean
-    isDraftWarband: Boolean # If the warband was created through the draft system
-    guildUpgradePoints: Float
-    guildUpgrades: [WarbandGuildUpgrade]
-    gloryPoints: Float # !
-    units: [WarbandUnit] # Unit in the warband
-    favoritedCount: Float # Number of times favorited
-    playedCount: Float # Number of times played
-    comments: [Comment] # Comments about this warband
     createdAt: DateTime
     updatedAt: DateTime
   }
 
-  type WarbandUnit {
-    unit: Card
-    count: Float
-  }
-
-  type GuildUpgrade @model @auth(read: ["public"]) {
+  type Seller @model @auth(read: ["public"]) {
+    externalId: ID!
     name: String!
-    isUnique: Boolean
-    allowsTags: [String] # Tags that can be added to the warband
-    allowsTagsMax: Float # Max amount of tags that can be added
-    description: String
-    options: [GuildUpgradeOption]
-    cost: Float!
-    image: String @file(maxSize: 1000000, types: ["image/jpeg", "image/png"]) # URL to the upgrade image
-    isExclusiveToCampaigns: Boolean
+    createdAt: DateTime
+    updatedAt: DateTime
   }
 
-  type GuildUpgradeOption {
+  type Brand @model @auth(read: ["public"]) {
+    externalId: ID!
     name: String!
-    allowsTags: [String] # Tags that can be added to the warband
-    allowsTagsMax: Float # Max amount of tags that can be added
-    description: String
-    cost: Float
+    createdAt: DateTime
+    updatedAt: DateTime
   }
 
-  type WarbandGuildUpgrade {
-    guildUpgrade: GuildUpgrade
-    count: Float
-  }
-
-  # Represents a single card. Supports: Card Database, Card Filtering and Search, Cost-Building Suggestions, Card Rarity System, Feedback and Rating System.
-  type Card @model @auth(read: ["public"]) {
+  type Category @model @auth(read: ["public"]) {
+    externalId: ID!
     name: String!
-    description: String
-    faction: String
-    tags: [String] # Tags for filtering: cavalry, hero, glorious hero, beast, spell, spell type and rank ("animancy 3") etc.
-    cost: Float!
-    image: String @file(maxSize: 1000000, types: ["image/jpeg", "image/png"]) # URL to the card image
-    frequency: Float! # How often added to warbands
-    favoritedCount: Float! # Number of times favorited
-    comments: [Comment]
+    createdAt: DateTime
+    updatedAt: DateTime
   }
 
-  # Represents a comment, used for feedback on cards and warbands. Supports: Feedback and Rating System, In-App Messaging.
-  type Comment @model @auth(create: ["public"], read: ["public"]) {
-    userId: ID!
-    warbandId: ID
-    cardId: ID
-    content: String!
-    createdAt: DateTime!
-  }
-
-  # Represents a collection of cards owned by a user. Supports: Management.
-  type Collection @model {
-    userId: ID!
+  type Subcategory @model @auth(read: ["public"]) {
+    externalId: ID!
     name: String!
-    cards: [Card]
-    warbands: [Warband] # To support adding warbands to collections
-    createdAt: DateTime!
-  }
-
-  # Represents a match (single game). Supports: Event Management, Event Scheduling.
-  type Match @model {
-    eventId: ID!
-    warband1Id: ID!
-    warband2Id: ID!
-    player1Id: ID!
-    player2Id: ID!
-    winnerId: ID!
-    createdAt: DateTime!
-    previousMatches: [ID!] # IDs of matches leading to this match
-    nextMatch: ID # ID of the match this one leads to
-  }
-
-  # Represents a tournament. Supports: Event Management, Event Scheduling.
-  type Tournament @model {
-    name: String!
-    matches: [Match] # Keep this for easy access to all matches
-    firstRoundMatches: [ID!] # IDs of the matches in the first round
-    winnerId: ID!
-    createdAt: DateTime!
-  }
-
-  # Represents an event, which can be a single match or a tournament. Supports: Event Management, Event Scheduling, Integration with Other Platforms.
-  type Event @model {
-    name: String!
-    date: DateTime!
-    location: String!
-    latitude: Float!
-    longitude: Float!
-    createdBy: ID!
-    participants: [Profile] # Participants in the event
-    matches: [Match] # If it's a tournament
-    tournament: Tournament # If it's a tournament
-    createdAt: DateTime!
+    createdAt: DateTime
+    updatedAt: DateTime
   }
 
   type Query {

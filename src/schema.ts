@@ -114,6 +114,7 @@ const typeDefinitions = /* GraphQL */ `
   type ProductManager @model @auth(read: ["public"]) {
     externalId: ID!
     name: String!
+    email: String!
     createdAt: DateTime
     updatedAt: DateTime
   }

@@ -39,6 +39,10 @@ Commands:
 - block readOne when you don't have access to the owner entity (AuthZ)
 - Agregar list y maxPages a children entities (Ej: mensajes dentro de chats)
 
+## Pagination
+
+If you send a -1 in pageSize, it'll assume you want all the elements
+
 ## File transfer
 
 ### Create card

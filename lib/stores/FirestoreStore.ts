@@ -66,6 +66,12 @@ export class FirestoreStore implements Store {
     }
 
     const collectionRef = this.getCollection(props.type.name);
+    if ((props.where as any).id) {
+      // get element by id
+      const doc = await collectionRef.doc((props.where as any).id).get();
+      return doc ? this.formatOutput({ id: doc.id, ...doc.data() }) : null;
+    }
+
     const query = collectionRef.where("deletedAt", "==", null);
     const formattedInput = this.formatInput(props.where);
 
@@ -106,7 +112,12 @@ export class FirestoreStore implements Store {
     }
 
     const pageSize = props.pageSize || 10;
-    const snapshot = await query.limit(pageSize).get();
+    let snapshot = null;
+    if (pageSize === -1) {
+      snapshot = await query.get();
+    } else {
+      snapshot = await query.limit(pageSize).get();
+    }
 
     const list = snapshot.docs.map((doc) =>
       this.formatOutput({ id: doc.id, ...doc.data() })

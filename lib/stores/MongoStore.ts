@@ -138,10 +138,19 @@ export class MongoStore implements Store {
         deletedAt: null,
       }),
     });
-    const res = await model
-      .find({ ...findOneParams, ...permissionFilters, deletedAt: null })
-      .skip((page - 1) * pageSize)
-      .limit(pageSize);
+    let res = null;
+    if (pageSize === -1) {
+      res = await model.find({
+        ...findOneParams,
+        ...permissionFilters,
+        deletedAt: null,
+      });
+    } else {
+      res = await model
+        .find({ ...findOneParams, ...permissionFilters, deletedAt: null })
+        .skip((page - 1) * pageSize)
+        .limit(pageSize);
+    }
     return { list: this.formatOutput(res), maxPages };
   }
   public async create(

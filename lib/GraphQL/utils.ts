@@ -1,6 +1,30 @@
 import { FieldDefinitionNode } from "graphql";
 import { ASTNode, FieldDefinitionNodeType } from "./types";
 
+// TODO: check if type is singular, if not, make it singular
+export async function createCSQLTableIfNotExists({
+  pool,
+  singularType,
+}: {
+  pool: any;
+  singularType: string;
+}) {
+  const query = `
+    CREATE TABLE IF NOT EXISTS ${singularType} (
+      id UUID PRIMARY KEY,
+      data JSONB
+  );`;
+
+  try {
+    await pool.query(query);
+    console.log(`Table ${singularType} checked/created successfully.`);
+  } catch (error) {
+    console.error("Error creating table:", error);
+  } finally {
+    // await pool.end(); // Close the pool
+  }
+}
+
 export function extractDirectiveParams(
   astNode: ASTNode,
   directiveName: string

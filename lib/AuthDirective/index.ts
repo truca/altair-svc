@@ -235,3 +235,32 @@ export function getHasPermissionOnlyThroughAnotherEntity({
 
   return configForAction.every((role) => role.includes("|"));
 }
+
+export function getSQLFilterForOwnerOrCollaborator(
+  config: AuthConfig,
+  profile: Profile,
+  action: ActionTypes
+) {
+  const hasOwnerPermissionInConfig = getHasOwnerPermissionInConfig({
+    config,
+    action,
+  });
+  const hasCollaboratorPermissionInConfig =
+    getHasCollaboratorPermissionInConfig({ config, action });
+
+  if (!profile?.uid) return "1 = 0";
+
+  if (hasOwnerPermissionInConfig && hasCollaboratorPermissionInConfig) {
+    return `ownerIds = ? OR collaboratorIds = ?`;
+  }
+
+  if (hasOwnerPermissionInConfig) {
+    return `ownerIds = ?`;
+  }
+
+  if (hasCollaboratorPermissionInConfig) {
+    return `collaboratorIds = ?`;
+  }
+
+  return "1 = 0";
+}

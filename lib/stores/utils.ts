@@ -1,10 +1,13 @@
 import { MongoStore, MongoStoreOptions } from "./MongoStore";
 import { FirestoreStore, FirestoreOptions } from "./FirestoreStore";
+import { CloudSQLStore, CloudSQLStoreOptions } from "./PostgresStore";
 import { Store } from "./types";
 
 const serviceAccount = require("../../serviceAccountKey.json");
 
-export function getDbOptions(dbType: "mongo" | "firestore") {
+export type DbTypes = "mongo" | "firestore" | "postgres";
+
+export function getDbOptions(dbType: DbTypes) {
   switch (dbType) {
     case "mongo":
       return {
@@ -12,13 +15,21 @@ export function getDbOptions(dbType: "mongo" | "firestore") {
       };
     case "firestore":
       return serviceAccount;
+    case "postgres":
+      return serviceAccount;
+    // return {
+    //   connectionName: "cep-form:region:cep-form-csql-dbs",
+    //   user: "postgres",
+    //   password: "K?$;{C2]7TEsFomn",
+    //   db: "cep-form-csql-db-1",
+    // };
     default:
       throw new Error("Unsupported database type");
   }
 }
 
 export function createStore(
-  dbType: "mongo" | "firestore",
+  dbType: DbTypes,
   options: MongoStoreOptions | FirestoreOptions
 ): Store {
   switch (dbType) {
@@ -26,6 +37,8 @@ export function createStore(
       return new MongoStore(options as MongoStoreOptions);
     case "firestore":
       return new FirestoreStore(options as FirestoreOptions);
+    case "postgres":
+      return new CloudSQLStore(options as CloudSQLStoreOptions);
     default:
       throw new Error("Unsupported database type");
   }

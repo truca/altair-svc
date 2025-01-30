@@ -76,10 +76,7 @@ const typeDefinitions = /* GraphQL */ `
   }
 
   enum FormType {
-    AUTHOR
-    BOOK
-    PROFILE
-    CHAT
+    PRODUCTMANAGER
   }
 
   # Represents a user.  Supports: User Registration and Login, Profile Customization, In-App Messaging, Integration with Other Platforms, Notifications and Updates.
@@ -111,7 +108,9 @@ const typeDefinitions = /* GraphQL */ `
     wonTournaments: [ObjectId] # Tournaments this user won
   }
 
-  type ProductManager @model @auth(read: ["public"]) {
+  type ProductManager
+    @model
+    @auth(read: ["public"], update: ["public"], delete: ["public"]) {
     externalId: ID!
     name: String!
     email: String!
@@ -172,9 +171,7 @@ const typeDefinitions = /* GraphQL */ `
 `;
 
 const formTypes: FormTypes = {
-  AUTHOR: "author",
-  BOOK: "book",
-  PROFILE: "profile",
+  PRODUCTMANAGER: "productManager",
 };
 
 export const schema = makeSchema({

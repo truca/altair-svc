@@ -21,7 +21,7 @@ export interface StoreFindOneReturn {
   [key: string]: any;
 }
 export interface StoreCreateProps {
-  data: object;
+  data: object & { id?: string };
   type: GraphQLNamedType;
 }
 export type StoreCreateReturn = {

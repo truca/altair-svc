@@ -195,8 +195,258 @@ export const WARBAND_FORM_STEP_2: Field[] = [
   },
 ];
 
+// type ProductManager @model @auth(read: ["public"], delete: ["public"]) {
+//   externalId: ID!
+//   name: String!
+//   email: String!
+//   createdAt: DateTime
+//   updatedAt: DateTime
+// }
+export const PRODUCT_MANAGER_FORM: Field[] = [
+  {
+    label: "externalId",
+    type: FieldType.TEXT,
+    validation: [
+      {
+        label: "type",
+        value: "string",
+        valueType: ValueType.STRING,
+        errorMessage: "External ID should be a string",
+      },
+      {
+        label: "required",
+        value: "true",
+        valueType: ValueType.BOOLEAN,
+        errorMessage: "External ID is required",
+      },
+    ],
+  },
+  {
+    label: "name",
+    type: FieldType.TEXT,
+    validation: [
+      {
+        label: "type",
+        value: "string",
+        valueType: ValueType.STRING,
+        errorMessage: "Name should be a string",
+      },
+      {
+        label: "required",
+        value: "true",
+        valueType: ValueType.BOOLEAN,
+        errorMessage: "Name is required",
+      },
+    ],
+  },
+  {
+    label: "email",
+    type: FieldType.TEXT,
+    validation: [
+      {
+        label: "type",
+        value: "string",
+        valueType: ValueType.STRING,
+        errorMessage: "Email should be a string",
+      },
+      {
+        label: "required",
+        value: "true",
+        valueType: ValueType.BOOLEAN,
+        errorMessage: "Email is required",
+      },
+    ],
+  },
+];
+
+// type Seller @model @auth(read: ["public"]) {
+//   externalId: ID!
+//   name: String!
+//   createdAt: DateTime
+//   updatedAt: DateTime
+// }
+
+export const SELLER_FORM: Field[] = [
+  {
+    label: "externalId",
+    type: FieldType.TEXT,
+    validation: [
+      {
+        label: "type",
+        value: "string",
+        valueType: ValueType.STRING,
+        errorMessage: "External ID should be a string",
+      },
+      {
+        label: "required",
+        value: "true",
+        valueType: ValueType.BOOLEAN,
+        errorMessage: "External ID is required",
+      },
+    ],
+  },
+  {
+    label: "name",
+    type: FieldType.TEXT,
+    validation: [
+      {
+        label: "type",
+        value: "string",
+        valueType: ValueType.STRING,
+        errorMessage: "Name should be a string",
+      },
+      {
+        label: "required",
+        value: "true",
+        valueType: ValueType.BOOLEAN,
+        errorMessage: "Name is required",
+      },
+    ],
+  },
+];
+
+// type Brand @model @auth(read: ["public"]) {
+//   externalId: ID!
+//   name: String!
+//   createdAt: DateTime
+//   updatedAt: DateTime
+// }
+
+export const BRAND_FORM: Field[] = [
+  {
+    label: "externalId",
+    type: FieldType.TEXT,
+    validation: [
+      {
+        label: "type",
+        value: "string",
+        valueType: ValueType.STRING,
+        errorMessage: "External ID should be a string",
+      },
+      {
+        label: "required",
+        value: "true",
+        valueType: ValueType.BOOLEAN,
+        errorMessage: "External ID is required",
+      },
+    ],
+  },
+  {
+    label: "name",
+    type: FieldType.TEXT,
+    validation: [
+      {
+        label: "type",
+        value: "string",
+        valueType: ValueType.STRING,
+        errorMessage: "Name should be a string",
+      },
+      {
+        label: "required",
+        value: "true",
+        valueType: ValueType.BOOLEAN,
+        errorMessage: "Name is required",
+      },
+    ],
+  },
+];
+
+// type Category @model @auth(read: ["public"]) {
+//   externalId: ID!
+//   name: String!
+//   createdAt: DateTime
+//   updatedAt: DateTime
+// }
+
+export const CATEGORY_FORM: Field[] = [
+  {
+    label: "externalId",
+    type: FieldType.TEXT,
+    validation: [
+      {
+        label: "type",
+        value: "string",
+        valueType: ValueType.STRING,
+        errorMessage: "External ID should be a string",
+      },
+      {
+        label: "required",
+        value: "true",
+        valueType: ValueType.BOOLEAN,
+        errorMessage: "External ID is required",
+      },
+    ],
+  },
+  {
+    label: "name",
+    type: FieldType.TEXT,
+    validation: [
+      {
+        label: "type",
+        value: "string",
+        valueType: ValueType.STRING,
+        errorMessage: "Name should be a string",
+      },
+      {
+        label: "required",
+        value: "true",
+        valueType: ValueType.BOOLEAN,
+        errorMessage: "Name is required",
+      },
+    ],
+  },
+];
+
+// type Subcategory @model @auth(read: ["public"]) {
+//   externalId: ID!
+//   name: String!
+//   createdAt: DateTime
+//   updatedAt: DateTime
+// }
+
+export const SUBCATEGORY_FORM: Field[] = [
+  {
+    label: "externalId",
+    type: FieldType.TEXT,
+    validation: [
+      {
+        label: "type",
+        value: "string",
+        valueType: ValueType.STRING,
+        errorMessage: "External ID should be a string",
+      },
+      {
+        label: "required",
+        value: "true",
+        valueType: ValueType.BOOLEAN,
+        errorMessage: "External ID is required",
+      },
+    ],
+  },
+  {
+    label: "name",
+    type: FieldType.TEXT,
+    validation: [
+      {
+        label: "type",
+        value: "string",
+        valueType: ValueType.STRING,
+        errorMessage: "Name should be a string",
+      },
+      {
+        label: "required",
+        value: "true",
+        valueType: ValueType.BOOLEAN,
+        errorMessage: "Name is required",
+      },
+    ],
+  },
+];
+
 export const FORMS: FormsHash = {
-  author: AUTHOR_FORM,
-  book: BOOK_FORM,
-  chat: CHAT_FORM,
+  productManager: PRODUCT_MANAGER_FORM,
+  seller: SELLER_FORM,
+  brand: BRAND_FORM,
+  category: CATEGORY_FORM,
+  subcategory: SUBCATEGORY_FORM,
 };

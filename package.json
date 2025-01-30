@@ -16,6 +16,7 @@
     "@types/jsonwebtoken": "^9.0.7",
     "@types/lodash": "^4.17.0",
     "@types/node": "18.16.16",
+    "@types/pg": "^8.11.11",
     "@types/pluralize": "^0.0.33",
     "@types/uuid": "^10.0.0",
     "cross-env": "7.0.3",
@@ -24,6 +25,7 @@
     "typescript": "5.1.6"
   },
   "dependencies": {
+    "@google-cloud/cloud-sql-connector": "^1.6.0",
     "@google-cloud/firestore": "^7.11.0",
     "@graphql-tools/schema": "^7.1.5",
     "@graphql-tools/utils": "^7.1.5",
@@ -38,6 +40,7 @@
     "lodash": "^4.17.21",
     "mongoose": "^8.4.0",
     "pascal-case": "^4.0.0",
+    "pg": "^8.13.1",
     "pluralize": "^8.0.0",
     "uuid": "^10.0.0"
   }

@@ -2,7 +2,7 @@ import { makeExecutableSchema } from "@graphql-tools/schema";
 import { ModelDirective } from "../ModelDirective";
 import { StaticModelDirective } from "../StaticModelDirective";
 import { MongoStore } from "../stores/MongoStore";
-import { createStore, getDbOptions } from "../stores/utils";
+import { createStore, DbTypes, getDbOptions } from "../stores/utils";
 import { CookieStore, FormsHash, Profile } from "../types";
 
 import { GraphQLID } from "graphql";
@@ -112,8 +112,13 @@ export function makeContext({ context: contextArg }: any) {
   // const store = new MongoStore({
   //   connection: `${process.env.DB_URI}/${process.env.DATABASE}`,
   // });
-  const dbType: "mongo" | "firestore" =
-    process.env.DB_TYPE === "firestore" ? "firestore" : "mongo";
+  const envDbType = process.env.DB_TYPE;
+  const dbType: DbTypes = ["mongo", "firestore", "postgres"].includes(
+    envDbType || ""
+  )
+    ? (envDbType as DbTypes)
+    : "mongo";
+
   const options = getDbOptions(dbType);
   const store = createStore(dbType, options);
 

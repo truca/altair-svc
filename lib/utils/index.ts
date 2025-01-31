@@ -12,6 +12,7 @@ import { createPubSub } from "graphql-yoga";
 const pubSub = createPubSub();
 
 import { config } from "dotenv";
+import { Store } from "../stores/types";
 config();
 
 const jwt = require("jsonwebtoken");
@@ -108,24 +109,36 @@ export function setTokensAsCookies(
   });
 }
 
-export function makeContext({ context: contextArg }: any) {
-  // const store = new MongoStore({
-  //   connection: `${process.env.DB_URI}/${process.env.DATABASE}`,
-  // });
-  const envDbType = process.env.DB_TYPE;
-  const dbType: DbTypes = ["mongo", "firestore", "postgres"].includes(
-    envDbType || ""
-  )
-    ? (envDbType as DbTypes)
-    : "mongo";
+function connectDatabases() {
+  const dbCountEnv = process.env.DB_COUNT;
 
-  const options = getDbOptions(dbType);
-  const store = createStore(dbType, options);
+  if (!dbCountEnv) throw new Error("DB_COUNT environment variable not set");
+
+  const dbCount = parseInt(dbCountEnv, 10) || 2; // Default to 2 if not specified
+
+  const dbs: { [key: string]: Store } = {};
+  for (let i = 1; i <= dbCount; i++) {
+    const dbType: DbTypes = process.env[`DB_${i}_TYPE`] as DbTypes;
+    const dbName: string = process.env[`DB_${i}_NAME`] as string;
+    const dbOptions = JSON.parse(process.env[`DB_${i}_OPTIONS`] || "{}");
+    const dbIsDefault = process.env[`DB_${i}_IS_DEFAULT`] === "true";
+
+    if (!dbType || !dbName) continue;
+
+    dbs[dbName] = createStore(dbType, dbOptions);
+    if (dbIsDefault) dbs["store"] = dbs[dbName];
+  }
+
+  return dbs;
+}
+
+export function makeContext({ context: contextArg }: any) {
+  const databases = connectDatabases();
 
   const context = {
     ...contextArg,
     directives: {
-      model: { store },
+      model: { ...databases },
       file: {
         maxSize: 1000000,
         types: ["image/jpeg", "image/png"],

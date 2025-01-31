@@ -25,13 +25,21 @@ import { extractDirectiveParams } from "../GraphQL/utils";
 import { Firestore, Settings } from "@google-cloud/firestore";
 import admin from "firebase-admin";
 
-export type FirestoreOptions = admin.ServiceAccount;
+// export type FirestoreOptions = admin.ServiceAccount;
+export interface FirestoreOptions {
+  serviceAccountPath: string;
+}
 
 export class FirestoreStore implements Store {
   public db: Firestore;
 
-  constructor(serviceAccount: FirestoreOptions) {
-    console.log({ serviceAccount });
+  constructor(options: FirestoreOptions) {
+    this.db = {} as any;
+    this.connectToDb(options);
+  }
+
+  private async connectToDb(options: FirestoreOptions) {
+    const serviceAccount = await import(options.serviceAccountPath);
     const app = admin.initializeApp({
       credential: admin.credential.cert(serviceAccount),
     });

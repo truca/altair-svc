@@ -17,12 +17,6 @@ export function getDbOptions(dbType: DbTypes) {
       return serviceAccount;
     case "postgres":
       return serviceAccount;
-    // return {
-    //   connectionName: "cep-form:region:cep-form-csql-dbs",
-    //   user: "postgres",
-    //   password: "K?$;{C2]7TEsFomn",
-    //   db: "cep-form-csql-db-1",
-    // };
     default:
       throw new Error("Unsupported database type");
   }
@@ -30,7 +24,7 @@ export function getDbOptions(dbType: DbTypes) {
 
 export function createStore(
   dbType: DbTypes,
-  options: MongoStoreOptions | FirestoreOptions
+  options: MongoStoreOptions | FirestoreOptions | CloudSQLStoreOptions
 ): Store {
   switch (dbType) {
     case "mongo":

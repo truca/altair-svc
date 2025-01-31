@@ -53,39 +53,32 @@ async function getConnector() {
 }
 
 export interface CloudSQLStoreOptions {
-  connectionName: string; // Format: project:region:instance
+  dbName: string;
   user: string;
   password: string;
-  db: string; // Database name
+  database: string;
 }
 
 export class CloudSQLStore implements Store {
   private pool: any;
-  private db: any;
 
   constructor(options: CloudSQLStoreOptions) {
     this.pool = new pg.Client();
-    this.getPool().then((client) => {
+    this.getPool(options).then((client) => {
       this.pool = client;
     });
   }
 
-  private async getPool() {
-    const { clientOpts, connector } = await getConnector();
+  private async getPool(baseOptions: CloudSQLStoreOptions) {
+    const { dbName, ...options } = baseOptions;
+    // TODO: connector.close() when done
+    const { clientOpts } = await getConnector(); // , connector
     const pool = new Pool({
       ...clientOpts,
-      user: "postgres",
-      password: "K?$;{C2]7TEsFomn",
-      database: "cep-form-csql-db-1",
+      ...options,
       max: 1,
     });
     return pool;
-
-    // const { rows } = await pool.query("SELECT NOW()");
-    // console.table(rows); // prints returned time value from server
-
-    // await pool.end();
-    // connector.close();
   }
 
   public async findOne(

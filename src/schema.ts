@@ -146,8 +146,14 @@ const typeDefinitions = /* GraphQL */ `
     updatedAt: DateTime
   }
 
-  # CampaignGroup
+  type Image @model @auth(read: ["public"]) {
+    externalId: ID!
+    url: String!
+    createdAt: DateTime
+    updatedAt: DateTime
+  }
 
+  # CampaignGroup
   type BaseForm {
     budget: Float!
     startDate: String!
@@ -461,7 +467,9 @@ const typeDefinitions = /* GraphQL */ `
     strategies: [HomeLandingStrategy!]!
   }
 
-  type CampaignGroup {
+  type CampaignGroup
+    @model
+    @auth(read: ["public"], update: ["public"], delete: ["public"]) {
     productManagerId: String!
     businessUnitId: String!
     campaignTypeId: String!

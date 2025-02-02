@@ -247,7 +247,9 @@ export class ModelDirective extends SchemaDirectiveVisitor {
       context: ResolverContext,
       info: any
     ) => {
-      const initialData: object[] = await context.directives.model.store.find(
+      const params = getDirectiveParams("model", type);
+      const db = params?.db ?? "store";
+      const initialData: object[] = await context.directives.model[db].find(
         {
           where: args.where,
           page: args.page,
@@ -315,7 +317,9 @@ export class ModelDirective extends SchemaDirectiveVisitor {
       context: ResolverContext,
       info: any
     ) => {
-      const rootObject = await context.directives.model.store.findOne(
+      const params = getDirectiveParams("model", type);
+      const db = params?.db ?? "store";
+      const rootObject = await context.directives.model[db].findOne(
         {
           where: args.where,
           type,
@@ -420,7 +424,9 @@ export class ModelDirective extends SchemaDirectiveVisitor {
 
       const objectIds = this.pluckModelObjectIds(relatedObjects);
 
-      const rootObject = await context.directives.model.store.create(
+      const params = getDirectiveParams("model", type);
+      const db = params?.db ?? "store";
+      const rootObject = await context.directives.model[db].create(
         {
           data: {
             ...args.data,
@@ -437,9 +443,9 @@ export class ModelDirective extends SchemaDirectiveVisitor {
       // @subscribe(on: "create", topic: "messageAdded")
       const isSubscribable = hasDirective("subscribe", type);
       if (isSubscribable) {
-        const params = getDirectiveParams("subscribe", type);
-        if (params) {
-          const { on = [], topic } = params;
+        const subscribeParams = getDirectiveParams("subscribe", type);
+        if (subscribeParams) {
+          const { on = [], topic } = subscribeParams;
         }
       }
 
@@ -468,7 +474,9 @@ export class ModelDirective extends SchemaDirectiveVisitor {
       // This will update all files and return the file paths
       await uploadFiles(type, args.data);
 
-      const currentRootObject = await context.directives.model.store.findOne(
+      const params = getDirectiveParams("model", type);
+      const db = params?.db ?? "store";
+      const currentRootObject = await context.directives.model[db].findOne(
         {
           where: args.where,
           type,
@@ -564,7 +572,7 @@ export class ModelDirective extends SchemaDirectiveVisitor {
       }
       const objectIds = mergeWith(filteredRootObject, newObjectIds, customizer);
 
-      const updated = await context.directives.model.store.update(
+      const updated = await context.directives.model[db].update(
         {
           where: args.where,
           data: {
@@ -582,7 +590,7 @@ export class ModelDirective extends SchemaDirectiveVisitor {
         throw new Error(`Failed to update ${type}`);
       }
 
-      const rootObject = await context.directives.model.store.findOne(
+      const rootObject = await context.directives.model[db].findOne(
         {
           where: args.where,
           type,
@@ -700,7 +708,9 @@ export class ModelDirective extends SchemaDirectiveVisitor {
       ) => {
         const modelDirective = getDirectiveParams("model", type);
 
-        return context.directives.model.store.remove(
+        const params = getDirectiveParams("model", type);
+        const db = params?.db ?? "store";
+        return context.directives.model[db].remove(
           {
             where: args.where,
             type,

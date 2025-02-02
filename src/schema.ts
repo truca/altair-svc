@@ -125,7 +125,7 @@ const typeDefinitions = /* GraphQL */ `
     updatedAt: DateTime
   }
 
-  type Brand @model @auth(read: ["public"]) {
+  type Brand @model(db: "cep-firebase") @auth(read: ["public"]) {
     externalId: ID!
     name: String!
     createdAt: DateTime

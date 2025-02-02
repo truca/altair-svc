@@ -129,6 +129,7 @@ function connectDatabases() {
     if (dbIsDefault) dbs["store"] = dbs[dbName];
   }
 
+  console.log({ dbs });
   return dbs;
 }
 

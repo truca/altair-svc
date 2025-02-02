@@ -27,6 +27,7 @@ import admin from "firebase-admin";
 
 // export type FirestoreOptions = admin.ServiceAccount;
 export interface FirestoreOptions {
+  name?: string;
   serviceAccountPath: string;
 }
 
@@ -40,13 +41,17 @@ export class FirestoreStore implements Store {
 
   private async connectToDb(options: FirestoreOptions) {
     const serviceAccount = await import(options.serviceAccountPath);
-    const app = admin.initializeApp({
-      credential: admin.credential.cert(serviceAccount),
-    });
+    const app = admin.initializeApp(
+      {
+        credential: admin.credential.cert(serviceAccount),
+      },
+      options.name
+    );
 
     this.db = app.firestore();
 
     this.db.settings({
+      ...(options.name ? { databaseId: options.name } : {}),
       ignoreUndefinedProperties: true,
     });
   }

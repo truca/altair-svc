@@ -51,16 +51,26 @@ export const addInputTypesForObjectType = ({
   parent = null,
 }: AddInputTypesForObjectTypeProps) => {
   // Fields of an input type cannot have resolvers
-  let fields = omitResolvers(objectType.getFields());
+  let fields = omitResolvers(
+    typeof objectType?.getFields === "function"
+      ? objectType.getFields()
+      : objectType.ofType.getFields()
+  );
   // To Do: don't map field type for query type
   fields = mapFileFieldsToFileInputType(fields, schema);
 
   // Create the corresponding input type.
   // For example, if given `type Foo` will create `input FooInputType`
   let inputObjectType = new GraphQLInputObjectType({
-    name: `${prefix}${toInputObjectTypeName(objectType.name)}`,
+    name: `${prefix}${toInputObjectTypeName(
+      objectType.name ?? objectType.ofType.name
+    )}`,
     fields,
   });
+
+  // if (objectType instanceof GraphQLList) {
+  //   inputObjectType = new GraphQLList(inputObjectType);
+  // }
 
   // Adds the newly created input type to the type map.
   //
@@ -87,7 +97,15 @@ export const addInputTypesForObjectType = ({
         field = createInputField(field, inputType);
       } else {
         // Input type does not exist so we need to create it
-        const fieldType = getNamedType(field.type);
+        let fieldType = getNamedType(field.type);
+        const a = GraphQLList;
+        if (
+          field.type instanceof GraphQLList ||
+          (field.type instanceof GraphQLNonNull &&
+            field.type.ofType instanceof GraphQLList)
+        ) {
+          fieldType = new GraphQLList(fieldType);
+        }
         const newInputType = addInputTypesForObjectType({
           objectType: fieldType as unknown as GraphQLObjectType,
           schema,
@@ -95,7 +113,13 @@ export const addInputTypesForObjectType = ({
           modifyField,
           parent: objectType,
         });
-        field = createInputField(field, newInputType);
+        field = createInputField(
+          field,
+          field.type instanceof GraphQLList ||
+            (field.type.ofType && field.type.ofType instanceof GraphQLList)
+            ? new GraphQLList(newInputType)
+            : newInputType
+        );
       }
     }
 
@@ -108,9 +132,13 @@ export const addInputTypesForObjectType = ({
   // Replace our original inputObjectType with new one containing the modified fields
 
   inputObjectType = new GraphQLInputObjectType({
-    name: inputObjectType.name,
+    name: inputObjectType.name ?? inputObjectType.ofType.name,
     fields: inputObjectFields,
   });
+
+  // if (objectType instanceof GraphQLList) {
+  //   inputObjectType = new GraphQLList(inputObjectType);
+  // }
 
   schema.getTypeMap()[inputObjectType.name] = inputObjectType;
 

@@ -698,6 +698,8 @@ export class ModelDirective extends SchemaDirectiveVisitor {
         context: ResolverContext,
         info: any
       ) => {
+        const modelDirective = getDirectiveParams("model", type);
+
         return context.directives.model.store.remove(
           {
             where: args.where,

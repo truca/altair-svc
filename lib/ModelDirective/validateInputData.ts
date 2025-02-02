@@ -1,5 +1,10 @@
 // @ts-nocheck
-import { getNullableType, GraphQLObjectType, GraphQLSchema } from "graphql";
+import {
+  getNullableType,
+  GraphQLList,
+  GraphQLObjectType,
+  GraphQLSchema,
+} from "graphql";
 
 import { isEmpty, isPlainObject } from "lodash";
 import { isNonNullable } from "./util";
@@ -17,6 +22,14 @@ export const validateInputData = (props: ValidateInputDataProps) => {
     throw new Error("data input object is missing");
   }
 
+  if (props.type instanceof GraphQLList) {
+    if (!Array.isArray(props.data) && !isEmpty(props.data)) {
+      throw new Error(
+        `${props.type.ofType.ofType.name} must be an array or empty`
+      );
+    }
+    const fields = props.type.ofType.ofType.getFields();
+  }
   const fields = props.type.getFields();
 
   Object.keys(fields).forEach((key) => {

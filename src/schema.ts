@@ -6,7 +6,7 @@ const typeDefinitions = /* GraphQL */ `
   scalar ID
   scalar File
   scalar DateTime
-  directive @model on OBJECT
+  directive @model(db: String) on OBJECT
   directive @file(maxSize: Float!, types: [String!]!) on FIELD_DEFINITION
   directive @auth(
     create: [String]
@@ -146,7 +146,7 @@ const typeDefinitions = /* GraphQL */ `
     updatedAt: DateTime
   }
 
-  type Image @model @auth(read: ["public"]) {
+  type Image @model(db: "cep") @auth(read: ["public"]) {
     externalId: ID!
     url: String!
     createdAt: DateTime
@@ -154,18 +154,67 @@ const typeDefinitions = /* GraphQL */ `
   }
 
   # CampaignGroup
-  type BaseForm {
-    budget: Float!
+  type CampaignGroup @model @auth(read: ["public"]) {
+    productManagerId: String!
+    businessUnitId: String!
+    campaignTypeId: String!
+    eventType: String!
+    sellerId: String!
+    brandId: String!
+    categoryId: String!
+    subCategoryId: String!
     startDate: String!
     endDate: String!
-    comment: String
+
+    # Service flags
+    bannersFadsEnabled: Boolean!
+    CRMEnabled: Boolean!
+    homeLandingEnabled: Boolean!
+    mediaOnEnabled: Boolean!
+    ratingsAndReviewsEnabled: Boolean!
+    sponsoredBrandsEnabled: Boolean!
+    sponsoredProductEnabled: Boolean!
+    mediaOffEnabled: Boolean!
+    mediaOffBudget: Float
+    storeEnabled: Boolean!
+    storeBudget: Float
+    graphicsEnabled: Boolean!
+    graphicsBudget: Float
+    othersEnabled: Boolean!
+    othersBudget: Float
+    mediaPlan: String
+
+    # Forms
+    mediaOnForm: MediaOnForm
+    sponsoredBrandForm: SponsoredBrandForm
+    sponsoredProductForm: SponsoredProductForm
+    bannerForm: BannerFadsForm
+    CRMForm: CRMForm
+    ratingAndReviewForm: RatingAndReviewForm
+    homeLanding: HomeLandingForm
+
+    campaignIds: [String!]!
   }
 
-  type SponsoredCommonForm {
+  type MediaOnForm {
+    strategiesId: String!
     budget: Float!
+    commission: String!
+    totalAmount: Float!
+    strategies: [MediosDigitalesStrategy!]!
+  }
+
+  type MediosDigitalesStrategy {
+    mediumId: String!
+    objectiveId: String!
+    strategyId: String!
+    segmentationId: String!
+    purchaseTypeId: String!
+    formatsId: String!
+    budget: Float!
+    commission: Float!
     startDate: String!
     endDate: String!
-    comment: String
   }
 
   type SponsoredBrandForm {
@@ -195,6 +244,7 @@ const typeDefinitions = /* GraphQL */ `
   }
 
   type BannerFadsForm {
+    # Banner Fads
     bannerFadBannerTypeId: String!
     bannerFadTotalBudget: Float!
     bannerFadStartDate: String!
@@ -203,6 +253,8 @@ const typeDefinitions = /* GraphQL */ `
     bannerFadCategoryId: String!
     bannerFadUrl: String!
     bannerFadComment: String!
+
+    # Banner Menu
     bannerMenuTotalBudget: Float!
     bannerMenuStartDate: String!
     bannerMenuEndDate: String!
@@ -211,186 +263,40 @@ const typeDefinitions = /* GraphQL */ `
     image: String!
   }
 
-  type MediosDigitalesStrategy {
-    mediumId: String!
-    objectiveId: String!
-    strategyId: String!
-    segmentationId: String!
-    purchaseTypeId: String!
-    formatsId: String!
-    budget: Float!
-    commission: Float!
-    startDate: String!
-    endDate: String!
-  }
-
-  type MediaOnForm {
-    strategiesId: String!
-    budget: Float!
-    commission: String!
-    totalAmount: Float!
-    strategies: [MediosDigitalesStrategy!]!
-  }
-
-  type CRMCommonForm {
-    budget: Float!
-    base: Float!
-    shippingDate: String!
-    internalCampaignName: String!
-    comments: String!
-  }
-
-  type CRMEmailForm {
-    budget: Float!
-    base: Float!
-    shippingDate: String!
-    internalCampaignName: String!
-    comments: String!
-    type: String!
-  }
-
-  type CRMTriggersForm {
-    budget: Float!
-    base: Float!
-    shippingDate: String!
-    internalCampaignName: String!
-    comments: String!
-    type: String!
-    quantityMonths: Float!
-    triggerTypeId: String!
-  }
-
-  type CRMBannerForm {
-    budget: Float!
-    base: Float!
-    startDate: String!
-    endDate: String!
-    sku: String!
-    callToAction: String!
-    url: String!
-    internalCampaignName: String!
-    comments: String!
-    type: String!
-  }
-
-  type CRMSmsForm {
-    budget: Float!
-    base: Float!
-    shippingDate: String!
-    internalCampaignName: String!
-    comments: String!
-    type: String!
-    smsText: String!
-    url: String!
-  }
-
-  type CRMWhatsappForm {
-    budget: Float!
-    base: Float!
-    shippingDate: String!
-    internalCampaignName: String!
-    comments: String!
-    type: String!
-    smsText: String!
-    url: String!
-  }
-
-  type CRMPushForm {
-    budget: Float!
-    base: Float!
-    shippingDate: String!
-    internalCampaignName: String!
-    comments: String!
-    type: String!
-    link: String!
-    title: String!
-    callToAction: String!
-    url: String!
-  }
-
-  type CRMPushSmsNrtForm {
-    budget: Float!
-    base: Float!
-    startDate: String!
-    endDate: String!
-    text: String!
-    storeId: String!
-    internalCampaignName: String!
-    comments: String!
-    type: String!
-  }
-
-  type CRMPreheaderForm {
-    budget: Float!
-    base: Float!
-    startDate: String!
-    endDate: String!
-    sku: String!
-    callToAction: String!
-    url: String!
-    internalCampaignName: String!
-    comments: String!
-    type: String!
-  }
-
-  type CRMCuponForm {
-    budget: Float!
-    base: Float!
-    startDate: String!
-    endDate: String!
-    cuponTypeId: String!
-    benefit: String!
-    benefitAmount: Float!
-    trigger: String!
-    message: String!
-    storeId: String!
-    internalCampaignName: String!
-    comments: String!
-    type: String!
-  }
-
-  type CRMSamplingForm {
-    budget: Float!
-    base: Float!
-    shippingDate: String!
-    internalCampaignName: String!
-    comments: String!
-    typeId: String!
-    units: Float!
-    storeId: String!
-    segmentation: String!
-    type: String!
-  }
-
-  type CRMWhatsappCarrouselForm {
-    budget: Float!
-    base: Float!
-    shippingDate: String!
-    internalCampaignName: String!
-    comments: String!
-    type: String!
-    skus: [String!]!
-    text: String!
-    url: String!
-  }
-
-  union CRMFormSubProduct =
-      CRMEmailForm
-    | CRMWhatsappForm
-    | CRMPushForm
-    | CRMSmsForm
-    | CRMTriggersForm
-    | CRMBannerForm
-    | CRMSamplingForm
-    | CRMCuponForm
-    | CRMPushSmsNrtForm
-    | CRMPreheaderForm
-    | CRMWhatsappCarrouselForm
-
   type CRMForm {
     crmTypeId: String!
     templateId: String!
-    subProducts: [CRMFormSubProduct!]!
+    subProducts: [CRMCampaignSubProduct!]!
+  }
+
+  type CRMCampaignSubProduct {
+    type: String!
+    budget: Float!
+    base: Float!
+    shippingDate: String
+    internalCampaignName: String!
+    comments: String!
+    quantityMonths: Float
+    triggerTypeId: String
+    startDate: String
+    endDate: String
+    sku: String
+    callToAction: String
+    url: String
+    smsText: String
+    link: String
+    title: String
+    text: String
+    storeId: String
+    cuponTypeId: String
+    benefit: String
+    benefitAmount: Float
+    trigger: String
+    message: String
+    typeId: String
+    units: Float
+    segmentation: String
+    skus: [String!]
   }
 
   type RatingAndReviewForm {
@@ -406,110 +312,22 @@ const typeDefinitions = /* GraphQL */ `
     sku: String
   }
 
-  type HomeLandingCommonForm {
-    budget: Float!
-    visualKey: String!
-    sku: String!
-    startDate: String!
-    endDate: String!
-    url: String!
-    comment: String!
-  }
-
-  type HomeLandingShowcase6Form {
-    budget: Float!
-    visualKey: String!
-    sku: String!
-    startDate: String!
-    endDate: String!
-    url: String!
-    comment: String!
-  }
-
-  type HomeLandingTheLastForm {
-    budget: Float!
-    visualKey: String!
-    sku: String!
-    startDate: String!
-    endDate: String!
-    url: String!
-    comment: String!
-  }
-
-  type HomeLandingTapeForm {
-    budget: Float!
-    visualKey: String!
-    sku: String!
-    startDate: String!
-    endDate: String!
-    url: String!
-    comment: String!
-  }
-
-  type HomeOtherBannerForm {
-    budget: Float!
-    visualKey: String!
-    sku: String!
-    startDate: String!
-    endDate: String!
-    url: String!
-    comment: String!
-  }
-
-  union HomeLandingStrategy =
-      HomeLandingShowcase6Form
-    | HomeLandingTheLastForm
-    | HomeLandingTapeForm
-    | HomeOtherBannerForm
-
   type HomeLandingForm {
     totalBudget: Float!
     strategies: [HomeLandingStrategy!]!
   }
 
-  type CampaignGroup
-    @model
-    @auth(read: ["public"], update: ["public"], delete: ["public"]) {
-    productManagerId: String!
-    businessUnitId: String!
-    campaignTypeId: String!
-    eventType: String!
-    sellerId: String!
-    brandId: String!
-    categoryId: String!
-    subCategoryId: String!
+  type HomeLandingStrategy {
+    type: String!
+    budget: Float!
     startDate: String!
     endDate: String!
-
-    bannersFadsEnabled: Boolean!
-    CRMEnabled: Boolean!
-    homeLandingEnabled: Boolean!
-    mediaOnEnabled: Boolean!
-    ratingsAndReviewsEnabled: Boolean!
-    sponsoredBrandsEnabled: Boolean!
-    sponsoredProductEnabled: Boolean!
-
-    mediaOffEnabled: Boolean!
-    mediaOffBudget: Float
-    storeEnabled: Boolean!
-    storeBudget: Float
-    graphicsEnabled: Boolean!
-    graphicsBudget: Float
-    othersEnabled: Boolean!
-    othersBudget: Float
-
-    mediaPlan: String
-
-    mediaOnForm: MediaOnForm
-    sponsoredBrandForm: SponsoredBrandForm
-    sponsoredProductForm: SponsoredProductForm
-    bannerForm: BannerFadsForm
-    CRMForm: CRMCommonForm
-    ratingAndReviewForm: RatingAndReviewForm
-    homeLanding: HomeLandingForm
-    campaignIds: [String!]!
+    comment: String
+    visualKey: String
+    sku: String
+    url: String!
+    totalBudget: Float
   }
-
   # CampaignGroup
 
   type Query {

@@ -5,7 +5,7 @@ import { hasDirective } from "./util";
 const fs = require(`fs`);
 const path = require(`path`);
 
-export function getDirectiveArguments(type: any, fieldName: string) {
+export function getFileDirectiveArguments(type: any, fieldName: string) {
   const field = type.getFields()[fieldName];
   const directive = hasDirective("file", field);
 
@@ -58,7 +58,7 @@ export async function uploadFiles(type: any, data: Record<string, any>) {
   await Promise.all(
     fileKeys.map(async (key) => {
       const id = uuidv4();
-      const args = getDirectiveArguments(type, key);
+      const args = getFileDirectiveArguments(type, key);
 
       if (args.maxSize && data[key].size > args.maxSize) {
         throw new Error(

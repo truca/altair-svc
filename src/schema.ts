@@ -158,7 +158,7 @@ const typeDefinitions = /* GraphQL */ `
     productManagerId: String!
     businessUnitId: String!
     campaignTypeId: String!
-    eventType: String!
+    eventTypeId: String!
     sellerId: String!
     brandId: String!
     categoryId: String!
@@ -191,7 +191,7 @@ const typeDefinitions = /* GraphQL */ `
     bannerForm: BannerFadsForm
     CRMForm: CRMForm
     ratingAndReviewForm: RatingAndReviewForm
-    homeLanding: HomeLandingForm
+    homeLandingForm: HomeLandingForm
 
     campaignIds: [String!]!
   }
@@ -258,7 +258,7 @@ const typeDefinitions = /* GraphQL */ `
     bannerMenuTotalBudget: Float!
     bannerMenuStartDate: String!
     bannerMenuEndDate: String!
-    bannerMenuFadUrl: String!
+    bannerMenuUrl: String!
     bannerMenuComment: String!
     image: String!
   }
@@ -306,10 +306,10 @@ const typeDefinitions = /* GraphQL */ `
     comment: String
     shippingCost: Float!
     agreedShipments: Float!
-    segmentationId: String!
+    segmentationTypeId: String!
     sellerId: String
     brandId: String
-    sku: String
+    skus: String
   }
 
   type HomeLandingForm {

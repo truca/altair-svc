@@ -6,6 +6,7 @@ import {
   PageState,
   usePageContextReducer,
 } from "./contexts/PageContext";
+import Form from "./warbands/create/page";
 
 const initialState: PageState<"sidebar" | "logo" | "user" | "content"> = {
   page: { type: "" },
@@ -24,8 +25,9 @@ export default function Home() {
 
   return (
     <PageContext.Provider value={state}>
-      <DashboardLayout page={state.page} {...(state.slots as any)} />
-      <ModalsAndSidebars />
+      {/* <DashboardLayout page={state.page} {...(state.slots as any)} />
+      <ModalsAndSidebars /> */}
+      <Form />
     </PageContext.Provider>
   );
 }

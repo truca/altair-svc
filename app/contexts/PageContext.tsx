@@ -117,6 +117,7 @@ export function usePageContextReducer<SlotsKeys extends string>(
   //   const router = useRouter();
   const showToast = useToast();
   const [state, reduxDispatch] = useReducer(pageReducer, init);
+  console.log("init: ", init);
 
   const dispatch = (action: Action) => {
     if (action.type === "showToast") {

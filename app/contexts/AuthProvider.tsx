@@ -79,7 +79,7 @@ export const AuthContext = createContext<AuthContextProps | undefined>(
 export function AuthProvider({ children }: { children: ReactNode }) {
   const router = useRouter();
   const { cookies, setCookie } = useCookies();
-  const [user, setUser] = useState<any | null>(null);
+  const [user, setUser] = useState<any | null>(true);
   const [mutate] = useMutation(authenticationMutation);
 
   const pathname = usePathname();
@@ -102,15 +102,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setCookie("token", result.data.authenticate, 1);
 
       if (pathname === "/login") {
-        const redirect = searchParams.get("redirect");
-        router.push(redirect || "/");
+        // const redirect = searchParams.get("redirect");
+        // router.push(redirect || "/");
       }
     },
     onLogout: () => {
       setUser(null);
-      router.push(
-        pathname !== "/login" ? `/login?redirect=${pathname}` : "/login"
-      );
+      // router.push(
+      //   pathname !== "/login" ? `/login?redirect=${pathname}` : "/login"
+      // );
     },
   });
 

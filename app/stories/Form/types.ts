@@ -15,6 +15,8 @@ export enum FieldType {
   MULTISELECT = "multiselect",
   FILE = "file",
 
+  SMART_SELECT = "smart-select",
+
   HIDDEN = "hidden",
   RESET = "reset",
 
@@ -102,7 +104,15 @@ export interface Field {
   sx?: StackProps;
   optionSx?: StackProps;
   inputProps?: any;
+  labelProps?: any;
   component?: React.FC<{ field: InternalField }> | string;
+  setFieldsForm?: any;
+  formName?: any;
+  entity?: string | undefined;
+  valueAttribute?: string | undefined;
+  labelAttribute?: string | undefined;
+  startDateFieldName?: string | undefined;
+  endDateFieldName?: string | undefined;
 }
 
 export interface InternalField extends Field {

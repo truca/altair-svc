@@ -3,7 +3,7 @@ import { Direction, Field } from "./types";
 import { FieldComponentsHash } from "./FieldComponentsHash";
 import { FieldValues, useForm } from "react-hook-form";
 import { buildYup } from "schema-to-yup";
-import { useCallback } from "react";
+import { useCallback, useEffect } from "react";
 import * as yup from "yup";
 
 export interface FormProps {
@@ -18,7 +18,8 @@ export interface FormProps {
   submitProps?: Omit<ButtonProps, "onClick">;
 
   containerSx?: React.CSSProperties;
-
+  // setCurrentValueForm?: any;
+  setFieldsForm?: any;
   cancelText?: string;
   onCancel?: () => void;
 }
@@ -129,11 +130,15 @@ export function BasicForm({
   onCancel,
   cancelText,
   containerSx,
+  // setCurrentValueForm,
+  setFieldsForm,
   ...extraProps
 }: FormProps) {
+  console.log("extraProps: ", extraProps);
   console.log({ fields });
   const { validationValues, validationMessages } =
     getValidationsFromFields(fields);
+
   const resolver = useYupValidationResolver(
     buildYup(validationValues, {
       errMessages: {
@@ -153,7 +158,19 @@ export function BasicForm({
     handleSubmit,
     getValues,
     formState: { errors, touchedFields },
-  } = useForm({ defaultValues, mode: "onSubmit", resolver });
+    watch,
+    setValue,
+  } = useForm({
+    defaultValues,
+    mode: "onSubmit",
+    // resolver
+  });
+
+  const allValues = watch();
+
+  useEffect(() => {
+    console.log("allValues: ", allValues);
+  }, [allValues]);
 
   return (
     <form
@@ -191,9 +208,12 @@ export function BasicForm({
             key={field.id}
             control={control}
             getValues={getValues}
+            watch={watch}
+            setValue={setValue}
             field={{
               register,
               error: (errors as any)[field.id],
+              setFieldsForm,
               ...commonFieldProps,
               ...otherFieldProps,
             }}

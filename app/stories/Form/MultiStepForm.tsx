@@ -14,10 +14,10 @@ import {
   StepTitle,
   StepDescription,
 } from "@chakra-ui/react";
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Text } from "../Text";
 import { BasicForm, FormProps } from "./BasicForm";
-import { Direction } from "./types";
+import { Direction, FieldType } from "./types";
 
 export function debounce(func: (...args: any[]) => void, wait: number) {
   let timeout: NodeJS.Timeout;
@@ -39,17 +39,48 @@ interface Step {
 export interface MultiStepFormProps extends FormProps {
   steps?: Step[];
   formSx?: React.CSSProperties;
+  // handlerNext?: (goToNext: VoidFunction) => (values: any) => void;
+  setFieldsForm?: any;
 }
 
 export const MultiStepForm: React.FC<MultiStepFormProps> = (
   props: MultiStepFormProps
 ) => {
   const { fields, initialValues, onSubmit, steps: stepsParam } = props;
+
+  console.log("stepsParam: ", stepsParam);
+  console.log("props: ", props);
   const [values, setValues] = useState(initialValues);
+  // const [fields, setFields] = useState(initialFields);
+
+  console.log("fields2222: ", fields);
+
+  // const setCurrentValueForm = (values: any) => {
+  //   console.log("Entré en setCurrentValueForm: ", values);
+
+  //   if (!values?.graphicsBudget && values?.graphicsEnabled) {
+  //     console.log("Añadiendo campo Graphics Budget");
+
+  //     const addField: any = {
+  //       id: "graphicsBudget",
+  //       label: "Graphics Budget",
+  //       type: FieldType.NUMBER,
+  //       validation: {
+  //         type: ["number", "Graphics Budget should be a number"],
+  //         required: [false],
+  //       },
+  //       step: 0,
+  //     };
+
+  //     // setFields([...fields, addField]);
+  //   }
+  // };
 
   const totalSteps = stepsParam
     ? stepsParam.length
-    : Math.max(...fields.map((field) => field.step as number));
+    : Math.max(...fields.map((field) => field.step as number)) + 1;
+
+  console.log("totalSteps: ", totalSteps);
 
   const steps: Step[] = useMemo(() => {
     if (stepsParam) {
@@ -71,9 +102,13 @@ export const MultiStepForm: React.FC<MultiStepFormProps> = (
 
   const handleSubmit = useCallback(
     (submitValues: any) => {
+      console.log("entreeee");
+      console.log("currentStep: ", currentStep);
+      // goToNext();
       if (currentStep === totalSteps - 1) {
         onSubmit(submitValues as any);
       } else {
+        console.log("entreeeee");
         goToNext();
       }
     },
@@ -87,7 +122,7 @@ export const MultiStepForm: React.FC<MultiStepFormProps> = (
 
   return (
     <VStack spacing={4} style={props.containerSx}>
-      <Stepper index={currentStep} style={{ width: "100%" }}>
+      <Stepper index={currentStep} style={{ width: "35%" }}>
         {steps.map((step, index) => (
           <Step key={index}>
             <StepIndicator>
@@ -112,6 +147,7 @@ export const MultiStepForm: React.FC<MultiStepFormProps> = (
         {stepFields.length ? (
           <BasicForm
             {...props}
+            // setCurrentValueForm={setCurrentValueForm}
             fields={stepFields}
             initialValues={values}
             direction={Direction.COLUMN}
@@ -119,6 +155,7 @@ export const MultiStepForm: React.FC<MultiStepFormProps> = (
             containerSx={props.formSx}
             onSubmit={(v) => {
               const newValues = { ...values, ...v };
+              console.log("entreee aquiiiiiiii");
               setValues(newValues);
               handleSubmit(newValues);
             }}

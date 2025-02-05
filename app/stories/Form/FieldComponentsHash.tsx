@@ -13,8 +13,16 @@ import {
 import { FieldType, InternalField } from "./types";
 import GuildUpgradesSelect from "../GuildUpgradesSelect";
 import { GUs } from "../GuildUpgradesSelect/GuildUpgradesSelect.stories";
-import { Control, Controller, UseFormGetValues } from "react-hook-form";
+import {
+  Control,
+  Controller,
+  UseFormGetValues,
+  UseFormSetValue,
+  UseFormWatch,
+} from "react-hook-form";
 import UnitSelect from "../UnitSelect";
+import queriesSelectsField from "@/app/warbands/create/queries/getSelectOptions";
+import { useQuery } from "@apollo/client";
 
 export const createSyntheticEvent = <T extends Element, E extends Event>(
   event: E
@@ -52,77 +60,21 @@ interface FieldComponentProps {
   field: InternalField;
   control?: Control<{}, any>;
   getValues?: UseFormGetValues<{}>;
+  watch?: UseFormWatch<{}>;
+  setValue?: UseFormSetValue<{}>;
 }
 export const FieldComponentsHash: {
   [key in FieldType | string]: React.FunctionComponent<FieldComponentProps>;
 } = {
-  GuildUpgradesSelect: ({ field, control, getValues }: FieldComponentProps) => {
-    return (
-      <FormControl
-        isInvalid={Boolean(field.error?.message)}
-        sx={field.sx}
-        alignItems="flex-start"
-      >
-        <Controller
-          name={field.id as never}
-          control={control}
-          render={({ field: { onChange, value } }) => (
-            <GuildUpgradesSelect
-              id={field.id}
-              getValues={getValues}
-              values={{ guild_upgrade_points: 5 }}
-              options={GUs.map((gu) => ({
-                label: gu.name,
-                value: gu.name,
-                base: gu,
-              }))}
-              {...field.register(field.id)}
-              {...field.inputProps}
-              onChange={onChange}
-              value={value}
-            />
-          )}
-        />
-      </FormControl>
-    );
-  },
-  UnitSelect: ({ field, control, getValues }: FieldComponentProps) => {
-    return (
-      <FormControl
-        isInvalid={Boolean(field.error?.message)}
-        sx={field.sx}
-        alignItems="flex-start"
-      >
-        <Controller
-          name={field.id as never}
-          control={control}
-          render={({ field: { onChange, value } }) => (
-            <UnitSelect
-              id={field.id}
-              getValues={getValues}
-              values={{ guild_upgrade_points: 5 }}
-              options={GUs.map((gu) => ({
-                label: gu.name,
-                value: gu.name,
-                base: gu,
-              }))}
-              {...field.register(field.id)}
-              {...field.inputProps}
-              onChange={onChange}
-              value={value}
-            />
-          )}
-        />
-      </FormControl>
-    );
-  },
   [FieldType.TEXT]: ({ field }: FieldComponentProps) => (
     <FormControl
       isInvalid={Boolean(field.error?.message)}
       sx={field.sx}
       alignItems="flex-start"
     >
-      <FormLabel htmlFor={field.id}>{field.label}</FormLabel>
+      <FormLabel htmlFor={field.id} {...field.labelProps}>
+        {field.label}
+      </FormLabel>
       <Input
         id={field.id}
         type="text"
@@ -145,7 +97,7 @@ export const FieldComponentsHash: {
       <Input
         id={field.id}
         type="number"
-        {...field.register(field.id)}
+        {...field.register(field.id, { valueAsNumber: true })}
         placeholder={field.placeholder}
         step={field.step ?? "any"}
         {...field.inputProps}
@@ -174,6 +126,88 @@ export const FieldComponentsHash: {
       )}
     </FormControl>
   ),
+  [FieldType.SELECT]: ({ field }: FieldComponentProps) => (
+    <FormControl
+      isInvalid={Boolean(field.error?.message)}
+      sx={field.sx}
+      alignItems="flex-start"
+    >
+      <FormLabel htmlFor={field.id} {...field.labelProps}>
+        {field.label}
+      </FormLabel>
+      <Select
+        id={field.id}
+        {...field.register(field.id)}
+        placeholder={field.placeholder}
+        {...field.inputProps}
+      >
+        {field.options?.map((option) => (
+          <option key={option.value} value={option.value}>
+            {option.label}
+          </option>
+        ))}
+      </Select>
+      {field.error && (
+        <FormErrorMessage>{field.error.message}</FormErrorMessage>
+      )}
+    </FormControl>
+  ),
+  [FieldType.SMART_SELECT]: ({ field }: FieldComponentProps) => {
+    const entitykey = field?.entity ?? "";
+
+    const { data } = useQuery(queriesSelectsField[entitykey]);
+
+    const fieldOptions = data?.[entitykey]?.list?.map((item: any) => (
+      <option
+        key={item[field?.valueAttribute ?? ""]}
+        value={item[field?.valueAttribute ?? ""]}
+      >
+        {item[field?.labelAttribute ?? ""]}
+      </option>
+    )) ?? (
+      <option key={"exmple"} value={"exmple"}>
+        {"example 1"}
+      </option>
+    );
+
+    return (
+      <FormControl
+        isInvalid={Boolean(field.error?.message)}
+        sx={field.sx}
+        alignItems="flex-start"
+      >
+        <FormLabel htmlFor={field.id} {...field.labelProps}>
+          {field.label}
+        </FormLabel>
+        <Select
+          id={field.id}
+          {...field.register(field.id)}
+          placeholder={field.placeholder}
+          {...field.inputProps}
+        >
+          {fieldOptions}
+        </Select>
+        {field.error && (
+          <FormErrorMessage>{field.error.message}</FormErrorMessage>
+        )}
+      </FormControl>
+    );
+  },
+  [FieldType.CHECKBOX]: ({ field }: FieldComponentProps) => (
+    <FormControl
+      isInvalid={Boolean(field.error?.message)}
+      sx={field.sx}
+      alignItems="flex-start"
+    >
+      <Checkbox {...field.inputProps} {...field.register(field.id)}>
+        {field.label}
+      </Checkbox>
+      {field.error && (
+        <FormErrorMessage>{field.error.message}</FormErrorMessage>
+      )}
+    </FormControl>
+  ),
+
   [FieldType.EMAIL]: ({ field }: FieldComponentProps) => (
     <FormControl
       isInvalid={Boolean(field.error?.message)}
@@ -231,44 +265,7 @@ export const FieldComponentsHash: {
       )}
     </FormControl>
   ),
-  [FieldType.SELECT]: ({ field }: FieldComponentProps) => (
-    <FormControl
-      isInvalid={Boolean(field.error?.message)}
-      sx={field.sx}
-      alignItems="flex-start"
-    >
-      <FormLabel htmlFor={field.id}>{field.label}</FormLabel>
-      <Select
-        id={field.id}
-        {...field.register(field.id)}
-        placeholder={field.placeholder}
-        {...field.inputProps}
-      >
-        {field.options?.map((option) => (
-          <option key={option.value} value={option.value}>
-            {option.label}
-          </option>
-        ))}
-      </Select>
-      {field.error && (
-        <FormErrorMessage>{field.error.message}</FormErrorMessage>
-      )}
-    </FormControl>
-  ),
-  [FieldType.CHECKBOX]: ({ field }: FieldComponentProps) => (
-    <FormControl
-      isInvalid={Boolean(field.error?.message)}
-      sx={field.sx}
-      alignItems="flex-start"
-    >
-      <Checkbox {...field.inputProps} {...field.register(field.id)}>
-        {field.label}
-      </Checkbox>
-      {field.error && (
-        <FormErrorMessage>{field.error.message}</FormErrorMessage>
-      )}
-    </FormControl>
-  ),
+
   [FieldType.RADIO]: ({ field }: FieldComponentProps) => {
     const fieldRegister = field.register(field.id);
     return (

@@ -265,6 +265,22 @@ export function makeSchema({
         );
         return profile;
       },
+      // createCampaignGroupAndCEPCampaigns: async (
+      //   _: any,
+      //   params: { data: any },
+      //   context: any,
+      //   info: any
+      // ) => {
+      //   const campaignGroupType = context?.typeMap?.CampaignGroup;
+      //   const campaignGroup = await StaticModelDirective.createMutationResolver(
+      //     campaignGroupType
+      //   )(_, params, context, info);
+
+      //   console.log({ campaignGroup });
+
+      //   // Crear campañas y sus acciones comerciales
+
+      // },
       ...mutations,
     },
   };

@@ -1,26 +1,38 @@
-# Use the official Node.js image as a base
-FROM node:18
+# ---- Stage 1: Build Stage ----
+FROM node:18 AS builder
 
-# Set the working directory inside the container
+# Establece el directorio de trabajo
 WORKDIR /usr/src/app
 
-# Copy package.json and package-lock.json (if available)
-COPY package*.json ./
+# Copia los archivos de definición de dependencias
+COPY package.json yarn.lock ./
 
-# Install dependencies
-RUN yarn install --production --frozen-lockfile --ignore-scripts
+# Instala todas las dependencias (producción y desarrollo)
+RUN yarn install --frozen-lockfile
 
-# Copy the rest of your application code
+# Copia el resto del código fuente
 COPY . .
 
-# Install TypeScript as a dev dependency
-RUN yarn add --dev typescript@5.1.6
-
-# Build the TypeScript project
+# Compila el proyecto usando TypeScript (el comando "build" está definido en package.json)
 RUN yarn build
 
-# Expose the port your application runs on
+# ---- Stage 2: Production Image ----
+FROM node:18-alpine
+
+# Establece el directorio de trabajo
+WORKDIR /usr/src/app
+
+# Copia los archivos de definición de dependencias
+COPY package.json yarn.lock ./
+
+# Instala solo las dependencias de producción
+RUN yarn install --production --frozen-lockfile
+
+# Copia el código compilado desde la etapa anterior
+COPY --from=builder /usr/src/app/dist ./dist
+
+# Expone el puerto en el que corre la aplicación (ajusta si es necesario)
 EXPOSE 4000
 
-# Command to run your application
-CMD ["yarn", "start"]
+# Comando para ejecutar la aplicación (ejecuta el código compilado)
+CMD ["node", "dist/main.js"]

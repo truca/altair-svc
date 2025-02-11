@@ -1,0 +1,9 @@
+image: google/cloud-sdk
+
+include:
+  - component: gitlab.falabella.tech/falabella-infrastructure-standards/gitlab-components/workload-identity-federation/auth@1
+  - ".gitlab/cd/cloud_run.yml"
+
+stages:
+  - Build
+  - Deploy

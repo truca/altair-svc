@@ -1,0 +1,4 @@
+{
+  "trailing-spaces.trimOnSave": true,
+  "yaml.customTags": [ "!reference sequence"]
+}

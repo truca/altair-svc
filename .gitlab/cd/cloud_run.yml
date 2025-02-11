@@ -1,0 +1,62 @@
+cloud_run_build:
+  stage: Build
+  image: google/cloud-sdk
+  environment: $CI_COMMIT_REF_NAME
+
+  services:
+    - docker:stable-dind
+
+  variables:
+    REGISTRY: us-central1-docker.pkg.dev
+    REPOSITORY: fmedia-cep
+    IMAGE: api
+    TAG: latest
+
+    DOCKER_DRIVER: overlay2
+    TZ: "America/Santiago"
+    DOCKER_TLS_CERTDIR: ""
+    DOCKER_HOST: tcp://docker:2375
+
+  extends: .google-oidc:auth
+  before_script:
+    - !reference [".google-oidc:auth", "before_script"]
+    - gcloud auth configure-docker $REGISTRY --quiet
+
+  script:
+    - |
+      # replace '/' with '-' in branch name
+      branch_name=$(echo "$CI_COMMIT_REF_NAME" | tr '/' '-')
+      TAG=$branch_name
+
+      # remove prefix if exists
+      prefixes=("feat-" "bugfix-" "refactor-" "hotfix-")
+      for prefix in "${prefixes[@]}"; do
+          if [[ "$branch_name" == $prefix* ]]; then
+              TAG=${branch_name#"$prefix"}
+              break
+          fi
+      done
+
+      # protected branches point to 'latest', feature branches to [issue-id]
+      if [[ $TAG =~ ^(qa|prd)$ ]]; then
+          TAG="latest"
+      fi
+    - docker build -t $REGISTRY/$GCP_PROJECT_ID/$REPOSITORY/$IMAGE:$TAG .
+    - docker push $REGISTRY/$GCP_PROJECT_ID/$REPOSITORY/$IMAGE:$TAG
+
+  rules:
+    - if: "$CI_COMMIT_REF_NAME =~ /^(qa|prd)$/"
+      when: manual
+
+  allow_failure: false
+
+infra_trigger:
+  stage: Deploy
+  needs: ["cloud_run_build"]
+
+  script:
+    - "curl -X POST --fail -F token=$INFRA_PIPELINE_TRIGGER_TOKEN -F ref=$CI_COMMIT_REF_NAME https://gitlab.falabella.tech/api/v4/projects/$INFRA_PROJECT_ID/trigger/pipeline"
+
+  rules:
+    - if: "$CI_PIPELINE_SOURCE == 'push' && $CI_COMMIT_REF_NAME =~ /^(qa|prd)$/"
+      when: on_success

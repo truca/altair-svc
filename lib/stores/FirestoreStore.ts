@@ -11,24 +11,18 @@ import {
   StoreUpdateProps,
   StoreUpdateReturn,
 } from "./types";
-import { cloneDeep } from "lodash";
-import mongoose, { Schema } from "mongoose";
 import { Context } from "../types";
 import {
   ActionTypes,
   getHasNecessaryRolePermissionsToContinue,
-  getHasPermissionOnlyThroughAnotherEntity,
-  getMongoFilterForOwnerOrCollaborator,
 } from "../AuthDirective";
 import { extractDirectiveParams } from "../GraphQL/utils";
 
-import { Firestore, Settings } from "@google-cloud/firestore";
+import { Firestore } from "@google-cloud/firestore";
 import admin from "firebase-admin";
 
-// export type FirestoreOptions = admin.ServiceAccount;
 export interface FirestoreOptions {
   name?: string;
-  serviceAccountPath: string;
 }
 
 export class FirestoreStore implements Store {
@@ -40,13 +34,7 @@ export class FirestoreStore implements Store {
   }
 
   private async connectToDb(options: FirestoreOptions) {
-    const serviceAccount = await import(options.serviceAccountPath);
-    const app = admin.initializeApp(
-      {
-        credential: admin.credential.cert(serviceAccount),
-      },
-      options.name
-    );
+    const app = admin.initializeApp();
 
     this.db = app.firestore();
 

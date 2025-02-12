@@ -2,7 +2,7 @@ import { makeExecutableSchema } from "@graphql-tools/schema";
 import { ModelDirective } from "../ModelDirective";
 import { StaticModelDirective } from "../StaticModelDirective";
 import { MongoStore } from "../stores/MongoStore";
-import { createStore, DbTypes, getDbOptions } from "../stores/utils";
+import { createStore, DbTypes } from "../stores/utils";
 import { CookieStore, FormsHash, Profile } from "../types";
 
 import { GraphQLID } from "graphql";

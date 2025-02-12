@@ -15,13 +15,11 @@ import {
 } from "./types";
 import { Connector } from "@google-cloud/cloud-sql-connector";
 import { v4 as uuidv4 } from "uuid";
-import admin from "firebase-admin";
 import { Context } from "../types";
 import {
   ActionTypes,
   getHasNecessaryRolePermissionsToContinue,
   getHasPermissionOnlyThroughAnotherEntity,
-  getSQLFilterForOwnerOrCollaborator,
 } from "../AuthDirective";
 import {
   createCSQLTableIfNotExists,
@@ -31,15 +29,10 @@ import {
 const { Pool } = pg;
 
 import { GoogleAuth } from "google-auth-library";
-import * as fs from "fs";
 
 async function getConnector() {
-  // Path to the service account key JSON file
-  const keyFilePath = "./serviceAccountKey.json";
-
   // Create a GoogleAuth instance with the service account
   const auth = new GoogleAuth({
-    keyFile: keyFilePath,
     scopes: "https://www.googleapis.com/auth/cloud-platform", // adjust the scopes as needed
   });
   const connector = new Connector({ auth } as any);

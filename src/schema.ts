@@ -126,6 +126,8 @@ const typeDefinitions = /* GraphQL */ `
   }
 
   type Brand @model @auth(read: ["public"]) {
+    parentId: ID
+
     externalId: ID!
     name: String!
     createdAt: DateTime
@@ -140,6 +142,8 @@ const typeDefinitions = /* GraphQL */ `
   }
 
   type Subcategory @model @auth(read: ["public"]) {
+    parentId: ID
+
     externalId: ID!
     name: String!
     createdAt: DateTime
@@ -204,7 +208,9 @@ const typeDefinitions = /* GraphQL */ `
     strategies: [MediosDigitalesStrategy!]!
   }
 
-  type MediosDigitalesStrategy {
+  type MediosDigitalesStrategy @model {
+    campaignId: ID
+
     mediumId: String!
     objectiveId: String!
     strategyId: String!
@@ -217,7 +223,9 @@ const typeDefinitions = /* GraphQL */ `
     endDate: String!
   }
 
-  type SponsoredBrandForm {
+  type SponsoredBrandForm @model {
+    campaignId: ID
+
     budget: Float!
     startDate: String!
     endDate: String!
@@ -231,7 +239,9 @@ const typeDefinitions = /* GraphQL */ `
     images: String!
   }
 
-  type SponsoredProductForm {
+  type SponsoredProductForm @model {
+    campaignId: ID
+
     budget: Float!
     startDate: String!
     endDate: String!
@@ -243,7 +253,9 @@ const typeDefinitions = /* GraphQL */ `
     skus: String!
   }
 
-  type BannerFadsForm {
+  type BannerFadsForm @model {
+    campaignId: ID
+
     # Banner Fads
     bannerFadBannerTypeId: String!
     bannerFadTotalBudget: Float!
@@ -269,7 +281,9 @@ const typeDefinitions = /* GraphQL */ `
     subProducts: [CRMCampaignSubProduct!]!
   }
 
-  type CRMCampaignSubProduct {
+  type CRMCampaignSubProduct @model {
+    campaignId: ID
+
     type: String!
     budget: Float!
     base: Float!
@@ -299,7 +313,9 @@ const typeDefinitions = /* GraphQL */ `
     skus: [String!]
   }
 
-  type RatingAndReviewForm {
+  type RatingAndReviewForm @model {
+    campaignId: ID
+
     budget: Float!
     startDate: String!
     endDate: String!
@@ -317,7 +333,9 @@ const typeDefinitions = /* GraphQL */ `
     strategies: [HomeLandingStrategy!]!
   }
 
-  type HomeLandingStrategy {
+  type HomeLandingStrategy @model {
+    campaignId: ID
+
     type: String!
     budget: Float!
     startDate: String!

@@ -1,5 +1,7 @@
 node_modules/
 dist/
 uploads/
-serviceAccountKey.json
+
+.DS_Store
 .env
+serviceAccountKey.json

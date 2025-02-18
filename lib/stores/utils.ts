@@ -1,21 +1,23 @@
-import { MongoStore, MongoStoreOptions } from "./MongoStore";
 import { FirestoreStore, FirestoreOptions } from "./FirestoreStore";
-import { CloudSQLStore, CloudSQLStoreOptions } from "./PostgresStore";
 import { Store } from "./types";
 
-export type DbTypes = "mongo" | "firestore" | "postgres";
+const serviceAccount = require("../../serviceAccountKey.json");
 
-export function createStore(
-  dbType: DbTypes,
-  options: MongoStoreOptions | FirestoreOptions | CloudSQLStoreOptions
-): Store {
+export type DbTypes = "firestore";
+
+export function getDbOptions(dbType: DbTypes) {
   switch (dbType) {
-    case "mongo":
-      return new MongoStore(options as MongoStoreOptions);
+    case "firestore":
+      return serviceAccount;
+    default:
+      throw new Error("Unsupported database type");
+  }
+}
+
+export function createStore(dbType: DbTypes, options: FirestoreOptions): Store {
+  switch (dbType) {
     case "firestore":
       return new FirestoreStore(options as FirestoreOptions);
-    case "postgres":
-      return new CloudSQLStore(options as CloudSQLStoreOptions);
     default:
       throw new Error("Unsupported database type");
   }

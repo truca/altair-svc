@@ -1,12 +1,11 @@
 import { makeExecutableSchema } from "@graphql-tools/schema";
 import { ModelDirective } from "../ModelDirective";
 import { StaticModelDirective } from "../StaticModelDirective";
-import { MongoStore } from "../stores/MongoStore";
 import { createStore, DbTypes } from "../stores/utils";
 import { CookieStore, FormsHash, Profile } from "../types";
 
 import { GraphQLID } from "graphql";
-import _ from "lodash";
+import _, { create } from "lodash";
 import { createPubSub } from "graphql-yoga";
 
 const pubSub = createPubSub();
@@ -183,6 +182,38 @@ export function makeSchema({
         const profileType = context?.typeMap?.Profile;
         const args = { where: { uid: params.uid } };
         return StaticModelDirective.findOneQueryResolver(profileType)(
+          _,
+          args,
+          context,
+          info
+        );
+      },
+      getServicesBetweenDates: async (
+        _: any,
+        params: any,
+        context: any,
+        info: any
+      ) => {
+        const profileType = context?.typeMap?.Service;
+        const startDateValue =
+          params.startDate && params.endDate
+            ? `>=${params.startDate},<=${params.endDate}`
+            : params.startDate
+            ? `>=${params.startDate}`
+            : params.endDate
+            ? `<=${params.endDate}`
+            : null;
+        const args = {
+          ...params,
+          pageSize: params.pageSize || 10,
+          page: params.page || 1,
+          where: {
+            ...params.where,
+            ...(params.serviceType ? { serviceType: params.serviceType } : {}),
+            ...(startDateValue ? { startDate: startDateValue } : {}),
+          },
+        };
+        return StaticModelDirective.findQueryResolver(profileType)(
           _,
           args,
           context,

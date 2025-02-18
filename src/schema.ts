@@ -158,6 +158,8 @@ const typeDefinitions = /* GraphQL */ `
   }
 
   # CampaignGroup
+  # CampaignGroup remains unchanged (even though it has @model)
+  # but any field that referenced a service type is updated:
   type CampaignGroup @model @auth(read: ["public"]) {
     productManagerId: String!
     businessUnitId: String!
@@ -188,118 +190,103 @@ const typeDefinitions = /* GraphQL */ `
     othersBudget: Float
     mediaPlan: String
 
-    # Forms
+    # Forms – note:
+    # • Forms that were originally services (@model) now use Service
+    # • Middleware forms remain but their service fields are updated to Service
     mediaOnForm: MediaOnForm
-    sponsoredBrandForm: SponsoredBrandForm
-    sponsoredProductForm: SponsoredProductForm
-    bannerForm: BannerFadsForm
+    sponsoredBrandForm: Service
+    sponsoredProductForm: Service
+    bannerForm: Service
     CRMForm: CRMForm
-    ratingAndReviewForm: RatingAndReviewForm
+    ratingAndReviewForm: Service
     homeLandingForm: HomeLandingForm
 
     campaignIds: [String!]!
   }
 
+  # Middleware types are kept, but if they contained a service type they now reference Service:
   type MediaOnForm {
     strategiesId: String!
     budget: Float!
     commission: String!
     totalAmount: Float!
-    strategies: [MediosDigitalesStrategy!]!
-  }
-
-  type MediosDigitalesStrategy @model {
-    campaignId: ID
-
-    mediumId: String!
-    objectiveId: String!
-    strategyId: String!
-    segmentationId: String!
-    purchaseTypeId: String!
-    formatsId: String!
-    budget: Float!
-    commission: Float!
-    startDate: String!
-    endDate: String!
-  }
-
-  type SponsoredBrandForm @model {
-    campaignId: ID
-
-    budget: Float!
-    startDate: String!
-    endDate: String!
-    comment: String
-    budgetType: String!
-    dailyLimitEnabled: Boolean
-    dailyBudgetLimit: Float
-    title: String!
-    url: String!
-    skus: String!
-    images: String!
-  }
-
-  type SponsoredProductForm @model {
-    campaignId: ID
-
-    budget: Float!
-    startDate: String!
-    endDate: String!
-    comment: String
-    budgetType: String!
-    dailyLimitEnabled: Boolean
-    dailyBudgetLimit: Float
-    url: String!
-    skus: String!
-  }
-
-  type BannerFadsForm @model {
-    campaignId: ID
-
-    # Banner Fads
-    bannerFadBannerTypeId: String!
-    bannerFadTotalBudget: Float!
-    bannerFadStartDate: String!
-    bannerFadEndDate: String!
-    bannerFadSegmentationTypeId: String!
-    bannerFadCategoryId: String!
-    bannerFadUrl: String!
-    bannerFadComment: String!
-
-    # Banner Menu
-    bannerMenuTotalBudget: Float!
-    bannerMenuStartDate: String!
-    bannerMenuEndDate: String!
-    bannerMenuUrl: String!
-    bannerMenuComment: String!
-    image: String!
+    # Originally [MediosDigitalesStrategy!]! becomes [Service!]!
+    strategies: [Service]
   }
 
   type CRMForm {
     crmTypeId: String!
     templateId: String!
-    subProducts: [CRMCampaignSubProduct!]!
+    # subProducts was [CRMCampaignSubProduct!]! → [Service!]!
+    subProducts: [Service]
   }
 
-  type CRMCampaignSubProduct @model {
-    campaignId: ID
+  type HomeLandingForm {
+    totalBudget: Float!
+    # strategies was [HomeLandingStrategy!]! → [Service!]!
+    strategies: [Service]
+  }
 
-    type: String!
-    budget: Float!
-    base: Float!
+  # A unified Service type that combines all fields from your service (@model) types.
+  # All fields (except serviceType) are optional.
+  type Service @model @auth(read: ["public"]) {
+    # This discriminator is always provided when creating a Service
+    serviceType: String
+
+    # Fields from MediosDigitalesStrategy
+    campaignId: ID
+    mediumId: String
+    objectiveId: String
+    strategyId: String
+    segmentationId: String
+    purchaseTypeId: String
+    formatsId: String
+    budget: Float
+    commission: Float
+    startDate: DateTime
+    endDate: DateTime
+
+    # Fields from SponsoredBrandForm / SponsoredProductForm
+    comment: String
+    budgetType: String
+    dailyLimitEnabled: Boolean
+    dailyBudgetLimit: Float
+    title: String
+    url: String
+    # Note: where one type had skus: String and another had skus: [String!],
+    # here we use the more general list form:
+    skus: [String]
+    images: String
+
+    # Fields from BannerFadsForm
+    bannerFadBannerTypeId: String
+    bannerFadTotalBudget: Float
+    bannerFadStartDate: String
+    bannerFadEndDate: String
+    bannerFadSegmentationTypeId: String
+    bannerFadCategoryId: String
+    bannerFadUrl: String
+    bannerFadComment: String
+    bannerMenuTotalBudget: Float
+    bannerMenuStartDate: String
+    bannerMenuEndDate: String
+    bannerMenuUrl: String
+    bannerMenuComment: String
+    image: String
+
+    # Fields from CRMCampaignSubProduct
+    type: String
+    base: Float
     shippingDate: String
-    internalCampaignName: String!
-    comments: String!
+    internalCampaignName: String
+    comments: String
     quantityMonths: Float
     triggerTypeId: String
-    startDate: String
-    endDate: String
+    # startDate and endDate already included above
     sku: String
     callToAction: String
-    url: String
     smsText: String
     link: String
-    title: String
     text: String
     storeId: String
     cuponTypeId: String
@@ -310,48 +297,36 @@ const typeDefinitions = /* GraphQL */ `
     typeId: String
     units: Float
     segmentation: String
-    skus: [String!]
-  }
 
-  type RatingAndReviewForm @model {
-    campaignId: ID
-
-    budget: Float!
-    startDate: String!
-    endDate: String!
-    comment: String
-    shippingCost: Float!
-    agreedShipments: Float!
-    segmentationTypeId: String!
+    # Fields from RatingAndReviewForm
+    shippingCost: Float
+    agreedShipments: Float
+    segmentationTypeId: String
     sellerId: String
     brandId: String
-    skus: String
-  }
 
-  type HomeLandingForm {
-    totalBudget: Float!
-    strategies: [HomeLandingStrategy!]!
-  }
-
-  type HomeLandingStrategy @model {
-    campaignId: ID
-
-    type: String!
-    budget: Float!
-    startDate: String!
-    endDate: String!
-    comment: String
+    # Fields from HomeLandingStrategy
     visualKey: String
-    sku: String
-    url: String!
     totalBudget: Float
   }
   # CampaignGroup
+
+  type Services {
+    list: [Service]
+    maxPages: Float
+  }
 
   type Query {
     _: Boolean
     me(uid: String): Profile
     form(type: FormType): Form
+    getServicesBetweenDates(
+      startDate: DateTime
+      endDate: DateTime
+      serviceType: String
+      pageSize: Float
+      page: Float
+    ): Services
   }
 
   type Mutation {

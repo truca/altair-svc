@@ -104,12 +104,29 @@ export class FirestoreStore implements Store {
       return { list: [], maxPages: null };
     }
 
-    const collectionRef = this.getCollection(props.type.name);
-    let query = collectionRef.where("deletedAt", "==", null);
+    const typeName = props.type.name;
+    const collectionRef = this.getCollection(typeName);
+    let query: any =
+      typeName === "Profile"
+        ? collectionRef
+        : collectionRef.where("deletedAt", "==", null);
     const formattedInput = this.formatInput(props.where);
 
+    // support {[key]: { operator, value: dateObj }} and {[key]: [{ operator, value: dateObj }]}
     for (const key in formattedInput) {
-      query = query.where(key, "==", formattedInput[key]);
+      if (Array.isArray(formattedInput[key])) {
+        for (const condition of formattedInput[key]) {
+          query = query.where(key, condition.operator, condition.value);
+        }
+      } else if (typeof formattedInput[key] === "object") {
+        query = query.where(
+          key,
+          formattedInput[key].operator,
+          formattedInput[key].value
+        );
+      } else {
+        query = query.where(key, "==", formattedInput[key]);
+      }
     }
 
     const pageSize = props.pageSize || 10;
@@ -120,7 +137,7 @@ export class FirestoreStore implements Store {
       snapshot = await query.limit(pageSize).get();
     }
 
-    const list = snapshot.docs.map((doc) =>
+    const list = snapshot.docs.map((doc: any) =>
       this.formatOutput({ id: doc.id, ...doc.data() })
     );
     const countQuerySnapshot = await collectionRef.get();
@@ -259,14 +276,72 @@ export class FirestoreStore implements Store {
     return { id: object.id || object._id, ...object };
   }
 
-  private formatInput(object: any) {
-    if (!object) {
+  private formatInput(where: any) {
+    if (!where) {
       return null;
     }
-    const clonedObject = { ...object };
-    if (clonedObject.id) {
-      clonedObject.id = clonedObject.id;
+    const formattedWhere = { ...where };
+    if (formattedWhere.id) {
+      formattedWhere.id = formattedWhere.id;
     }
-    return clonedObject;
+
+    // [key]: '>=2025-02-27,<=2025-02-28'
+    // search between start of day and end of day
+    for (const key in where) {
+      const value = where[key];
+      if (
+        typeof value === "string" &&
+        (value.includes(">") || value.includes("<"))
+      ) {
+        // Split the string into parts (e.g. ">=2025-02-27,<=2025-02-28")
+        let parts = [value.trim()];
+        if (value.includes(",")) {
+          parts = value.split(",").map((part) => part.trim());
+        }
+
+        // Process each condition
+        const conditions = parts
+          .map((part) => {
+            // Look for operators: >=, <=, >, or <
+            const operatorMatch = part.match(/(>=|<=|>|<)/);
+            if (!operatorMatch) {
+              console.warn(
+                `No valid operator found in condition "${part}" for field "${key}". Skipping this condition.`
+              );
+              return null;
+            }
+            const operator = operatorMatch[0];
+            // Extract the date string by removing the operator
+            const dateStr = part.replace(operator, "").trim();
+            // utc timezne
+            const dateObj = new Date(dateStr);
+
+            // Adjust the time to cover the full day range:
+            // For greater-than conditions, set to start of day.
+            // For less-than conditions, set to end of day.
+            if (operator === ">=" || operator === ">") {
+              dateObj.setHours(0, 0, 0, 0);
+            } else if (operator === "<=" || operator === "<") {
+              dateObj.setHours(23, 59, 59, 999);
+            }
+
+            const result = {
+              operator,
+              value: admin.firestore.Timestamp.fromDate(dateObj),
+            };
+            console.log({ operator: { ...result, dateObj } });
+            return result;
+          })
+          .filter((condition) => condition !== null);
+
+        if (conditions.length === 1) {
+          formattedWhere[key] = conditions[0];
+        } else if (conditions.length > 1) {
+          formattedWhere[key] = conditions;
+        }
+      }
+    }
+
+    return formattedWhere;
   }
 }

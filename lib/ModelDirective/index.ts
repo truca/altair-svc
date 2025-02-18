@@ -30,6 +30,7 @@ import {
   getEntityTypeFromField,
   getFieldType,
 } from "../GraphQL/utils";
+import { mapEntity } from "./mapEntity";
 
 import { config } from "dotenv";
 config();
@@ -76,6 +77,7 @@ export async function visitNestedModels({
   context,
   info,
   localInfo,
+  isCreateOrUpdate = false,
 }) {
   const res = {};
   const data = { ...dataParam };
@@ -274,7 +276,9 @@ export class ModelDirective extends SchemaDirectiveVisitor {
               data,
               info,
               context,
-              localInfo: this.getListSelection(info),
+              localInfo: this.getListSelection
+                ? this.getListSelection(info)
+                : info,
               modelFunction: async (localType, value, newInfo = null) => {
                 const found = await this.findOneQueryResolver(localType)(
                   root,
@@ -359,6 +363,8 @@ export class ModelDirective extends SchemaDirectiveVisitor {
       context: ResolverContext,
       info: any
     ) => {
+      args.data = mapEntity(args.data, type);
+
       validateInputData({
         data: args.data,
         type,
@@ -383,6 +389,7 @@ export class ModelDirective extends SchemaDirectiveVisitor {
         data: args.data,
         info,
         context,
+        isCreateOrUpdate: true,
         modelFunction: async (localType: any, value: any) => {
           const parentType = getNamedType(type) as any;
           const parentTypeName = parentType.name.toLowerCase();
@@ -494,6 +501,7 @@ export class ModelDirective extends SchemaDirectiveVisitor {
         data: args.data,
         info,
         context,
+        isCreateOrUpdate: true,
         modelFunction: async (localType: any, value: any) => {
           // update
           if (value.id) {
@@ -604,6 +612,7 @@ export class ModelDirective extends SchemaDirectiveVisitor {
         data: rootObject,
         info,
         context,
+        isCreateOrUpdate: true,
         modelFunction: (localType: any, value: any, infoParam: any = {}) =>
           this.findOneQueryResolver(localType)(
             root,

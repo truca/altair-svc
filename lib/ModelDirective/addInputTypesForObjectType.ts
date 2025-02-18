@@ -28,8 +28,16 @@ export const createInputField = (field, inputType) => {
   // Create an input field based on the original field's type.
   // If the field is non nullable or a list then it needs to be wrapped with the correct class.
 
-  let type =
-    field.type instanceof GraphQLList ? new GraphQLList(inputType) : inputType;
+  let type = inputType;
+
+  // handle arrays of arrays in the future
+  if (
+    field.type instanceof GraphQLList &&
+    !(inputType instanceof GraphQLList)
+  ) {
+    // && !inputType instanceof GraphQLList
+    type = new GraphQLList(inputType);
+  }
 
   if (isNonNullable(field)) {
     type = new GraphQLNonNull(type);

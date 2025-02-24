@@ -145,7 +145,7 @@ async function main() {
       };
     },
     cors: {
-      origin: "*",
+      origin: ["https://fmedia-cep-qa.web.app"],
       credentials: true,
       allowedHeaders: ["Content-Type", "Authorization"],
       methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],

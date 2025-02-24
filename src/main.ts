@@ -148,6 +148,7 @@ async function main() {
       origin: "*",
       credentials: true,
     },
+    maskedErrors: false,
   });
 
   const server = createServer(async (req, res) => {

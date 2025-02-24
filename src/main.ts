@@ -145,7 +145,7 @@ async function main() {
       };
     },
     cors: {
-      origin: "*",
+      origin: "https://fmedia-cep-qa.web.app",
       credentials: true,
       allowedHeaders: ["Content-Type", "Authorization"],
       methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
@@ -153,7 +153,10 @@ async function main() {
   });
 
   const server = createServer(async (req, res) => {
-    res.setHeader("Access-Control-Allow-Origin", "*");
+    res.setHeader(
+      "Access-Control-Allow-Origin",
+      "https://fmedia-cep-qa.web.app"
+    );
     res.setHeader("Access-Control-Allow-Credentials", "true");
     res.setHeader(
       "Access-Control-Allow-Methods",

@@ -145,7 +145,7 @@ async function main() {
       };
     },
     cors: {
-      origin: ["https://fmedia-cep-qa.web.app"],
+      origin: "*",
       credentials: true,
       allowedHeaders: ["Content-Type", "Authorization"],
       methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
@@ -153,6 +153,23 @@ async function main() {
   });
 
   const server = createServer(async (req, res) => {
+    res.setHeader("Access-Control-Allow-Origin", "*");
+    res.setHeader("Access-Control-Allow-Credentials", "true");
+    res.setHeader(
+      "Access-Control-Allow-Methods",
+      "GET, POST, PUT, DELETE, OPTIONS"
+    );
+    res.setHeader(
+      "Access-Control-Allow-Headers",
+      "Content-Type, Authorization"
+    );
+
+    if (req.method === "OPTIONS") {
+      res.writeHead(204);
+      res.end();
+      return;
+    }
+
     // Serve static files first
     if (req.url?.startsWith("/uploads") || req.url === "/") {
       await serveFile(req, res);

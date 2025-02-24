@@ -144,6 +144,10 @@ async function main() {
         cookieStore,
       };
     },
+    cors: {
+      origin: "*",
+      credentials: true,
+    },
   });
 
   const server = createServer(async (req, res) => {

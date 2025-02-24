@@ -122,7 +122,7 @@ function connectDatabases() {
     // const dbOptions = JSON.parse(process.env[`DB_${i}_OPTIONS`] || "{}");
     // const dbIsDefault = process.env[`DB_${i}_IS_DEFAULT`] === "true";
     const dbType = "firestore";
-    const dbName = "vas";
+    const dbName = "store";
     const dbOptions = { name: "cep-services-form-firestore" };
 
     if (!dbType || !dbName) continue;

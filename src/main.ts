@@ -147,7 +147,7 @@ async function main() {
     cors: {
       origin: "https://fmedia-cep-qa.web.app",
       credentials: true,
-      allowedHeaders: ["Content-Type", "Authorization"],
+      allowedHeaders: ["Content-Type", "Authorization", "x-api-key"],
       methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     },
   });
@@ -164,7 +164,7 @@ async function main() {
     );
     res.setHeader(
       "Access-Control-Allow-Headers",
-      "Content-Type, Authorization"
+      "Content-Type, Authorization, x-api-key"
     );
 
     if (req.method === "OPTIONS") {

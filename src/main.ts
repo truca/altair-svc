@@ -153,26 +153,6 @@ async function main() {
   });
 
   const server = createServer(async (req, res) => {
-    res.setHeader(
-      "Access-Control-Allow-Origin",
-      "https://fmedia-cep-qa.web.app"
-    );
-    res.setHeader("Access-Control-Allow-Credentials", "true");
-    res.setHeader(
-      "Access-Control-Allow-Methods",
-      "GET, POST, PUT, DELETE, OPTIONS"
-    );
-    res.setHeader(
-      "Access-Control-Allow-Headers",
-      "Content-Type, Authorization, x-api-key"
-    );
-
-    if (req.method === "OPTIONS") {
-      res.writeHead(204);
-      res.end();
-      return;
-    }
-
     // Serve static files first
     if (req.url?.startsWith("/uploads") || req.url === "/") {
       await serveFile(req, res);

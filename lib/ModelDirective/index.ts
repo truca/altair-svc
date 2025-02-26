@@ -163,7 +163,8 @@ export async function visitNestedModels({
 }
 
 export class ModelDirective extends SchemaDirectiveVisitor {
-  public isFirestore = process.env.DB_TYPE === "firestore";
+  // public isFirestore = process.env.DB_TYPE === "firestore";
+  public isFirestore = "firestore";
 
   public visitObject(type: GraphQLObjectType) {
     // TODO check that id field does not already exist on type

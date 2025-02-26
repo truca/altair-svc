@@ -76,6 +76,11 @@ const typeDefinitions = /* GraphQL */ `
   }
 
   enum FormType {
+    CAMPAIGNGROUP
+    SELLER
+    BRAND
+    CATEGORY
+    SUBCATEGORY
     PRODUCTMANAGER
   }
 
@@ -118,14 +123,18 @@ const typeDefinitions = /* GraphQL */ `
     updatedAt: DateTime
   }
 
-  type Seller @model @auth(read: ["public"]) {
+  type Seller
+    @model
+    @auth(read: ["public"], update: ["public"], delete: ["public"]) {
     externalId: ID!
     name: String!
     createdAt: DateTime
     updatedAt: DateTime
   }
 
-  type Brand @model @auth(read: ["public"]) {
+  type Brand
+    @model
+    @auth(read: ["public"], update: ["public"], delete: ["public"]) {
     parentId: ID
 
     externalId: ID!
@@ -134,14 +143,18 @@ const typeDefinitions = /* GraphQL */ `
     updatedAt: DateTime
   }
 
-  type Category @model @auth(read: ["public"]) {
+  type Category
+    @model
+    @auth(read: ["public"], update: ["public"], delete: ["public"]) {
     externalId: ID!
     name: String!
     createdAt: DateTime
     updatedAt: DateTime
   }
 
-  type Subcategory @model @auth(read: ["public"]) {
+  type Subcategory
+    @model
+    @auth(read: ["public"], update: ["public"], delete: ["public"]) {
     parentId: ID
 
     externalId: ID!
@@ -150,7 +163,9 @@ const typeDefinitions = /* GraphQL */ `
     updatedAt: DateTime
   }
 
-  type Image @model(db: "cep") @auth(read: ["public"]) {
+  type Image
+    @model(db: "cep")
+    @auth(read: ["public"], update: ["public"], delete: ["public"]) {
     externalId: ID!
     url: String!
     createdAt: DateTime
@@ -160,7 +175,9 @@ const typeDefinitions = /* GraphQL */ `
   # CampaignGroup
   # CampaignGroup remains unchanged (even though it has @model)
   # but any field that referenced a service type is updated:
-  type CampaignGroup @model @auth(read: ["public"]) {
+  type CampaignGroup
+    @model
+    @auth(read: ["public"], update: ["public"], delete: ["public"]) {
     productManagerId: String!
     businessUnitId: String!
     campaignTypeId: String!
@@ -348,6 +365,11 @@ const typeDefinitions = /* GraphQL */ `
 `;
 
 const formTypes: FormTypes = {
+  CAMPAIGNGROUP: "campaignGroup",
+  SELLER: "seller",
+  BRAND: "brand",
+  CATEGORY: "category",
+  SUBCATEGORY: "subcategory",
   PRODUCTMANAGER: "productManager",
 };
 

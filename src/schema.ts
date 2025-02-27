@@ -180,7 +180,7 @@ const typeDefinitions = /* GraphQL */ `
     @auth(read: ["public"], update: ["public"], delete: ["public"]) {
     productManagerId: String!
     businessUnitId: String!
-    campaignTypeId: String!
+    campaignName: String!
     eventTypeId: String!
     sellerId: String!
     brandId: String!
@@ -218,7 +218,7 @@ const typeDefinitions = /* GraphQL */ `
     ratingAndReviewForm: Service
     homeLandingForm: HomeLandingForm
 
-    campaignIds: [String!]!
+    campaignIds: [String!]
   }
 
   # Middleware types are kept, but if they contained a service type they now reference Service:

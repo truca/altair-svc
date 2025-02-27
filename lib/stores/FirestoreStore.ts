@@ -20,6 +20,7 @@ import { extractDirectiveParams } from "../GraphQL/utils";
 
 import { Firestore } from "@google-cloud/firestore";
 import admin from "firebase-admin";
+import { GoogleAuth } from "google-auth-library";
 
 export interface FirestoreOptions {
   name?: string;
@@ -34,12 +35,15 @@ export class FirestoreStore implements Store {
   }
 
   private async connectToDb(options: FirestoreOptions) {
+    const auth = new GoogleAuth({
+      scopes: "https://www.googleapis.com/auth/cloud-platform", // adjust the scopes as needed
+    });
     const app = admin.initializeApp();
 
     this.db = app.firestore();
 
     this.db.settings({
-      ...(options.name ? { databaseId: options.name } : {}),
+      ...(options.name ? { databaseId: options.name, projectId: await auth.getProjectId() } : {}),
       ignoreUndefinedProperties: true,
     });
   }

@@ -190,7 +190,7 @@ const typeDefinitions = /* GraphQL */ `
     endDate: String!
 
     # Service flags
-    bannersFadsEnabled: Boolean!
+    bannersEnabled: Boolean!
     CRMEnabled: Boolean!
     homeLandingEnabled: Boolean!
     mediaOnEnabled: Boolean!

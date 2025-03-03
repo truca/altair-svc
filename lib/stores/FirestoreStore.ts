@@ -43,7 +43,9 @@ export class FirestoreStore implements Store {
     this.db = app.firestore();
 
     this.db.settings({
-      ...(options.name ? { databaseId: options.name, projectId: await auth.getProjectId() } : {}),
+      ...(options.name
+        ? { databaseId: options.name, projectId: await auth.getProjectId() }
+        : {}),
       ignoreUndefinedProperties: true,
     });
   }
@@ -208,11 +210,7 @@ export class FirestoreStore implements Store {
     const collectionRef = this.getCollection(props.type.name);
     const formattedInput = this.formatInput(props.where);
 
-    const querySnapshot = await collectionRef
-      .where("id", "==", formattedInput.id)
-      .limit(1)
-      .get();
-    const doc = querySnapshot.docs[0];
+    const doc = await collectionRef.doc(formattedInput.id).get();
 
     if (doc) {
       await doc.ref.update(props.data);

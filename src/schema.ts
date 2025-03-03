@@ -246,7 +246,9 @@ const typeDefinitions = /* GraphQL */ `
 
   # A unified Service type that combines all fields from your service (@model) types.
   # All fields (except serviceType) are optional.
-  type Service @model @auth(read: ["public"]) {
+  type Service
+    @model
+    @auth(read: ["public"], update: ["public"], delete: ["public"]) {
     # This discriminator is always provided when creating a Service
     serviceType: String
 

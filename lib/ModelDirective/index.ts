@@ -31,6 +31,7 @@ import {
   getFieldType,
 } from "../GraphQL/utils";
 import { mapEntity } from "./mapEntity";
+import admin from "firebase-admin";
 
 import { config } from "dotenv";
 config();
@@ -581,13 +582,43 @@ export class ModelDirective extends SchemaDirectiveVisitor {
       }
       const objectIds = mergeWith(filteredRootObject, newObjectIds, customizer);
 
+      const data = {
+        ...filteredData,
+        ...objectIds,
+      };
+
+      const startDateKeys: (keyof Service)[] = [
+        "startDate",
+        "bannerFadStartDate",
+        "bannerMenuStartDate",
+      ];
+
+      startDateKeys.forEach((key) => {
+        if (data[key]) {
+          const date = new Date(data[key]);
+          date.setHours(0, 0, 0, 0);
+          data.startDate = admin.firestore.Timestamp.fromDate(date);
+        }
+      });
+
+      const endDateKeys: (keyof Service)[] = [
+        "endDate",
+        "bannerFadEndDate",
+        "bannerMenuEndDate",
+      ];
+
+      endDateKeys.forEach((key) => {
+        if (data[key]) {
+          const date = new Date(data[key]);
+          date.setHours(23, 59, 59, 999);
+          data.endDate = admin.firestore.Timestamp.fromDate(date);
+        }
+      });
+
       const updated = await context.directives.model[db].update(
         {
           where: args.where,
-          data: {
-            ...filteredData,
-            ...objectIds,
-          },
+          data,
           upsert: args.upsert,
           type,
         },

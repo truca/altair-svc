@@ -54,6 +54,10 @@ infra_trigger:
   stage: Deploy
   needs: ["cloud_run_build"]
 
+  before_script:
+    - apk update
+    - apk add curl
+
   script:
     - "curl -X POST --fail -F token=$INFRA_PIPELINE_TRIGGER_TOKEN -F ref=$CI_COMMIT_REF_NAME https://gitlab.falabella.tech/api/v4/projects/$INFRA_PROJECT_ID/trigger/pipeline"
 

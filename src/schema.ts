@@ -260,6 +260,7 @@ const typeDefinitions = /* GraphQL */ `
     userAssigned: [String]
     labels: [String]
     plannerComments: [PlannerComments]
+    nomenclature: String
 
     # This discriminator is always provided when creating a Service
     serviceType: String
@@ -296,6 +297,7 @@ const typeDefinitions = /* GraphQL */ `
     bannerFadEndDate: String
     bannerFadSegmentationTypeId: String
     bannerFadCategoryId: [String]
+    bannerFadAudienceId: [String]
     bannerFadUrl: String
     bannerFadComment: String
     bannerMenuTotalBudget: Float

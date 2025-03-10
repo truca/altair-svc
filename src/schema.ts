@@ -234,6 +234,7 @@ const typeDefinitions = /* GraphQL */ `
   type CRMForm {
     crmTypeId: String!
     templateId: String!
+    numberTouches: String
     # subProducts was [CRMCampaignSubProduct!]! → [Service!]!
     subProducts: [Service]
   }
@@ -244,11 +245,22 @@ const typeDefinitions = /* GraphQL */ `
     strategies: [Service]
   }
 
+  type PlannerComments {
+    text: String!
+    user: String!
+    date: String!
+  }
+
   # A unified Service type that combines all fields from your service (@model) types.
   # All fields (except serviceType) are optional.
   type Service
     @model
     @auth(read: ["public"], update: ["public"], delete: ["public"]) {
+    #Fields from planner
+    userAssigned: [String]
+    labels: [String]
+    plannerComments: [PlannerComments]
+
     # This discriminator is always provided when creating a Service
     serviceType: String
 
@@ -283,7 +295,7 @@ const typeDefinitions = /* GraphQL */ `
     bannerFadStartDate: String
     bannerFadEndDate: String
     bannerFadSegmentationTypeId: String
-    bannerFadCategoryId: String
+    bannerFadCategoryId: [String]
     bannerFadUrl: String
     bannerFadComment: String
     bannerMenuTotalBudget: Float

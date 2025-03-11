@@ -80,7 +80,61 @@ function mapServiceDates(service: Service): Service {
   return service;
 }
 
+function generateCustomId(): string {
+  const timePart = Date.now().toString().slice(-3);
+  const randomPart = Math.floor(100 + Math.random() * 900);
+
+  return `FM${timePart}${randomPart}`;
+}
+
+const generateNomenclature = (campaignGroup: CampaignGroup): string => {
+  const {
+    businessUnitId,
+    country,
+    eventTypeId,
+    subCategoryId,
+    customId,
+    brandId,
+    campaignName,
+  } = campaignGroup;
+
+  const businessUnitMap: Record<string, string> = {
+    "1P": "FA",
+    "3P": "FC",
+  };
+
+  const countryMap: Record<string, string> = {
+    CL: "CL",
+    CO: "CO",
+    PE: "PE",
+  };
+
+  const tacticalEvents = new Set([
+    "14_f",
+    "Escolares",
+    "DDM",
+    "DDP",
+    "DDN",
+    "Sneaker_Corner",
+    "Navidad",
+    "Otra",
+  ]);
+
+  const businessUnitCode = businessUnitMap[businessUnitId?.toUpperCase()] || "";
+  const countryCode = countryMap[country?.toUpperCase()] || "CL";
+  const eventTypePrefix = tacticalEvents.has(eventTypeId?.toUpperCase())
+    ? "TC"
+    : "HS";
+
+  return `${businessUnitCode}${countryCode}-LAB-${eventTypePrefix}-${subCategoryId}-${customId}-(${brandId})-${campaignName}`;
+};
+
 function addServiceTypesAndDates(campaignGroup: CampaignGroup): CampaignGroup {
+  const customId = generateCustomId();
+  campaignGroup.customId = customId;
+
+  const nomemclature = generateNomenclature(campaignGroup);
+  campaignGroup.nomemclature = nomemclature;
   // List of top-level keys that are of type Service.
   const topLevelServiceKeys: (keyof CampaignGroup)[] = [
     "sponsoredBrandForm",
@@ -94,6 +148,8 @@ function addServiceTypesAndDates(campaignGroup: CampaignGroup): CampaignGroup {
     const service = campaignGroup[key];
     if (service && typeof service === "object") {
       service.serviceType = key;
+      service.campaignGroupCustomId = customId;
+      service.nomenclature = nomemclature;
       mapServiceDates(service);
     }
   });
@@ -106,6 +162,8 @@ function addServiceTypesAndDates(campaignGroup: CampaignGroup): CampaignGroup {
     campaignGroup.mediaOnForm.strategies.forEach((service) => {
       if (service && typeof service === "object") {
         service.serviceType = "mediaOnForm.strategies";
+        service.campaignGroupCustomId = customId;
+        service.nomenclature = nomemclature;
         mapServiceDates(service);
       }
     });
@@ -119,6 +177,8 @@ function addServiceTypesAndDates(campaignGroup: CampaignGroup): CampaignGroup {
     campaignGroup.CRMForm.subProducts.forEach((service) => {
       if (service && typeof service === "object") {
         service.serviceType = "CRMForm.subProducts";
+        service.campaignGroupCustomId = customId;
+        service.nomenclature = nomemclature;
         mapServiceDates(service);
       }
     });
@@ -132,6 +192,8 @@ function addServiceTypesAndDates(campaignGroup: CampaignGroup): CampaignGroup {
     campaignGroup.homeLandingForm.strategies.forEach((service) => {
       if (service && typeof service === "object") {
         service.serviceType = "homeLandingForm.strategies";
+        service.campaignGroupCustomId = customId;
+        service.nomenclature = nomemclature;
         mapServiceDates(service);
       }
     });

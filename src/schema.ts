@@ -219,6 +219,7 @@ const typeDefinitions = /* GraphQL */ `
     homeLandingForm: HomeLandingForm
 
     campaignIds: [String!]
+    nomenclature: String
   }
 
   # Middleware types are kept, but if they contained a service type they now reference Service:
@@ -261,6 +262,7 @@ const typeDefinitions = /* GraphQL */ `
     labels: [String]
     plannerComments: [PlannerComments]
     nomenclature: String
+    campaignGroupCustomId: String
 
     # This discriminator is always provided when creating a Service
     serviceType: String

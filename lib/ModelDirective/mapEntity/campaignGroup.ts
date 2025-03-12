@@ -95,6 +95,7 @@ const generateNomenclature = (campaignGroup: CampaignGroup): string => {
     subCategoryId,
     customId,
     brandId,
+    sellerId,
     campaignName,
   } = campaignGroup;
 
@@ -126,7 +127,9 @@ const generateNomenclature = (campaignGroup: CampaignGroup): string => {
     ? "TC"
     : "HS";
 
-  return `${businessUnitCode}${countryCode}-LAB-${eventTypePrefix}-${subCategoryId}-${customId}-(${brandId})-${campaignName}`;
+  return `${businessUnitCode}${countryCode}-LAB-${eventTypePrefix}-${
+    subCategoryId[0]
+  }-${customId}-(${sellerId}-${brandId[0]})-${campaignName.replace(/ /g, "_")}`;
 };
 
 function addServiceTypesAndDates(campaignGroup: CampaignGroup): CampaignGroup {

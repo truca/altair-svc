@@ -183,9 +183,9 @@ const typeDefinitions = /* GraphQL */ `
     campaignName: String!
     eventTypeId: String!
     sellerId: String!
-    brandId: String!
-    categoryId: String!
-    subCategoryId: String!
+    brandId: [String!]!
+    categoryId: [String!]!
+    subCategoryId: [String!]!
     startDate: String!
     endDate: String!
 

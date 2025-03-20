@@ -116,6 +116,8 @@ const typeDefinitions = /* GraphQL */ `
   type ProductManager
     @model
     @auth(read: ["public"], update: ["public"], delete: ["public"]) {
+    country: String!
+
     externalId: ID!
     name: String!
     email: String!
@@ -135,6 +137,7 @@ const typeDefinitions = /* GraphQL */ `
   type Brand
     @model
     @auth(read: ["public"], update: ["public"], delete: ["public"]) {
+    country: String!
     parentId: ID
 
     externalId: ID!
@@ -146,6 +149,8 @@ const typeDefinitions = /* GraphQL */ `
   type Category
     @model
     @auth(read: ["public"], update: ["public"], delete: ["public"]) {
+    country: String!
+
     externalId: ID!
     name: String!
     createdAt: DateTime
@@ -155,6 +160,7 @@ const typeDefinitions = /* GraphQL */ `
   type Subcategory
     @model
     @auth(read: ["public"], update: ["public"], delete: ["public"]) {
+    country: String!
     parentId: ID
 
     externalId: ID!
@@ -178,6 +184,7 @@ const typeDefinitions = /* GraphQL */ `
   type CampaignGroup
     @model
     @auth(read: ["public"], update: ["public"], delete: ["public"]) {
+    country: String!
     productManagerId: String!
     businessUnitId: String!
     campaignName: String!
@@ -224,6 +231,7 @@ const typeDefinitions = /* GraphQL */ `
 
   # Middleware types are kept, but if they contained a service type they now reference Service:
   type MediaOnForm {
+    country: String!
     strategiesId: String!
     budget: Float!
     commission: String!
@@ -233,6 +241,7 @@ const typeDefinitions = /* GraphQL */ `
   }
 
   type CRMForm {
+    country: String!
     crmTypeId: String!
     templateId: String!
     numberTouches: String
@@ -241,6 +250,7 @@ const typeDefinitions = /* GraphQL */ `
   }
 
   type HomeLandingForm {
+    country: String!
     totalBudget: Float!
     # strategies was [HomeLandingStrategy!]! → [Service!]!
     strategies: [Service]
@@ -257,6 +267,8 @@ const typeDefinitions = /* GraphQL */ `
   type Service
     @model
     @auth(read: ["public"], update: ["public"], delete: ["public"]) {
+    country: String!
+
     #Fields from planner
     userAssigned: [String]
     labels: [String]

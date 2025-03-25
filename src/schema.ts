@@ -116,7 +116,7 @@ const typeDefinitions = /* GraphQL */ `
   type ProductManager
     @model
     @auth(read: ["public"], update: ["public"], delete: ["public"]) {
-    country: String!
+    country: String
 
     externalId: ID!
     name: String!
@@ -128,6 +128,8 @@ const typeDefinitions = /* GraphQL */ `
   type Seller
     @model
     @auth(read: ["public"], update: ["public"], delete: ["public"]) {
+    country: String
+
     externalId: ID!
     name: String!
     createdAt: DateTime
@@ -137,7 +139,7 @@ const typeDefinitions = /* GraphQL */ `
   type Brand
     @model
     @auth(read: ["public"], update: ["public"], delete: ["public"]) {
-    country: String!
+    country: String
     parentId: ID
 
     externalId: ID!
@@ -149,7 +151,7 @@ const typeDefinitions = /* GraphQL */ `
   type Category
     @model
     @auth(read: ["public"], update: ["public"], delete: ["public"]) {
-    country: String!
+    country: String
 
     externalId: ID!
     name: String!
@@ -160,7 +162,7 @@ const typeDefinitions = /* GraphQL */ `
   type Subcategory
     @model
     @auth(read: ["public"], update: ["public"], delete: ["public"]) {
-    country: String!
+    country: String
     parentId: ID
 
     externalId: ID!
@@ -184,7 +186,7 @@ const typeDefinitions = /* GraphQL */ `
   type CampaignGroup
     @model
     @auth(read: ["public"], update: ["public"], delete: ["public"]) {
-    country: String!
+    country: String
     productManagerId: String!
     businessUnitId: String!
     campaignName: String!
@@ -231,7 +233,7 @@ const typeDefinitions = /* GraphQL */ `
 
   # Middleware types are kept, but if they contained a service type they now reference Service:
   type MediaOnForm {
-    country: String!
+    country: String
     strategiesId: String!
     budget: Float!
     commission: String!
@@ -241,7 +243,7 @@ const typeDefinitions = /* GraphQL */ `
   }
 
   type CRMForm {
-    country: String!
+    country: String
     crmTypeId: String!
     templateId: String!
     numberTouches: String
@@ -250,7 +252,7 @@ const typeDefinitions = /* GraphQL */ `
   }
 
   type HomeLandingForm {
-    country: String!
+    country: String
     totalBudget: Float!
     # strategies was [HomeLandingStrategy!]! → [Service!]!
     strategies: [Service]
@@ -267,7 +269,7 @@ const typeDefinitions = /* GraphQL */ `
   type Service
     @model
     @auth(read: ["public"], update: ["public"], delete: ["public"]) {
-    country: String!
+    country: String
 
     #Fields from planner
     userAssigned: [String]
@@ -363,6 +365,10 @@ const typeDefinitions = /* GraphQL */ `
     maxPages: Float
   }
 
+  input ServiceInputType2 {
+    country: String
+  }
+
   type Query {
     _: Boolean
     me(uid: String): Profile
@@ -373,6 +379,7 @@ const typeDefinitions = /* GraphQL */ `
       serviceType: String
       pageSize: Float
       page: Float
+      where: ServiceInputType2
     ): Services
   }
 

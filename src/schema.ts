@@ -132,6 +132,7 @@ const typeDefinitions = /* GraphQL */ `
 
     externalId: ID!
     name: String!
+    businessUnitId: String!
     createdAt: DateTime
     updatedAt: DateTime
   }
@@ -144,6 +145,7 @@ const typeDefinitions = /* GraphQL */ `
 
     externalId: ID!
     name: String!
+    sellerIds: [String!]!
     createdAt: DateTime
     updatedAt: DateTime
   }
@@ -155,6 +157,7 @@ const typeDefinitions = /* GraphQL */ `
 
     externalId: ID!
     name: String!
+    brandIds: [String!]!
     createdAt: DateTime
     updatedAt: DateTime
   }
@@ -167,6 +170,7 @@ const typeDefinitions = /* GraphQL */ `
 
     externalId: ID!
     name: String!
+    categoryIds: [String!]!
     createdAt: DateTime
     updatedAt: DateTime
   }

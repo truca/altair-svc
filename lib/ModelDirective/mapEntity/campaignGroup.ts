@@ -137,6 +137,7 @@ function addServiceTypesAndDates(campaignGroup: CampaignGroup): CampaignGroup {
   campaignGroup.customId = customId;
 
   const nomemclature = generateNomenclature(campaignGroup);
+  const country = campaignGroup.country;
   campaignGroup.nomemclature = nomemclature;
   // List of top-level keys that are of type Service.
   const topLevelServiceKeys: (keyof CampaignGroup)[] = [
@@ -153,6 +154,8 @@ function addServiceTypesAndDates(campaignGroup: CampaignGroup): CampaignGroup {
       service.serviceType = key;
       service.campaignGroupCustomId = customId;
       service.nomenclature = nomemclature;
+      service.country = country;
+
       mapServiceDates(service);
     }
   });
@@ -167,6 +170,8 @@ function addServiceTypesAndDates(campaignGroup: CampaignGroup): CampaignGroup {
         service.serviceType = "mediaOnForm.strategies";
         service.campaignGroupCustomId = customId;
         service.nomenclature = nomemclature;
+        service.country = country;
+
         mapServiceDates(service);
       }
     });
@@ -182,6 +187,8 @@ function addServiceTypesAndDates(campaignGroup: CampaignGroup): CampaignGroup {
         service.serviceType = "CRMForm.subProducts";
         service.campaignGroupCustomId = customId;
         service.nomenclature = nomemclature;
+        service.country = country;
+
         mapServiceDates(service);
       }
     });
@@ -197,6 +204,8 @@ function addServiceTypesAndDates(campaignGroup: CampaignGroup): CampaignGroup {
         service.serviceType = "homeLandingForm.strategies";
         service.campaignGroupCustomId = customId;
         service.nomenclature = nomemclature;
+        service.country = country;
+
         mapServiceDates(service);
       }
     });

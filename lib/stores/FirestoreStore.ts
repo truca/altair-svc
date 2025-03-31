@@ -120,18 +120,22 @@ export class FirestoreStore implements Store {
 
     // support {[key]: { operator, value: dateObj }} and {[key]: [{ operator, value: dateObj }]}
     for (const key in formattedInput) {
-      if (Array.isArray(formattedInput[key])) {
-        for (const condition of formattedInput[key]) {
+      const value = formattedInput[key];
+
+      const isArrayObjects =
+        Array.isArray(value) &&
+        value.every((item: any) => typeof item === "object");
+
+      if (isArrayObjects) {
+        for (const condition of value) {
           query = query.where(key, condition.operator, condition.value);
         }
-      } else if (typeof formattedInput[key] === "object") {
-        query = query.where(
-          key,
-          formattedInput[key].operator,
-          formattedInput[key].value
-        );
+      } else if (Array.isArray(value)) {
+        query = query.where(key, "array-contains-any", value);
+      } else if (typeof value === "object") {
+        query = query.where(key, value.operator, value.value);
       } else {
-        query = query.where(key, "==", formattedInput[key]);
+        query = query.where(key, "==", value);
       }
     }
 

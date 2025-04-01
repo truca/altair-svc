@@ -596,7 +596,7 @@ export class ModelDirective extends SchemaDirectiveVisitor {
       startDateKeys.forEach((key) => {
         if (data[key]) {
           const date = new Date(data[key]);
-          date.setHours(0, 0, 0, 0);
+          date.setUTCHours(0, 0, 0, 0);
           data.startDate = admin.firestore.Timestamp.fromDate(date);
         }
       });
@@ -610,7 +610,7 @@ export class ModelDirective extends SchemaDirectiveVisitor {
       endDateKeys.forEach((key) => {
         if (data[key]) {
           const date = new Date(data[key]);
-          date.setHours(23, 59, 59, 999);
+          date.setUTCHours(23, 59, 59, 999);
           data.endDate = admin.firestore.Timestamp.fromDate(date);
         }
       });

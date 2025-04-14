@@ -201,20 +201,20 @@ export function getMongoFilterForOwnerOrCollaborator({
     getHasCollaboratorPermissionInConfig({ config, action });
 
   // TODO: Less restrictions if the user is not logged in? This seems wrong.
-  if (!profile?.uid) return {};
+  if (!profile?.email) return {};
 
   if (hasOwnerPermissionInConfig && hasCollaboratorPermissionInConfig) {
     return {
-      $or: [{ ownerIds: profile.uid }, { collaboratorIds: profile.uid }],
+      $or: [{ ownerIds: profile.email }, { collaboratorIds: profile.email }],
     };
   }
 
   if (hasOwnerPermissionInConfig) {
-    return { ownerIds: profile.uid };
+    return { ownerIds: profile.email };
   }
 
   if (hasCollaboratorPermissionInConfig) {
-    return { collaboratorIds: profile.uid };
+    return { collaboratorIds: profile.email };
   }
 
   // TODO: Less restrictions if the user is not logged in? This seems wrong.
@@ -248,7 +248,7 @@ export function getSQLFilterForOwnerOrCollaborator(
   const hasCollaboratorPermissionInConfig =
     getHasCollaboratorPermissionInConfig({ config, action });
 
-  if (!profile?.uid) return "1 = 0";
+  if (!profile?.email) return "1 = 0";
 
   if (hasOwnerPermissionInConfig && hasCollaboratorPermissionInConfig) {
     return `ownerIds = ? OR collaboratorIds = ?`;

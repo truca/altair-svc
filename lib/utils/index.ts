@@ -71,7 +71,7 @@ export function generateTokens(profile: Profile) {
     10
   );
   const refreshToken = jwt.sign(
-    { userId: profile.uid },
+    { email: profile.email },
     secretKey as string,
     { expiresIn: refreshTokenExpiresIn } // Token expires in 7 days
   );
@@ -181,9 +181,16 @@ export function makeSchema({
           fields: [],
         };
       },
-      me: async (_: any, params: { uid: String }, context: any, info: any) => {
+      me: async (
+        _: any,
+        params: { email: String },
+        context: any,
+        info: any
+      ) => {
         const profileType = context?.typeMap?.Profile;
-        const args = { where: { uid: params.uid } };
+        const args = {
+          where: { email: params.email || context?.session?.email },
+        };
         return StaticModelDirective.findOneQueryResolver(profileType)(
           _,
           args,
@@ -243,39 +250,96 @@ export function makeSchema({
         }
         return true;
       },
-      authenticate: async (_: any, params: Profile, context: any) => {
+      login: async (
+        _: any,
+        params: { email: string; password: string },
+        context: any
+      ) => {
         const info = null;
-        let profile = await context.directives.model.store.findOne(
-          {
-            where: { uid: params.uid, deletedAt: null },
-            type: { name: "Profile" },
-          },
-          context,
-          info,
-          true
-        );
-        if (profile) {
+
+        try {
+          const profile = await context.directives.model.store.findOne(
+            {
+              where: { email: params.email },
+              type: { name: "Profile" },
+            },
+            context,
+            info,
+            true
+          );
+
+          if (!profile) {
+            throw new Error("Usuario no encontrado");
+          }
+
+          if (profile.password !== params.password) {
+            throw new Error("Contraseña incorrecta");
+          }
+
           const tokens = generateTokens(profile);
           setTokensAsCookies(context.cookieStore, tokens);
 
-          return tokens.accessToken;
+          return { token: tokens.accessToken, country: profile.country };
+        } catch (error) {
+          throw error;
         }
+      },
 
-        profile = await context.directives.model.store.create({
-          data: {
-            ...params,
-            role: "user",
-          },
-          type: { name: "Profile" },
-        });
+      register: async (
+        _: any,
+        params: {
+          email: string;
+          password: string;
+          username?: string;
+          profilePicture?: string;
+        },
+        context: any
+      ) => {
+        const info = null;
 
-        if (!profile) {
-          return null;
+        try {
+          const existingUser = await context.directives.model.store.findOne(
+            {
+              where: { email: params.email, deletedAt: null },
+              type: { name: "Profile" },
+            },
+            context,
+            info,
+            true
+          );
+
+          if (existingUser) {
+            throw new Error("Ya existe un usuario con este email");
+          }
+
+          const profile = await context.directives.model.store.create(
+            {
+              data: {
+                ...params,
+                role: "user",
+                deletedAt: null,
+              },
+              type: { name: "Profile" },
+            },
+            context,
+            info
+          );
+
+          if (!profile) {
+            throw new Error("Error al crear el usuario");
+          }
+
+          const tokens = generateTokens(profile);
+          setTokensAsCookies(context.cookieStore, tokens);
+
+          if (!tokens.accessToken) {
+            throw new Error("Error al generar el token de autenticación");
+          }
+
+          return { token: tokens.accessToken, country: profile.country };
+        } catch (error) {
+          throw error;
         }
-
-        const tokens = generateTokens(profile);
-        setTokensAsCookies(context.cookieStore, tokens);
-        return tokens.accessToken;
       },
       updateMe: async (
         _: any,

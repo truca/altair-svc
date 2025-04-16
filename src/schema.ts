@@ -17,6 +17,69 @@ const typeDefinitions = /* GraphQL */ `
   directive @connection(type: String) on FIELD_DEFINITION
   directive @subscribe(on: [String], topic: String) on OBJECT
 
+  # Redis directive for caching and Redis-only entities
+  # Time-to-live in seconds
+  # Default: 3600 (1 hour) - balances freshness with reduced database load
+  # 0 means no expiration
+  # 
+  # Caching strategy when used with @model
+  # Default: CACHE_FIRST - optimal balance of performance and data consistency
+  # Values:
+  #   CACHE_FIRST - Check cache first, then database if not found
+  #   CACHE_ONLY - Only check cache, return null if not found
+  #   WRITE_THROUGH - Update cache and database simultaneously
+  #   WRITE_BEHIND - Update cache immediately, database asynchronously
+  #   REFRESH_AHEAD - Proactively refresh cache before expiration
+  #   READ_THROUGH - Always fetch from database and update cache
+  #
+  # Redis data structure to use
+  # Default: STRING - most versatile for storing serialized JS objects and arrays
+  # Values:
+  #   STRING - Simple key-value string storage (JSON serialized objects/arrays)
+  #   HASH - Field-value pairs, good for objects with partial updates
+  #   LIST - Ordered collection, useful for feeds or timelines
+  #   SET - Unordered collection of unique items (e.g., tags, categories)
+  #   SORTED_SET - Ordered collection with score-based ranking (leaderboards)
+  #   GEO - Geospatial data with radius queries
+  #   HYPERLOGLOG - Probabilistic data structure for cardinality
+  #   STREAM - Append-only log structure for messaging
+  #
+  # Events that trigger cache invalidation
+  # Default: ["CREATE", "UPDATE", "DELETE"] - ensures cache consistency
+  # Common values:
+  #   CREATE - When entity is created
+  #   UPDATE - When entity is updated
+  #   DELETE - When entity is deleted
+  #   RELATED_UPDATE - When related entities are modified
+  #   SCHEDULED - Time-based invalidation independent of TTL
+  #   CUSTOM_EVENT - Application-specific events
+  directive @redis(
+    ttl: Int
+    strategy: RedisCacheStrategy
+    structure: RedisStructure
+    invalidateOn: [String]
+  ) on OBJECT | FIELD_DEFINITION
+
+  enum RedisCacheStrategy {
+    CACHE_FIRST
+    CACHE_ONLY
+    WRITE_THROUGH
+    WRITE_BEHIND
+    REFRESH_AHEAD
+    READ_THROUGH
+  }
+
+  enum RedisStructure {
+    STRING
+    HASH
+    LIST
+    SET
+    SORTED_SET
+    GEO
+    HYPERLOGLOG
+    STREAM
+  }
+
   enum FieldType {
     TEXT
     TEXTAREA
@@ -87,6 +150,24 @@ const typeDefinitions = /* GraphQL */ `
     createdAt: DateTime!
     updatedAt: DateTime
   }
+
+  # Example of a Redis-only entity for session management
+  # type Session @redis(ttl: 3600, structure: HASH) {
+  #   id: ID!
+  #   userId: String!
+  #   ipAddress: String
+  #   userAgent: String
+  #   lastActive: DateTime!
+  # }
+
+  # Example of a model entity with Redis caching
+  # type Product @model @redis(ttl: 86400, strategy: CACHE_FIRST) {
+  #   id: ID!
+  #   name: String!
+  #   description: String
+  #   price: Float!
+  #   inventory: Int!
+  # }
 
   input ObjectId {
     id: ID!

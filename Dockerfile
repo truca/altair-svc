@@ -1,38 +1,37 @@
 # ---- Stage 1: Build Stage ----
-FROM node:18 AS builder
+    FROM node:18 AS builder
 
-# Establece el directorio de trabajo
-WORKDIR /usr/src/app
-
-# Copia los archivos de definición de dependencias
-COPY package.json yarn.lock ./
-
-# Instala todas las dependencias (producción y desarrollo)
-RUN yarn install --frozen-lockfile
-
-# Copia el resto del código fuente
-COPY . .
-
-# Compila el proyecto usando TypeScript (el comando "build" está definido en package.json)
-RUN yarn build
-
-# ---- Stage 2: Production Image ----
-FROM node:18-alpine
-
-# Establece el directorio de trabajo
-WORKDIR /usr/src/app
-
-# Copia los archivos de definición de dependencias
-COPY package.json yarn.lock ./
-
-# Instala solo las dependencias de producción
-RUN yarn install --production --frozen-lockfile
-
-# Copia el código compilado desde la etapa anterior
-COPY --from=builder /usr/src/app/dist ./dist
-
-# Expone el puerto en el que corre la aplicación (ajusta si es necesario)
-EXPOSE 4000
-
-# Comando para ejecutar la aplicación (ejecuta el código compilado)
-CMD ["node", "dist/main.js"]
+    WORKDIR /app
+    
+    # Copy package.json and yarn.lock to install dependencies
+    COPY package.json yarn.lock ./
+    RUN yarn install --frozen-lockfile
+    
+    # Copy the entire project
+    COPY . .
+    
+    # Compile TypeScript (output should go to /app/dist)
+    RUN yarn build
+    
+    # ---- Stage 2: Production Image ----
+    FROM node:18-alpine
+    
+    WORKDIR /app
+    
+    # Copy package.json and install only production dependencies
+    COPY package.json yarn.lock ./
+    RUN yarn install --production --frozen-lockfile
+    
+    # Copy compiled files from builder stage
+    COPY --from=builder /app/dist ./dist
+    
+    # Set the working directory to dist where main.js is located
+    WORKDIR /app/dist
+    
+    # List files in dist to confirm `main.js` exists
+    RUN ls -l
+    
+    EXPOSE 4000
+    
+    # Run the built application
+    CMD ["node", "main.js"]

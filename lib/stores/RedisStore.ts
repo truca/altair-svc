@@ -89,7 +89,8 @@ export class RedisStore implements Store {
     const redisParams = extractDirectiveParams(props.type.astNode as any, "redis");
     if (!redisParams) return null;
 
-    const ttl = redisParams.ttl || 3600;
+    // Ensure TTL is a number
+    const ttl = redisParams.ttl !== undefined ? parseInt(String(redisParams.ttl), 10) : 3600;
     const structure = redisParams.structure || RedisStructure.STRING;
     
     // Ensure we have an ID
@@ -97,6 +98,7 @@ export class RedisStore implements Store {
     const key = this.prefixKey(RedisKeyGenerator.forEntity(props.type.name, id));
     const data = { ...props.data, id };
     
+    console.log(`Setting Redis key ${key} with TTL: ${ttl}`);
     await this.redis.set(key, JSON.stringify(data), 'EX', ttl);
     
     return data as StoreCreateReturn;
@@ -111,7 +113,8 @@ export class RedisStore implements Store {
     if (!redisParams) return false;
 
     const structure = redisParams.structure || RedisStructure.STRING;
-    const ttl = redisParams.ttl || 3600;
+    // Ensure TTL is a number
+    const ttl = redisParams.ttl !== undefined ? parseInt(String(redisParams.ttl), 10) : 3600;
     
     // Get ID from where clause
     const id = (props.where as any)?.id || (props.where as any)?._id;
@@ -133,6 +136,7 @@ export class RedisStore implements Store {
     // For STRING, we need to get current data, merge, and set
     const currentData = await this.redis.get(key);
     const merged = { ...JSON.parse(currentData || '{}'), ...props.data, id };
+    console.log(`Updating Redis key ${key} with TTL: ${ttl}`);
     await this.redis.set(key, JSON.stringify(merged), 'EX', ttl);
     return merged as StoreUpdateReturn;
   }

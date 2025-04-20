@@ -54,7 +54,7 @@ export class RedisDirective extends SchemaDirectiveVisitor {
     const params = getDirectiveParams("redis", type);
     // Apply default values if not specified
     const config: RedisConfig = {
-      ttl: params?.ttl || 3600,
+      ttl: params?.ttl !== undefined ? parseInt(String(params.ttl), 10) : 3600,
       strategy: params?.strategy || RedisCacheStrategy.CACHE_FIRST,
       structure: params?.structure || RedisStructure.STRING,
       invalidateOn: params?.invalidateOn || [
@@ -64,6 +64,8 @@ export class RedisDirective extends SchemaDirectiveVisitor {
       ]
     };
 
+    console.log(`Redis config for ${type.name}: TTL=${config.ttl}, strategy=${config.strategy}`);
+    
     // Store configuration on the type for later use
     (type as any).redisConfig = config;
 

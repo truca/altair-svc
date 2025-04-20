@@ -219,6 +219,9 @@ export class ModelDirective extends SchemaDirectiveVisitor {
       isDeprecated: false,
     };
     
+    // Generate input types for Redis entities, just like we do for model entities
+    this.addInputTypes(type);
+    
     // Add Redis-specific resolvers (similar to addMutations/addQueries but for Redis)
     this.addRedisQueries(type);
     this.addRedisMutations(type);
@@ -283,7 +286,7 @@ export class ModelDirective extends SchemaDirectiveVisitor {
       args: [
         {
           name: "where",
-          type: GraphQLJSON,
+          type: this.getOrCreateInputType(type.name),
         } as any,
         {
           name: "page",
@@ -329,7 +332,7 @@ export class ModelDirective extends SchemaDirectiveVisitor {
       args: [
         {
           name: "data",
-          type: GraphQLJSON,
+          type: this.getOrCreateInputType(type.name),
         },
       ],
       resolve: async (
@@ -339,6 +342,23 @@ export class ModelDirective extends SchemaDirectiveVisitor {
         info: any
       ) => {
         if (!context.directives.redis?.enabled) return null;
+        
+        // Validate input data like we do for model entities
+        try {
+          validateInputData({
+            data: args.data,
+            type,
+            schema: this.schema,
+          });
+        } catch (error) {
+          console.error(`Input validation error for Redis entity ${type.name}:`, error);
+          throw error;
+        }
+        
+        // Ensure we have an ID for the Redis entity if not provided
+        if (!args.data.id) {
+          args.data.id = require('crypto').randomUUID();
+        }
         
         return context.directives.redis.store.create(
           {
@@ -364,7 +384,7 @@ export class ModelDirective extends SchemaDirectiveVisitor {
         },
         {
           name: "data",
-          type: GraphQLJSON,
+          type: this.getOrCreateInputType(type.name),
         },
       ],
       resolve: async (
@@ -374,6 +394,23 @@ export class ModelDirective extends SchemaDirectiveVisitor {
         info: any
       ) => {
         if (!context.directives.redis?.enabled) return null;
+        
+        // Validate input data like we do for model entities
+        try {
+          validateInputData({
+            data: args.data,
+            type,
+            schema: this.schema,
+          });
+        } catch (error) {
+          console.error(`Input validation error for Redis entity ${type.name}:`, error);
+          throw error;
+        }
+        
+        // Ensure ID is properly handled
+        if (!args.data.id) {
+          args.data.id = args.id;
+        }
         
         return context.directives.redis.store.update(
           {
@@ -1096,5 +1133,36 @@ export class ModelDirective extends SchemaDirectiveVisitor {
       resolve: this.findQueryResolver(type),
       isDeprecated: false,
     });
+  }
+
+  // Helper method to get or create an input type for a given type
+  private getOrCreateInputType(typeName: string) {
+    // Try different naming conventions for input types
+    const possibleInputTypeNames = [
+      `${typeName}Input`,          // Standard Input
+      `${typeName}InputType`,      // Alternative naming
+      `Create${typeName}Input`,    // Create-specific input
+      `Update${typeName}Input`     // Update-specific input
+    ];
+    
+    // Try to find an existing input type
+    for (const inputTypeName of possibleInputTypeNames) {
+      const inputType = this.schema.getType(inputTypeName);
+      if (inputType) {
+        return inputType;
+      }
+    }
+    
+    // If no input type exists, fall back to getInputType utility or create one
+    const inputType = getInputType(typeName, this.schema);
+    
+    if (inputType) {
+      return inputType;
+    }
+    
+    // Last resort: create a basic input type with just ID if nothing exists
+    // This ensures operations can at least work with IDs
+    console.warn(`No input type found for ${typeName}. Using GraphQLID as fallback.`);
+    return GraphQLID;
   }
 }

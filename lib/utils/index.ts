@@ -6,6 +6,7 @@ import { createStore, DbTypes, getDbOptions } from "../stores/utils";
 import { CookieStore, FormsHash, Profile } from "../types";
 
 import { GraphQLID } from "graphql";
+import { GraphQLJSON } from 'graphql-type-json';
 import _ from "lodash";
 import { createPubSub } from "graphql-yoga";
 
@@ -200,6 +201,7 @@ export function makeSchema({
 }) {
   const resolvers = {
     ID: GraphQLID,
+    JSON: GraphQLJSON,
     FormType: {
       ...formTypes,
     },

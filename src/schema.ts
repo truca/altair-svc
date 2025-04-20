@@ -6,6 +6,9 @@ const typeDefinitions = /* GraphQL */ `
   scalar ID
   scalar File
   scalar DateTime
+  scalar JSON
+  scalar Upload
+  scalar Date
   directive @model(db: String) on OBJECT
   directive @file(maxSize: Float!, types: [String!]!) on FIELD_DEFINITION
   directive @auth(
@@ -54,11 +57,11 @@ const typeDefinitions = /* GraphQL */ `
   #   SCHEDULED - Time-based invalidation independent of TTL
   #   CUSTOM_EVENT - Application-specific events
   directive @redis(
-    ttl: Int
+    ttl: Float
     strategy: RedisCacheStrategy
     structure: RedisStructure
     invalidateOn: [String]
-  ) on OBJECT | FIELD_DEFINITION
+  ) on OBJECT
 
   enum RedisCacheStrategy {
     CACHE_FIRST

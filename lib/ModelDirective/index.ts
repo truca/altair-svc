@@ -30,6 +30,7 @@ import {
   getEntityTypeFromField,
   getFieldType,
 } from "../GraphQL/utils";
+import { RedisCacheManager } from "../RedisDirective/CacheManager";
 
 import { config } from "dotenv";
 config();
@@ -38,6 +39,10 @@ export interface ResolverContext {
   directives: {
     model: {
       store: Store;
+    };
+    redis?: {
+      store: any;
+      enabled: boolean;
     };
   };
   [key: string]: any;
@@ -247,8 +252,26 @@ export class ModelDirective extends SchemaDirectiveVisitor {
       context: ResolverContext,
       info: any
     ) => {
+      // First try to get from cache
+      const { found, data: cachedData } = await RedisCacheManager.tryGetListFromCache({
+        type,
+        context,
+        info,
+        where: args.where,
+        page: args.page,
+        pageSize: args.pageSize,
+        includeMaxPages: args.includeMaxPages
+      });
+      
+      // If found in cache, return it
+      if (found) {
+        return cachedData;
+      }
+      
+      // Not found in cache, get from database
       const params = getDirectiveParams("model", type);
       const db = params?.db ?? "store";
+      
       const initialData: object[] = await context.directives.model[db].find(
         {
           where: args.where,
@@ -305,7 +328,17 @@ export class ModelDirective extends SchemaDirectiveVisitor {
         ),
       };
 
-      console.log({ results, where: args.where });
+      // Cache the list results
+      await RedisCacheManager.updateListCache({
+        type,
+        context,
+        info, 
+        data: results,
+        where: args.where,
+        page: args.page,
+        pageSize: args.pageSize
+      });
+
       return results;
     };
   }
@@ -317,8 +350,23 @@ export class ModelDirective extends SchemaDirectiveVisitor {
       context: ResolverContext,
       info: any
     ) => {
+      // First try to get from cache
+      const { found, data: cachedItem } = await RedisCacheManager.tryGetFromCache({
+        type,
+        context,
+        info,
+        where: args.where
+      });
+      
+      // If found in cache (even if null), return it
+      if (found) {
+        return cachedItem;
+      }
+      
+      // Not found in cache, get from database
       const params = getDirectiveParams("model", type);
       const db = params?.db ?? "store";
+      
       const rootObject = await context.directives.model[db].findOne(
         {
           where: args.where,
@@ -348,7 +396,18 @@ export class ModelDirective extends SchemaDirectiveVisitor {
         },
       });
 
-      return { ...rootObject, ...cleanNestedObjects(nestedObjects) };
+      const result = { ...rootObject, ...cleanNestedObjects(nestedObjects) };
+      
+      // Cache the result
+      await RedisCacheManager.updateCache({
+        type,
+        context,
+        info,
+        data: result,
+        operation: 'create'
+      });
+
+      return result;
     };
   }
 
@@ -453,6 +512,15 @@ export class ModelDirective extends SchemaDirectiveVisitor {
         ...rootObject,
         ...cleanNestedObjects(relatedObjects),
       };
+      
+      // Cache the new object
+      await RedisCacheManager.updateCache({
+        type,
+        context,
+        info,
+        data: mergedObjects,
+        operation: 'create'
+      });
 
       return mergedObjects;
     };
@@ -618,6 +686,15 @@ export class ModelDirective extends SchemaDirectiveVisitor {
         ...rootObject,
         ...cleanNestedObjects(nestedObjects),
       };
+      
+      // Update the cache with the updated object
+      await RedisCacheManager.updateCache({
+        type,
+        context,
+        info,
+        data: mergedObjects,
+        operation: 'update'
+      });
 
       return mergedObjects;
     };
@@ -700,16 +777,23 @@ export class ModelDirective extends SchemaDirectiveVisitor {
           type: this.schema.getType(names.input.type),
         } as any,
       ],
-      resolve: (
+      resolve: async (
         root,
         args: RemoveResolverArgs,
         context: ResolverContext,
         info: any
       ) => {
-        const modelDirective = getDirectiveParams("model", type);
-
         const params = getDirectiveParams("model", type);
         const db = params?.db ?? "store";
+        
+        // Invalidate the cache before removing from database
+        await RedisCacheManager.invalidateCache({
+          type,
+          context,
+          info,
+          where: args.where
+        });
+        
         return context.directives.model[db].remove(
           {
             where: args.where,

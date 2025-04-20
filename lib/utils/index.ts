@@ -133,13 +133,46 @@ function connectDatabases() {
   return dbs;
 }
 
+/**
+ * Connect to Redis if enabled in environment variables
+ * @returns Redis store instance or null if disabled
+ */
+function connectRedis() {
+  // Check if Redis is enabled
+  const redisEnabled = process.env.REDIS_ENABLED === "true";
+  
+  if (!redisEnabled) {
+    return { store: null, enabled: false };
+  }
+  
+  try {
+    const { RedisStore } = require("../stores/RedisStore");
+    
+    const redisStore = new RedisStore({
+      host: process.env.REDIS_HOST || "localhost",
+      port: parseInt(process.env.REDIS_PORT || "6379"),
+      password: process.env.REDIS_PASSWORD || undefined,
+      db: parseInt(process.env.REDIS_DB || "0"),
+      keyPrefix: process.env.REDIS_KEY_PREFIX || "altair"
+    });
+    
+    console.log("Redis connection established");
+    return { store: redisStore, enabled: true };
+  } catch (error) {
+    console.error("Failed to connect to Redis:", error);
+    return { store: null, enabled: false };
+  }
+}
+
 export function makeContext({ context: contextArg }: any) {
   const databases = connectDatabases();
+  const redis = connectRedis();
 
   const context = {
     ...contextArg,
     directives: {
       model: { ...databases },
+      redis,
       file: {
         maxSize: 1000000,
         types: ["image/jpeg", "image/png"],
@@ -277,8 +310,6 @@ export function makeSchema({
       //   )(_, params, context, info);
 
       //   console.log({ campaignGroup });
-
-      //   // Crear campañas y sus acciones comerciales
 
       // },
       ...mutations,

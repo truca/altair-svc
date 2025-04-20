@@ -206,6 +206,12 @@ const typeDefinitions = /* GraphQL */ `
     updatedAt: DateTime
   }
 
+  type Config @redis(ttl: 120){
+    id: ID!
+    name: String!
+    country: String!
+  }
+
   type Brand @model @auth(read: ["public"]) {
     externalId: ID!
     name: String!

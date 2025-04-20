@@ -321,6 +321,7 @@ export function makeSchema({
     resolvers,
     schemaDirectives: {
       model: ModelDirective,
+      redis: ModelDirective,
     },
   });
 }

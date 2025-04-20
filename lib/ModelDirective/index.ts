@@ -10,6 +10,7 @@ import {
   GraphQLList,
   GraphQLObjectType,
 } from "graphql";
+import { GraphQLJSON } from 'graphql-type-json';
 import { SchemaDirectiveVisitor } from "@graphql-tools/utils";
 import _, { isArray, isPlainObject, merge, mergeWith, pickBy } from "lodash";
 import * as pluralize from "pluralize";
@@ -169,9 +170,23 @@ export class ModelDirective extends SchemaDirectiveVisitor {
   public isFirestore = process.env.DB_TYPE === "firestore";
 
   public visitObject(type: GraphQLObjectType) {
-    // TODO check that id field does not already exist on type
-    // Add an "id" field to the object type.
-    //
+    // Detect the directive that triggered this call - model or redis
+    const directiveName = this.args ? Object.keys(this.args)[0] : "model";
+    const isModelDirective = directiveName === "model" || hasDirective("model", type);
+    const isRedisDirective = directiveName === "redis" || hasDirective("redis", type);
+    
+    if (isModelDirective) {
+      this.handleModelDirective(type);
+    }
+    
+    // For Redis-only entities, we need to add an id field as well
+    if (isRedisDirective && !isModelDirective) {
+      this.handleRedisOnlyEntity(type);
+    }
+  }
+  
+  private handleModelDirective(type: GraphQLObjectType) {
+    // Original @model directive handling
     type.getFields().id = {
       name: "id",
       type: GraphQLID,
@@ -190,6 +205,219 @@ export class ModelDirective extends SchemaDirectiveVisitor {
 
     // Modify root Query type to add "find one" and "find many" queries
     this.addQueries(type);
+  }
+  
+  private handleRedisOnlyEntity(type: GraphQLObjectType) {
+    // For Redis-only entities, we still need to add an ID field
+    type.getFields().id = {
+      name: "id",
+      type: GraphQLID,
+      description: "Unique ID for Redis entity",
+      args: [],
+      resolve: defaultFieldResolver,
+      // @ts-ignore
+      isDeprecated: false,
+    };
+    
+    // Add Redis-specific resolvers (similar to addMutations/addQueries but for Redis)
+    this.addRedisQueries(type);
+    this.addRedisMutations(type);
+  }
+  
+  private addRedisQueries(type: GraphQLObjectType) {
+    const names = generateFieldNames(type.name);
+    
+    // Find one query for Redis entities
+    this.addQuery({
+      name: names.query.one,
+      type,
+      description: `Find one ${type.name} from Redis`,
+      args: [
+        {
+          name: "id",
+          type: GraphQLID,
+        } as any,
+      ],
+      resolve: async (
+        root,
+        args: { id: string },
+        context: ResolverContext,
+        info: any
+      ) => {
+        // Simple Redis get operation
+        if (!context.directives.redis?.enabled) return null;
+        
+        return context.directives.redis.store.findOne(
+          {
+            where: { id: args.id },
+            type,
+          },
+          context,
+          info
+        );
+      },
+      isDeprecated: false,
+    });
+    
+    // Find many query for Redis entities
+    this.schema.getTypeMap()["GraphQLInt"] = GraphQLInt;
+
+    const listTypeName = `${names.query.one}List`;
+    const listType = new GraphQLObjectType({
+      name: listTypeName,
+      fields: () => ({
+        list: {
+          type: new GraphQLList(type),
+        },
+        maxPages: {
+          type: GraphQLInt,
+        },
+      }),
+    });
+    this.schema.getTypeMap()[listTypeName] = listType;
+    
+    this.addQuery({
+      name: names.query.many,
+      type: listType,
+      description: `Find multiple ${pluralize.plural(type.name)} from Redis`,
+      args: [
+        {
+          name: "where",
+          type: GraphQLJSON,
+        } as any,
+        {
+          name: "page",
+          type: GraphQLInt,
+        },
+        {
+          name: "pageSize",
+          type: GraphQLInt,
+        },
+      ],
+      resolve: async (
+        root,
+        args: { where?: any; page?: number; pageSize?: number },
+        context: ResolverContext,
+        info: any
+      ) => {
+        if (!context.directives.redis?.enabled) return { list: [], maxPages: null };
+        
+        return context.directives.redis.store.find(
+          {
+            where: args.where || {},
+            page: args.page || 1,
+            pageSize: args.pageSize || 10,
+            includeMaxPages: true,
+            type,
+          },
+          context,
+          info
+        );
+      },
+      isDeprecated: false,
+    });
+  }
+  
+  private addRedisMutations(type: GraphQLObjectType) {
+    const names = generateFieldNames(type.name);
+    
+    // Create mutation for Redis entities
+    this.addMutation({
+      name: names.mutation.create,
+      type,
+      description: `Create a ${type.name} in Redis`,
+      args: [
+        {
+          name: "data",
+          type: GraphQLJSON,
+        },
+      ],
+      resolve: async (
+        root,
+        args: { data: any },
+        context: ResolverContext,
+        info: any
+      ) => {
+        if (!context.directives.redis?.enabled) return null;
+        
+        return context.directives.redis.store.create(
+          {
+            data: args.data,
+            type,
+          },
+          context,
+          info
+        );
+      },
+      isDeprecated: false,
+    });
+    
+    // Update mutation for Redis entities
+    this.addMutation({
+      name: names.mutation.update,
+      type,
+      description: `Update a ${type.name} in Redis`,
+      args: [
+        {
+          name: "id",
+          type: GraphQLID,
+        },
+        {
+          name: "data",
+          type: GraphQLJSON,
+        },
+      ],
+      resolve: async (
+        root,
+        args: { id: string; data: any },
+        context: ResolverContext,
+        info: any
+      ) => {
+        if (!context.directives.redis?.enabled) return null;
+        
+        return context.directives.redis.store.update(
+          {
+            where: { id: args.id },
+            data: args.data,
+            type,
+          },
+          context,
+          info
+        );
+      },
+      isDeprecated: false,
+    });
+    
+    // Remove mutation for Redis entities
+    this.addMutation({
+      name: names.mutation.remove,
+      type: GraphQLBoolean,
+      description: `Remove a ${type.name} from Redis`,
+      args: [
+        {
+          name: "id",
+          type: GraphQLID,
+        },
+      ],
+      resolve: async (
+        root,
+        args: { id: string },
+        context: ResolverContext,
+        info: any
+      ) => {
+        if (!context.directives.redis?.enabled) return false;
+        
+        return context.directives.redis.store.remove(
+          {
+            where: { id: args.id },
+            type,
+          },
+          context,
+          info
+        );
+      },
+      isDeprecated: false,
+    });
   }
 
   private addInputTypes(objectType: GraphQLObjectType) {

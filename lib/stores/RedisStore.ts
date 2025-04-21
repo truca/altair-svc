@@ -12,9 +12,8 @@ import {
   StoreUpdateReturn
 } from "./types";
 import { Context } from "../types";
-import { RedisKeyGenerator, RedisCacheStrategy, RedisStructure } from "../RedisDirective";
+import { RedisKeyGenerator, RedisStructure } from "../RedisDirective";
 import { getDirectiveParams } from "../ModelDirective/util";
-import { extractDirectiveParams } from "../GraphQL/utils";
 import Redis from "ioredis";
 
 export interface RedisStoreOptions {
@@ -45,8 +44,9 @@ export class RedisStore implements Store {
     context: Context,
     info: any
   ): Promise<StoreFindOneReturn | null> {
-    const redisParams = extractDirectiveParams(props.type.astNode as any, "redis");
-    if (!redisParams) return null;
+    const redisParams = getDirectiveParams("redis", props.type) || {
+      ttl: 3600,
+    };
 
     const structure = redisParams.structure || RedisStructure.STRING;
     const id = (props.where as any)?.id || (props.where as any)?._id;
@@ -65,19 +65,44 @@ export class RedisStore implements Store {
     context: Context,
     info: any
   ): Promise<{ list: StoreFindReturn[]; maxPages: number | null }> {
-    const redisParams = extractDirectiveParams(props.type.astNode as any, "redis");
-    if (!redisParams) return { list: [], maxPages: null };
+    const redisParams = getDirectiveParams("redis", props.type) || {
+      ttl: 3600,
+    };
 
-    // For list queries, we need to use a different key pattern
-    const key = this.prefixKey(RedisKeyGenerator.forList(props.type.name, props.where || {}));
+    // Create a pattern to match all entities of this type
+    const pattern = this.prefixKey(RedisKeyGenerator.forEntity(props.type.name, '*'));
     
-    const data = await this.redis.get(key);
-    if (!data) return { list: [], maxPages: null };
+    // Get all matching key-value pairs
+    const results = await this.getKeyValuesByPatternSafe(pattern);
     
-    const parsed = JSON.parse(data);
+    // Apply filtering if where clause is provided
+    let filteredResults = results;
+    if (props.where && Object.keys(props.where).length > 0) {
+      filteredResults = results.filter(item => {
+        for (const [key, value] of Object.entries(props.where)) {
+          if (item.value[key] !== value) {
+            return false;
+          }
+        }
+        return true;
+      });
+    }
+    
+    // Calculate pagination
+    const page = props.page || 1;
+    const pageSize = props.pageSize || filteredResults.length;
+    const startIndex = (page - 1) * pageSize;
+    const endIndex = Math.min(startIndex + pageSize, filteredResults.length);
+    const maxPages = pageSize > 0 ? Math.ceil(filteredResults.length / pageSize) : 1;
+    
+    // Extract just the values for the current page
+    const paginatedResults = filteredResults
+      .slice(startIndex, endIndex)
+      .map(item => item.value);
+    
     return {
-      list: Array.isArray(parsed.items) ? parsed.items : [],
-      maxPages: parsed.maxPages || null
+      list: paginatedResults,
+      maxPages: props.includeMaxPages ? maxPages : null
     };
   }
 
@@ -86,8 +111,9 @@ export class RedisStore implements Store {
     context: Context,
     info: any
   ): Promise<StoreCreateReturn> {
-    const redisParams = extractDirectiveParams(props.type.astNode as any, "redis");
-    if (!redisParams) return null;
+    const redisParams = getDirectiveParams("redis", props.type) || {
+      ttl: 3600,
+    };
 
     // Ensure TTL is a number
     const ttl = redisParams.ttl !== undefined ? parseInt(String(redisParams.ttl), 10) : 3600;
@@ -109,8 +135,9 @@ export class RedisStore implements Store {
     context: Context,
     info: any
   ): Promise<StoreUpdateReturn> {
-    const redisParams = extractDirectiveParams(props.type.astNode as any, "redis");
-    if (!redisParams) return false;
+    const redisParams = getDirectiveParams("redis", props.type) || {
+      ttl: 3600,
+    };
 
     const structure = redisParams.structure || RedisStructure.STRING;
     // Ensure TTL is a number
@@ -118,7 +145,7 @@ export class RedisStore implements Store {
     
     // Get ID from where clause
     const id = (props.where as any)?.id || (props.where as any)?._id;
-    if (!id) return false;
+    if (!id) return null as StoreUpdateReturn;
     
     // Generate key for the entity
     const key = this.prefixKey(RedisKeyGenerator.forEntity(props.type.name, id));
@@ -126,11 +153,7 @@ export class RedisStore implements Store {
     // Check if key exists
     const exists = await this.redis.exists(key);
     if (!exists) {
-      // Create instead of update if not exists
-      return Boolean(await this.create({ 
-        data: { ...props.data, id }, 
-        type: props.type 
-      }, context, info));
+      return null as StoreUpdateReturn;
     }
     
     // For STRING, we need to get current data, merge, and set
@@ -153,6 +176,53 @@ export class RedisStore implements Store {
     
     const deleted = await this.redis.del(key);
     return deleted > 0;
+  }
+
+  /**
+   * Helper function to get all key-value pairs that match a pattern using SCAN
+   * This is more suitable for production with large datasets
+   * @param pattern Redis key pattern with wildcards (e.g., "user:*")
+   * @returns Array of {key, value} objects for all matching keys
+   */
+  async getKeyValuesByPatternSafe(pattern: string): Promise<Array<{key: string, value: any}>> {
+    const results: Array<{key: string, value: any}> = [];
+    let cursor = '0';
+    
+    try {
+      do {
+        // Get batch of keys
+        const [nextCursor, keys] = await this.redis.scan(cursor, 'MATCH', pattern, 'COUNT', 100);
+        cursor = nextCursor;
+        
+        if (keys.length > 0) {
+          // Get values for this batch
+          const values = await this.redis.mget(keys);
+          
+          // Add to results
+          keys.forEach((key, index) => {
+            if (values[index]) {
+              try {
+                results.push({
+                  key,
+                  value: JSON.parse(values[index] as string)
+                });
+              } catch (e) {
+                // If not valid JSON, use as is
+                results.push({
+                  key,
+                  value: values[index]
+                });
+              }
+            }
+          });
+        }
+      } while (cursor !== '0');
+      
+      return results;
+    } catch (error) {
+      console.error('Error scanning keys by pattern:', error);
+      return [];
+    }
   }
 
   // Helper to convert Redis hash to object

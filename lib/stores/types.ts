@@ -34,7 +34,10 @@ export interface StoreUpdateProps {
   where?: object;
   upsert?: boolean;
 }
-export declare type StoreUpdateReturn = boolean;
+export declare type StoreUpdateReturn = {
+  id: string;
+  [key: string]: any;
+} | null | boolean;
 export interface StoreRemoveProps {
   where: object;
   type: GraphQLNamedType;

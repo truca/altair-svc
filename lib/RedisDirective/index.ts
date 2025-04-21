@@ -127,4 +127,8 @@ export class RedisKeyGenerator {
     
     return key;
   }
+
+  static forRedisList(typeName: string): string {
+    return `${typeName.toLowerCase()}:*`;
+  }
 } 

@@ -141,7 +141,6 @@ const typeDefinitions = /* GraphQL */ `
     @model
     @auth(read: ["public"], update: ["public"], delete: ["public"]) {
     country: String
-    parentId: ID
 
     externalId: ID!
     name: String!

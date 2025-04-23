@@ -79,15 +79,25 @@ export class FirestoreStore implements Store {
       return doc ? this.formatOutput({ id: doc.id, ...doc.data() }) : null;
     }
 
-    const query = collectionRef.where("deletedAt", "==", null);
+    let query: any = collectionRef;
+
+    query = query.where("deletedAt", "==", null);
+
     const formattedInput = this.formatInput(props.where);
 
     for (const key in formattedInput) {
-      query.where(key, "==", formattedInput[key]);
+      const value = formattedInput[key];
+      query = query.where(key, "==", value);
     }
 
     const snapshot = await query.limit(1).get();
+
+    if (snapshot.empty) {
+      return null;
+    }
+
     const doc = snapshot.docs[0];
+
     return doc ? this.formatOutput({ id: doc.id, ...doc.data() }) : null;
   }
 
@@ -179,7 +189,7 @@ export class FirestoreStore implements Store {
     const data = {
       ...props.data,
       createdAt: new Date(),
-      ownerIds: [context?.session?.uid],
+      ownerIds: [context?.session?.email],
     };
 
     const collectionRef = this.getCollection(props.type.name);
@@ -326,9 +336,9 @@ export class FirestoreStore implements Store {
             // For greater-than conditions, set to start of day.
             // For less-than conditions, set to end of day.
             if (operator === ">=" || operator === ">") {
-              dateObj.setHours(0, 0, 0, 0);
+              dateObj.setUTCHours(0, 0, 0, 0);
             } else if (operator === "<=" || operator === "<") {
-              dateObj.setHours(23, 59, 59, 999);
+              dateObj.setUTCHours(23, 59, 59, 999);
             }
 
             const result = {

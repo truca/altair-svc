@@ -63,13 +63,12 @@ export interface Field {
 
 export interface Profile {
   id: string;
-  uid: string;
-  displayName: string;
   email: string;
-  photoURL: string;
-  phoneNumber: string;
-  emailVerified: boolean;
-  isAnonymous: boolean;
+  password: string;
+  username?: string;
+  profilePicture?: string;
+  createdAt?: Date;
+  updatedAt?: Date;
   roles?: string[];
 }
 

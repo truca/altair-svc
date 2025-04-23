@@ -55,11 +55,11 @@ async function getSession(
   if (decodedAccessToken.error && decodedRefreshToken.error) return null;
   // use the refresh token to get a new access token
   if (decodedAccessToken.error) {
-    // get the user id from the refresh token
-    const { userId } = decodedRefreshToken.decoded as any;
+    // get the user email from the refresh token
+    const { email } = decodedRefreshToken.decoded as any;
     // get the user from the database
     let profile = await context.directives.model.store.findOne({
-      where: { uid: userId, deletedAt: null },
+      where: { email, deletedAt: null },
       type: { name: "Profile" },
     });
     if (!profile) return null;

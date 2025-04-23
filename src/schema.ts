@@ -86,7 +86,9 @@ const typeDefinitions = /* GraphQL */ `
 
   # Represents a user.  Supports: User Registration and Login, Profile Customization, In-App Messaging, Integration with Other Platforms, Notifications and Updates.
   type Profile @model @auth(read: ["public"]) {
-    uid: String
+    country: String!
+    email: String!
+    password: String!
     username: String
     profilePicture: String
     createdAt: DateTime!
@@ -98,11 +100,10 @@ const typeDefinitions = /* GraphQL */ `
   }
 
   input ProfileInputType2 {
-    uid: String
+    email: String
+    password: String
     username: String
     profilePicture: String
-    lat: Float
-    lng: Float
     createdAt: DateTime
     updatedAt: DateTime
     favoriteWarbands: [ObjectId]
@@ -372,6 +373,11 @@ const typeDefinitions = /* GraphQL */ `
     country: String
   }
 
+  type AuthPayload {
+    token: String!
+    country: String
+  }
+
   type Query {
     _: Boolean
     me(uid: String): Profile
@@ -390,16 +396,14 @@ const typeDefinitions = /* GraphQL */ `
     _: Boolean
     readTextFile(file: File!): String!
     saveFile(file: File!): Boolean!
-    authenticate(
-      uid: String
-      displayName: String
-      email: String
-      photoURL: String
-      phoneNumber: String
-      emailVerified: Boolean
-      isAnonymous: Boolean
-      createCookies: Boolean
-    ): String
+    login(email: String!, password: String!): AuthPayload
+    register(
+      email: String!
+      password: String!
+      username: String
+      profilePicture: String
+      country: String
+    ): AuthPayload
     updateMe(id: String, profile: ProfileInputType2): Profile
   }
 `;

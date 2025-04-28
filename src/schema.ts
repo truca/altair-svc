@@ -201,7 +201,7 @@ const typeDefinitions = /* GraphQL */ `
     subCategoryId: [String!]!
     startDate: String!
     endDate: String!
-
+    campaignTypeId: String!
     # Service flags
     bannersEnabled: Boolean!
     CRMEnabled: Boolean!

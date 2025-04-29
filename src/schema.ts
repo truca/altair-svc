@@ -257,7 +257,7 @@ const typeDefinitions = /* GraphQL */ `
 
   type HomeLandingForm {
     country: String
-    totalBudget: Float!
+    budget: Float!
     # strategies was [HomeLandingStrategy!]! → [Service!]!
     strategies: [Service]
   }
@@ -311,7 +311,7 @@ const typeDefinitions = /* GraphQL */ `
     images: String
 
     # Fields from BannerFadsForm
-    bannerFadBannerTypeId: String
+    bannerFadBannerTypeId: [String]
     bannerFadTotalBudget: Float
     bannerFadStartDate: String
     bannerFadEndDate: String

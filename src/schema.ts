@@ -223,11 +223,11 @@ const typeDefinitions = /* GraphQL */ `
     # Forms – note:
     # • Forms that were originally services (@model) now use Service
     # • Middleware forms remain but their service fields are updated to Service
-    mediaOnForm: MediaOnForm
+    mediaOnForm: Service
     sponsoredBrandForm: Service
     sponsoredProductForm: Service
     bannerForm: Service
-    CRMForm: CRMForm
+    CRMForm: Service
     ratingAndReviewForm: Service
     homeLandingForm: HomeLandingForm
 
@@ -236,20 +236,11 @@ const typeDefinitions = /* GraphQL */ `
   }
 
   # Middleware types are kept, but if they contained a service type they now reference Service:
-  type MediaOnForm {
-    country: String
-    strategiesId: String!
-    budget: Float!
-    commission: String!
-    totalAmount: Float!
-    # Originally [MediosDigitalesStrategy!]! becomes [Service!]!
-    strategies: [Service]
-  }
 
   type CRMForm {
     country: String
-    crmTypeId: String!
-    templateId: String!
+    crmTypeId: String
+    templateId: String
     numberTouches: String
     # subProducts was [CRMCampaignSubProduct!]! → [Service!]!
     subProducts: [Service]
@@ -268,12 +259,31 @@ const typeDefinitions = /* GraphQL */ `
     date: String!
   }
 
+  type MediaOnStrategy {
+    mediumId: String
+    objectiveId: String
+    strategyId: String
+    segmentationId: String
+    purchaseTypeId: String
+    formatsId: String
+    budget: Float
+    commission: Float
+    startDate: DateTime
+    endDate: DateTime
+  }
+
   # A unified Service type that combines all fields from your service (@model) types.
   # All fields (except serviceType) are optional.
   type Service
     @model
     @auth(read: ["public"], update: ["public"], delete: ["public"]) {
     country: String
+
+    # Common fields
+    campaignId: ID
+    budget: Float
+    startDate: DateTime
+    endDate: DateTime
 
     #Fields from planner
     userAssigned: [String]
@@ -286,17 +296,16 @@ const typeDefinitions = /* GraphQL */ `
     serviceType: String
 
     # Fields from MediosDigitalesStrategy
-    campaignId: ID
-    mediumId: String
-    objectiveId: String
-    strategyId: String
-    segmentationId: String
-    purchaseTypeId: String
-    formatsId: String
-    budget: Float
-    commission: Float
-    startDate: DateTime
-    endDate: DateTime
+    strategiesId: String
+    commission: String
+    totalAmount: Float
+    strategies: [MediaOnStrategy]
+
+    # Fields from CRM
+    crmTypeId: String
+    templateId: String
+    numberTouches: String
+    subProducts: [Service]
 
     # Fields from SponsoredBrandForm / SponsoredProductForm
     comment: String

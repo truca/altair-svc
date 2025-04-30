@@ -145,6 +145,8 @@ function addServiceTypesAndDates(campaignGroup: CampaignGroup): CampaignGroup {
     "sponsoredProductForm",
     "bannerForm",
     "ratingAndReviewForm",
+    "mediaOnForm",
+    "CRMForm",
   ];
 
   // Process top-level service fields
@@ -160,39 +162,39 @@ function addServiceTypesAndDates(campaignGroup: CampaignGroup): CampaignGroup {
     }
   });
 
-  // Process nested services in mediaOnForm.strategies
-  if (
-    campaignGroup.mediaOnForm?.strategies &&
-    Array.isArray(campaignGroup.mediaOnForm.strategies)
-  ) {
-    campaignGroup.mediaOnForm.strategies.forEach((service) => {
-      if (service && typeof service === "object") {
-        service.serviceType = "mediaOnForm.strategies";
-        service.campaignGroupCustomId = customId;
-        service.nomenclature = nomemclature;
-        service.country = country;
+  // // Process nested services in mediaOnForm.strategies
+  // if (
+  //   campaignGroup.mediaOnForm?.strategies &&
+  //   Array.isArray(campaignGroup.mediaOnForm.strategies)
+  // ) {
+  //   campaignGroup.mediaOnForm.strategies.forEach((service) => {
+  //     if (service && typeof service === "object") {
+  //       service.serviceType = "mediaOnForm.strategies";
+  //       service.campaignGroupCustomId = customId;
+  //       service.nomenclature = nomemclature;
+  //       service.country = country;
 
-        mapServiceDates(service);
-      }
-    });
-  }
+  //       mapServiceDates(service);
+  //     }
+  //   });
+  // }
 
   // Process nested services in CRMForm.subProducts
-  if (
-    campaignGroup.CRMForm?.subProducts &&
-    Array.isArray(campaignGroup.CRMForm.subProducts)
-  ) {
-    campaignGroup.CRMForm.subProducts.forEach((service) => {
-      if (service && typeof service === "object") {
-        service.serviceType = "CRMForm.subProducts";
-        service.campaignGroupCustomId = customId;
-        service.nomenclature = nomemclature;
-        service.country = country;
+  // if (
+  //   campaignGroup.CRMForm?.subProducts &&
+  //   Array.isArray(campaignGroup.CRMForm.subProducts)
+  // ) {
+  //   campaignGroup.CRMForm.subProducts.forEach((service) => {
+  //     if (service && typeof service === "object") {
+  //       service.serviceType = "CRMForm.subProducts";
+  //       service.campaignGroupCustomId = customId;
+  //       service.nomenclature = nomemclature;
+  //       service.country = country;
 
-        mapServiceDates(service);
-      }
-    });
-  }
+  //       mapServiceDates(service);
+  //     }
+  //   });
+  // }
 
   // Process nested services in homeLandingForm.strategies
   if (

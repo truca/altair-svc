@@ -1,5 +1,6 @@
 import { Timestamp } from "@google-cloud/firestore";
 import admin from "firebase-admin";
+import { constants } from "../../../src/constants";
 
 // Define interfaces for clarity (adjust as needed)
 interface Service {
@@ -80,14 +81,82 @@ function mapServiceDates(service: Service): Service {
   return service;
 }
 
-function generateCustomId(): string {
-  const timePart = Date.now().toString().slice(-3);
-  const randomPart = Math.floor(100 + Math.random() * 900);
+async function generateCustomId(): Promise<string> {
+  try {
+    const serviceCollection = admin
+      .firestore()
+      .collection(constants.COLLECTIONS_DATABASES.SERVICE);
 
-  return `FM${timePart}${randomPart}`;
+    const snapshot = await serviceCollection
+      .where("campaignGroupCustomId", ">=", "FM")
+      .orderBy("campaignGroupCustomId", "desc")
+      .limit(1)
+      .get();
+
+    if (snapshot.empty) {
+      return "FM000001";
+    }
+
+    const lastDocument = snapshot.docs[0];
+    const lastCustomId = lastDocument.data().campaignGroupCustomId || "";
+
+    let lastNumber = 0;
+    if (lastCustomId.startsWith("FM") && lastCustomId.length >= 8) {
+      lastNumber = parseInt(lastCustomId.substring(2)) || 0;
+    }
+
+    const nextNumber = lastNumber + 1;
+    const formattedNextNumber = String(nextNumber).padStart(6, "0");
+
+    return `FM${formattedNextNumber}`;
+  } catch (error) {
+    const timePart = Date.now().toString().slice(-3);
+    const randomPart = Math.floor(100 + Math.random() * 900);
+
+    return `FM${timePart}${randomPart}`;
+  }
 }
 
-const generateNomenclature = (campaignGroup: CampaignGroup): string => {
+const formatDateToNomenclature = (dateString: string): string => {
+  if (!dateString) return "";
+
+  const monthNames: { [key: string]: string } = {
+    "01": "ene",
+    "02": "feb",
+    "03": "mar",
+    "04": "abr",
+    "05": "may",
+    "06": "jun",
+    "07": "jul",
+    "08": "ago",
+    "09": "sep",
+    "10": "oct",
+    "11": "nov",
+    "12": "dic",
+  };
+
+  const dateObj = new Date(dateString);
+  const month = String(dateObj.getMonth() + 1).padStart(2, "0");
+  const day = String(dateObj.getDate()).padStart(2, "0");
+  return `${monthNames[month]}${day}`;
+};
+
+const getCampaignType = (campaignTypeId: string): string => {
+  if (campaignTypeId === "tactico") {
+    return "TC";
+  }
+
+  if (campaignTypeId === "always_on") {
+    return "AO";
+  }
+
+  return "";
+};
+
+const generateNomenclature = async (
+  campaignGroup: CampaignGroup,
+  service: any = {}
+): Promise<string> => {
   const {
     businessUnitId,
     country,
@@ -97,7 +166,11 @@ const generateNomenclature = (campaignGroup: CampaignGroup): string => {
     brandId,
     sellerId,
     campaignName,
+    campaignTypeId,
+    startDate,
   } = campaignGroup;
+
+  const { serviceType } = service;
 
   const businessUnitMap: Record<string, string> = {
     "1P": "FA",
@@ -123,22 +196,62 @@ const generateNomenclature = (campaignGroup: CampaignGroup): string => {
 
   const businessUnitCode = businessUnitMap[businessUnitId?.toUpperCase()] || "";
   const countryCode = countryMap[country?.toUpperCase()] || "CL";
-  const eventTypePrefix = tacticalEvents.has(eventTypeId?.toUpperCase())
-    ? "TC"
-    : "HS";
 
-  return `${businessUnitCode}${countryCode}-LAB-${eventTypePrefix}-${
+  const sellerCollection = admin
+    .firestore()
+    .collection(constants.COLLECTIONS_DATABASES.SELLER);
+  const snapshotSeller = await sellerCollection
+    .where("externalId", "==", sellerId)
+    .limit(1)
+    .get();
+
+  let sellerName = "";
+  if (!snapshotSeller.empty) {
+    sellerName = snapshotSeller.docs[0].data().name || "";
+  }
+
+  const brandCollection = admin
+    .firestore()
+    .collection(constants.COLLECTIONS_DATABASES.BRAND);
+
+  const snapshotBrand = await brandCollection
+    .where("externalId", "==", brandId[0])
+    .limit(1)
+    .get();
+
+  let brandName = "";
+  if (!snapshotBrand.empty) {
+    brandName = snapshotBrand.docs[0].data().name || "";
+  }
+
+  const date = formatDateToNomenclature(startDate as string);
+
+  if (["CRMForm"].includes(serviceType)) {
+    const subProducts = service.subProducts || [];
+    const numberTouches = service.numberTouches || 0;
+
+    const contratedServices = [
+      ...new Set(subProducts.map((subProduct: any) => subProduct.type)),
+    ].join(",");
+
+    return `${businessUnitCode}-${subCategoryId[0]}-${customId}-(${brandName})-${campaignName.replace(/ /g, "_")}-${date}-${contratedServices}-${numberTouches}`;
+  }
+
+  const campaignType = getCampaignType(campaignTypeId);
+
+  return `${businessUnitCode}${countryCode}-LAB-${campaignType}-${
     subCategoryId[0]
-  }-${customId}-(${sellerId}-${brandId[0]})-${campaignName.replace(/ /g, "_")}`;
+  }-${customId}-(${sellerName}-${brandName})-${campaignName.replace(/ /g, "_")}_${date}-${sellerId}`;
 };
 
-function addServiceTypesAndDates(campaignGroup: CampaignGroup): CampaignGroup {
-  const customId = generateCustomId();
+async function addServiceTypesAndDates(
+  campaignGroup: CampaignGroup
+): Promise<CampaignGroup> {
+  const customId = await generateCustomId();
   campaignGroup.customId = customId;
 
-  const nomemclature = generateNomenclature(campaignGroup);
   const country = campaignGroup.country;
-  campaignGroup.nomemclature = nomemclature;
+
   // List of top-level keys that are of type Service.
   const topLevelServiceKeys: (keyof CampaignGroup)[] = [
     "sponsoredBrandForm",
@@ -149,75 +262,60 @@ function addServiceTypesAndDates(campaignGroup: CampaignGroup): CampaignGroup {
     "CRMForm",
   ];
 
-  // Process top-level service fields
-  topLevelServiceKeys.forEach((key) => {
+  // Process top-level service fields - usar Promise.all para manejar los async en paralelo
+  const servicePromises = topLevelServiceKeys.map(async (key) => {
     const service = campaignGroup[key];
     if (service && typeof service === "object") {
       service.serviceType = key;
       service.campaignGroupCustomId = customId;
-      service.nomenclature = nomemclature;
       service.country = country;
+
+      const serviceNomemclature = await generateNomenclature(
+        campaignGroup,
+        service
+      );
+      service.nomenclature = serviceNomemclature;
 
       mapServiceDates(service);
     }
   });
 
-  // // Process nested services in mediaOnForm.strategies
-  // if (
-  //   campaignGroup.mediaOnForm?.strategies &&
-  //   Array.isArray(campaignGroup.mediaOnForm.strategies)
-  // ) {
-  //   campaignGroup.mediaOnForm.strategies.forEach((service) => {
-  //     if (service && typeof service === "object") {
-  //       service.serviceType = "mediaOnForm.strategies";
-  //       service.campaignGroupCustomId = customId;
-  //       service.nomenclature = nomemclature;
-  //       service.country = country;
-
-  //       mapServiceDates(service);
-  //     }
-  //   });
-  // }
-
-  // Process nested services in CRMForm.subProducts
-  // if (
-  //   campaignGroup.CRMForm?.subProducts &&
-  //   Array.isArray(campaignGroup.CRMForm.subProducts)
-  // ) {
-  //   campaignGroup.CRMForm.subProducts.forEach((service) => {
-  //     if (service && typeof service === "object") {
-  //       service.serviceType = "CRMForm.subProducts";
-  //       service.campaignGroupCustomId = customId;
-  //       service.nomenclature = nomemclature;
-  //       service.country = country;
-
-  //       mapServiceDates(service);
-  //     }
-  //   });
-  // }
+  // Esperamos a que todas las promesas se resuelvan
+  await Promise.all(servicePromises);
 
   // Process nested services in homeLandingForm.strategies
   if (
     campaignGroup.homeLandingForm?.strategies &&
     Array.isArray(campaignGroup.homeLandingForm.strategies)
   ) {
-    campaignGroup.homeLandingForm.strategies.forEach((service) => {
-      if (service && typeof service === "object") {
-        service.serviceType = "homeLandingForm.strategies";
-        service.campaignGroupCustomId = customId;
-        service.nomenclature = nomemclature;
-        service.country = country;
+    const strategyPromises = campaignGroup.homeLandingForm.strategies.map(
+      async (service) => {
+        if (service && typeof service === "object") {
+          service.serviceType = "homeLandingForm.strategies";
+          service.campaignGroupCustomId = customId;
+          service.country = country;
 
-        mapServiceDates(service);
+          // También necesitamos generar nomenclatura para las estrategias
+          const serviceNomemclature = await generateNomenclature(
+            campaignGroup,
+            service
+          );
+          service.nomenclature = serviceNomemclature;
+
+          mapServiceDates(service);
+        }
       }
-    });
+    );
+
+    // Esperamos a que todas las promesas de estrategias se resuelvan
+    await Promise.all(strategyPromises);
   }
 
   return campaignGroup;
 }
 
-export function mapCampaignGroup(entity: any): any {
+export async function mapCampaignGroup(entity: any): Promise<any> {
   const campaignGroup = entity as CampaignGroup;
-  const result = addServiceTypesAndDates(campaignGroup);
+  const result = await addServiceTypesAndDates(campaignGroup);
   return result;
 }

@@ -365,7 +365,7 @@ export class ModelDirective extends SchemaDirectiveVisitor {
       context: ResolverContext,
       info: any
     ) => {
-      args.data = mapEntity(args.data, type);
+      args.data = await mapEntity(args.data, type);
 
       validateInputData({
         data: args.data,

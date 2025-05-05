@@ -244,6 +244,29 @@ const generateNomenclature = async (
   }-${customId}-(${sellerName}-${brandName})-${campaignName.replace(/ /g, "_")}_${date}-${sellerId}`;
 };
 
+function calculateDates(strategies: Service[]): {
+  startDate: string | Timestamp;
+  endDate: string | Timestamp;
+} {
+  if (!strategies || !Array.isArray(strategies) || strategies.length === 0) {
+    return { startDate: "", endDate: "" };
+  }
+
+  const startDate = strategies
+    .map((s: Service) => s.startDate)
+    .reduce((min: string | Timestamp, curr: string | Timestamp) =>
+      curr < min ? curr : min
+    );
+
+  const endDate = strategies
+    .map((s: Service) => s.endDate)
+    .reduce((max: string | Timestamp, curr: string | Timestamp) =>
+      curr > max ? curr : max
+    );
+
+  return { startDate, endDate };
+}
+
 async function addServiceTypesAndDates(
   campaignGroup: CampaignGroup
 ): Promise<CampaignGroup> {
@@ -262,6 +285,11 @@ async function addServiceTypesAndDates(
     "CRMForm",
   ];
 
+  const serviceWithoutDatesKeys: (keyof CampaignGroup)[] = [
+    "mediaOnForm",
+    "homeLandingForm",
+  ];
+
   // Process top-level service fields - usar Promise.all para manejar los async en paralelo
   const servicePromises = topLevelServiceKeys.map(async (key) => {
     const service = campaignGroup[key];
@@ -269,6 +297,13 @@ async function addServiceTypesAndDates(
       service.serviceType = key;
       service.campaignGroupCustomId = customId;
       service.country = country;
+
+      if (serviceWithoutDatesKeys.includes(key)) {
+        const { startDate, endDate } = calculateDates(service.strategies);
+
+        service.startDate = startDate;
+        service.endDate = endDate;
+      }
 
       const serviceNomemclature = await generateNomenclature(
         campaignGroup,

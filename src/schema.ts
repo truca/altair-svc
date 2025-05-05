@@ -267,7 +267,7 @@ const typeDefinitions = /* GraphQL */ `
     purchaseTypeId: String
     formatsId: String
     budget: Float
-    commission: Float
+    commission: String
     startDate: DateTime
     endDate: DateTime
   }

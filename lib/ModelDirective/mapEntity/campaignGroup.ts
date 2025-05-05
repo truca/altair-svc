@@ -137,8 +137,8 @@ const formatDateToNomenclature = (dateString: string): string => {
 
   const dateObj = new Date(dateString);
   const month = String(dateObj.getMonth() + 1).padStart(2, "0");
-  const day = String(dateObj.getDate()).padStart(2, "0");
-  return `${monthNames[month]}${day}`;
+  const year = String(dateObj.getFullYear()).slice(-2);
+  return `${monthNames[month]}${year}`;
 };
 
 const getCampaignType = (campaignTypeId: string): string => {

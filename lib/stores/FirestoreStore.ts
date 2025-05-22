@@ -17,6 +17,7 @@ import {
   getHasNecessaryRolePermissionsToContinue,
 } from "../AuthDirective";
 import { extractDirectiveParams } from "../GraphQL/utils";
+import { MODEL_TYPES } from "../../src/constants";
 
 import { Firestore } from "@google-cloud/firestore";
 import admin from "firebase-admin";
@@ -28,6 +29,9 @@ export interface FirestoreOptions {
 
 export class FirestoreStore implements Store {
   public db: Firestore;
+  private fieldMetadata: Record<string, Record<string, { isArray: boolean }>> =
+    {};
+  private schema: any;
 
   constructor(options: FirestoreOptions) {
     this.db = {} as any;
@@ -48,6 +52,50 @@ export class FirestoreStore implements Store {
         : {}),
       ignoreUndefinedProperties: true,
     });
+  }
+
+  public initFieldMetadataFromSchema(schema: any) {
+    this.schema = schema;
+
+    if (schema) {
+      this.buildFieldMetadataFromSchema();
+    }
+  }
+
+  private buildFieldMetadataFromSchema() {
+    const fieldMetadata: Record<
+      string,
+      Record<string, { isArray: boolean }>
+    > = {};
+
+    MODEL_TYPES.forEach((typeName) => {
+      const typeNode = this.schema.getType(typeName);
+      if (typeNode?.astNode) {
+        fieldMetadata[typeName] = {};
+
+        typeNode.astNode.fields.forEach((field: any) => {
+          const fieldName = field.name.value;
+
+          const isArray = this.isFieldAnArray(field.type);
+
+          fieldMetadata[typeName][fieldName] = { isArray };
+        });
+      }
+    });
+
+    this.fieldMetadata = fieldMetadata;
+  }
+
+  private isFieldAnArray(typeNode: any): boolean {
+    if (typeNode?.kind === "ListType") {
+      return true;
+    }
+
+    if (typeNode?.kind === "NonNullType" && typeNode.type) {
+      return this.isFieldAnArray(typeNode.type);
+    }
+
+    return false;
   }
 
   public async findOne(
@@ -141,7 +189,15 @@ export class FirestoreStore implements Store {
           query = query.where(key, condition.operator, condition.value);
         }
       } else if (Array.isArray(value)) {
-        query = query.where(key, "array-contains-any", value);
+        const fieldMetadata = this.getFieldMetadata(typeName, key);
+        const isArrayField =
+          fieldMetadata?.isArray || this.isLikelyArrayField(key);
+
+        query = query.where(
+          key,
+          isArrayField ? "array-contains-any" : "in",
+          value
+        );
       } else if (typeof value === "object") {
         query = query.where(key, value.operator, value.value);
       } else {
@@ -290,6 +346,22 @@ export class FirestoreStore implements Store {
       return null;
     }
     return { id: object.id || object._id, ...object };
+  }
+
+  private getFieldMetadata(typeName: string, fieldName: string) {
+    const schemaMetadata = this.fieldMetadata[typeName]?.[fieldName];
+
+    if (schemaMetadata !== undefined) {
+      return schemaMetadata;
+    }
+
+    return { isArray: this.isLikelyArrayField(fieldName) };
+  }
+
+  private isLikelyArrayField(fieldName: string) {
+    const exceptions = ["status", "address", "class", "process"];
+    if (exceptions.includes(fieldName)) return false;
+    return /s$|List$|Ids$|Array$/.test(fieldName);
   }
 
   private formatInput(where: any) {

@@ -394,7 +394,7 @@ const typeDefinitions = /* GraphQL */ `
     getServicesBetweenDates(
       startDate: DateTime
       endDate: DateTime
-      serviceType: String
+      serviceType: [String]
       pageSize: Float
       page: Float
       where: ServiceInputType2

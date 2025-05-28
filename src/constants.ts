@@ -13,6 +13,8 @@ export const constants = {
     PRODUCT_MANAGER: "ProductManager",
     PROFILE: "Profile",
     SELLER: "Seller",
-    SUBCATEGORY: "SubCategory",
+    SUBCATEGORY: "Subcategory",
   },
 };
+
+export const MODEL_TYPES = Object.values(constants.COLLECTIONS_DATABASES);

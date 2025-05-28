@@ -108,7 +108,7 @@ export function setTokensAsCookies(
   });
 }
 
-function connectDatabases() {
+function connectDatabases(schema?: any) {
   const dbCountEnv = process.env.DB_COUNT || "1";
 
   if (!dbCountEnv) throw new Error("DB_COUNT environment variable not set");
@@ -127,7 +127,7 @@ function connectDatabases() {
 
     if (!dbType || !dbName) continue;
 
-    dbs[dbName] = createStore(dbType, dbOptions);
+    dbs[dbName] = createStore(dbType, dbOptions, schema);
     // if (dbIsDefault) dbs["store"] = dbs[dbName];
   }
 
@@ -135,8 +135,14 @@ function connectDatabases() {
   return dbs;
 }
 
-export function makeContext({ context: contextArg }: any) {
-  const databases = connectDatabases();
+export function makeContext({
+  context: contextArg,
+  schema,
+}: {
+  context: any;
+  schema?: any;
+}) {
+  const databases = connectDatabases(schema);
 
   const context = {
     ...contextArg,
@@ -209,10 +215,10 @@ export function makeSchema({
           params.startDate && params.endDate
             ? `>=${params.startDate},<=${params.endDate}`
             : params.startDate
-            ? `>=${params.startDate}`
-            : params.endDate
-            ? `<=${params.endDate}`
-            : null;
+              ? `>=${params.startDate}`
+              : params.endDate
+                ? `<=${params.endDate}`
+                : null;
         const args = {
           ...params,
           pageSize: params.pageSize || 10,

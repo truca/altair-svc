@@ -1,0 +1,6 @@
+---
+extends: default
+rules:
+  braces: disable
+  line-length: disable
+  comments: disable

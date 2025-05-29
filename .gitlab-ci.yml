@@ -1,9 +1,16 @@
-image: ${CI_DEPENDENCY_PROXY_GROUP_IMAGE_PREFIX}
-
+---
 include:
-  - component: gitlab.falabella.tech/falabella-infrastructure-standards/gitlab-components/workload-identity-federation/auth@1
-  - ".gitlab/cd/cloud_run.yml"
-
-stages:
-  - Build
-  - Deploy
+  - project: digital-retail/ci-reuse/templates/pipeline-cross-templates
+    ref: main
+    file: .gitlab-ci-node.yml
+variables:
+  DIGITAL_RETAIL: "true"
+  NODE_VERSION: node:22.15.0-alpine3.20
+  UNIT_TEST_COMMAND: npm run test:unit
+  INTEGRATION_TEST_COMMAND: npm run test:integration
+deploy:falabella:staging:
+  environment:
+    name: falabella-staging
+deploy:falabella:prod:
+  environment:
+    name: falabella-production

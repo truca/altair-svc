@@ -109,27 +109,25 @@ export function setTokensAsCookies(
 }
 
 function connectDatabases(schema?: any) {
-  const dbCountEnv = process.env.DB_COUNT || "1";
-
-  if (!dbCountEnv) throw new Error("DB_COUNT environment variable not set");
-
-  const dbCount = parseInt(dbCountEnv, 10) || 2; // Default to 2 if not specified
+  // const dbCountEnv = process.env.DB_COUNT || "1";
+  // if (!dbCountEnv) throw new Error("DB_COUNT environment variable not set");
+  // const dbCount = parseInt(dbCountEnv, 10) || 2; // Default to 2 if not specified
 
   const dbs: { [key: string]: Store } = {};
-  for (let i = 1; i <= dbCount; i++) {
-    // const dbType: DbTypes = process.env[`DB_${i}_TYPE`] as DbTypes;
-    // const dbName: string = process.env[`DB_${i}_NAME`] as string;
-    // const dbOptions = JSON.parse(process.env[`DB_${i}_OPTIONS`] || "{}");
-    // const dbIsDefault = process.env[`DB_${i}_IS_DEFAULT`] === "true";
-    const dbType = "firestore";
-    const dbName = "store";
-    const dbOptions = { name: "cep-services-form-firestore" };
+  // for (let i = 1; i <= dbCount; i++) {
 
-    if (!dbType || !dbName) continue;
+  const dbType: DbTypes = process.env.DB_ENGINE as DbTypes;
+  const dbName: string = process.env.DB_INTERNAL_NAME as string;
+  const dbOptions = {
+    name: process.env.FIRESTORE_DB_NAME,
+  };
 
-    dbs[dbName] = createStore(dbType, dbOptions, schema);
-    // if (dbIsDefault) dbs["store"] = dbs[dbName];
+  if (!dbType || !dbName) {
+    throw new Error("DB_TYPE and DB_NAME environment variables are required");
   }
+
+  dbs[dbName] = createStore(dbType, dbOptions, schema);
+  // }
 
   console.log({ dbs });
   return dbs;
@@ -215,10 +213,10 @@ export function makeSchema({
           params.startDate && params.endDate
             ? `>=${params.startDate},<=${params.endDate}`
             : params.startDate
-              ? `>=${params.startDate}`
-              : params.endDate
-                ? `<=${params.endDate}`
-                : null;
+            ? `>=${params.startDate}`
+            : params.endDate
+            ? `<=${params.endDate}`
+            : null;
         const args = {
           ...params,
           pageSize: params.pageSize || 10,

@@ -47,7 +47,15 @@ If you send a -1 in pageSize, it'll assume you want all the elements
 
 ### Create card
 
-curl -X POST -F 'operations={"query":"mutation CreateCard($faction: String, $file: File!) { createCard( data: {name: \"card\", description: \"description\", faction: $faction, cost: 7, image: $file, frequency: 0, favoritedCount: 0, comments: []} ) { id } }","variables":{"faction":"chaos","file":null}}' -F 'map={"0":["variables.file"]}' -F '0=@uploads/Chaos_AG_Units000_card_0_0_resized_400_50.png' http://localhost:4000/graphql
+curl -X POST \
+ -F 'operations={"query":"mutation CreateCard($faction: String, $file: File!) { \
+ createCard( \
+ data: {name: \"card\", description: \"description\", faction: $faction, cost: 7, image: $file, frequency: 0, favoritedCount: 0, comments: []} \
+ ) { id } \
+ }","variables":{"faction":"chaos","file":null}}' \
+ -F 'map={"0":["variables.file"]}' \
+ -F '0=@uploads/Chaos_AG_Units000_card_0_0_resized_400_50.png' \
+ http://localhost:4000/graphql
 
 ### Read file
 
@@ -72,15 +80,22 @@ curl localhost:4000/graphql \
 
 ### AuthN / AuthZ
 
-We're using 2 tokens: an access token and a refresh token. The access token has all the info of the user and is secure to read directly from, but has a shorter duration. If the access token is expired, we use the refresh token to give you a new access token automatically on any endpoint. Both durations are handled by env variables
+We're using 2 tokens: an access token and a refresh token. The access token has all the info of the user and is secure to read directly from,
+but has a shorter duration. If the access token is expired, we use the refresh token to give you a new access token automatically on any endpoint.
+Both durations are handled by env variables
 
 ### AuthZ
 
-AuthZ has 2 components: static and entity based. static is when the permission depends on user roles or is public. entity based is when we check for owners and collaborators in the final entity
+AuthZ has 2 components: static and entity based. Static is when the permission depends on user roles or is public.
+Entity based is when we check for owners and collaborators in the final entity
 
 #### Access token expiration
 
-it has 2 expirations: one for the cookie, and another in the expiresIn param, which is the one that matters because it can't be modified by the user. We just added the cookie expiration so that in most cases where the access token is expired, we're simply going to not receive it, so there's less things to check
+It has 2 expirations: one for the cookie, and another in the expiresIn param.
+The expiresIn parameter is what matters because it can't be modified by the user.
+We added the cookie expiration to handle most expired token cases at the cookie level.
+This means we won't receive expired tokens in most cases,
+reducing the number of checks needed
 
 ### Features
 

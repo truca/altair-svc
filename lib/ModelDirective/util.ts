@@ -1,4 +1,3 @@
-// @ts-nocheck
 import {
   getNamedType,
   GraphQLInputObjectType,
@@ -10,7 +9,7 @@ import { get } from "lodash";
 export const toInputObjectTypeName = (name: string): string =>
   `${name}InputType`;
 
-export const isValidInputFieldType = (type): boolean => {
+export const isValidInputFieldType = (type: any): boolean => {
   return !((getNamedType(type) as unknown) instanceof GraphQLObjectType);
 };
 
@@ -22,7 +21,7 @@ export const getInputType = (
   return type as GraphQLInputObjectType;
 };
 
-export const isNonNullable = (type) =>
+export const isNonNullable = (type: any) =>
   type.astNode && type.astNode.type.kind === "NonNullType";
 
 export const getObjectTypeFromInputType = (
@@ -33,22 +32,22 @@ export const getObjectTypeFromInputType = (
   return type as GraphQLObjectType;
 };
 
-export const hasDirective = (directive, type) => {
+export const hasDirective = (directive: any, type: any) => {
   const directives = get(type, ["astNode", "directives"]);
   if (directives) {
-    return directives.find((d) => d.name.value === directive);
+    return directives.find((d: any) => d.name.value === directive);
   }
   return false;
 };
 
-export const getDirectiveParams = (directiveName, type) => {
+export const getDirectiveParams = (directiveName: any, type: any) => {
   const directive = hasDirective(directiveName, type);
   if (!directive) return {};
 
-  return directive.arguments.reduce((acc, arg) => {
+  return directive.arguments.reduce((acc: any, arg: any) => {
     // handle array case
     if (arg.value.kind === "ListValue") {
-      acc[arg.name.value] = arg.value.values.map((v) => v.value);
+      acc[arg.name.value] = arg.value.values.map((v: any) => v.value);
       return acc;
     }
 
@@ -57,14 +56,14 @@ export const getDirectiveParams = (directiveName, type) => {
   }, {});
 };
 
-export const cleanNestedObjects = (nestedObjects) => {
-  const result = {};
+export const cleanNestedObjects = (nestedObjects: any) => {
+  const result: { [key: string]: any } = {};
   Object.keys(nestedObjects ?? {}).forEach((key) => {
     if (nestedObjects[key] === null) {
       result[key] = [];
     }
     if (Array.isArray(nestedObjects[key])) {
-      result[key] = nestedObjects[key].filter((v) => v);
+      result[key] = nestedObjects[key].filter((v: any) => v);
     }
     if (typeof nestedObjects[key] === "object") {
       result[key] = nestedObjects[key];

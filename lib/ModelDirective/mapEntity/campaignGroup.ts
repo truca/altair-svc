@@ -160,7 +160,7 @@ const generateNomenclature = async (
   const {
     businessUnitId,
     country,
-    eventTypeId,
+    // eventTypeId,
     subCategoryId,
     customId,
     brandId,
@@ -183,16 +183,16 @@ const generateNomenclature = async (
     PE: "PE",
   };
 
-  const tacticalEvents = new Set([
-    "14_f",
-    "Escolares",
-    "DDM",
-    "DDP",
-    "DDN",
-    "Sneaker_Corner",
-    "Navidad",
-    "Otra",
-  ]);
+  // const tacticalEvents = new Set([
+  //   "14_f",
+  //   "Escolares",
+  //   "DDM",
+  //   "DDP",
+  //   "DDN",
+  //   "Sneaker_Corner",
+  //   "Navidad",
+  //   "Otra",
+  // ]);
 
   const businessUnitCode = businessUnitMap[businessUnitId?.toUpperCase()] || "";
   const countryCode = countryMap[country?.toUpperCase()] || "CL";

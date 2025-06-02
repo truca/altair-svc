@@ -1,4 +1,3 @@
-// @ts-nocheck
 import {
   getNullableType,
   GraphQLList,
@@ -12,7 +11,7 @@ import { isNonNullable } from "./util";
 export interface ValidateInputDataProps {
   type: GraphQLObjectType;
   schema: GraphQLSchema;
-  data: object;
+  data: Record<string, any>;
 }
 
 // For every null value in the input data
@@ -25,10 +24,10 @@ export const validateInputData = (props: ValidateInputDataProps) => {
   if (props.type instanceof GraphQLList) {
     if (!Array.isArray(props.data) && !isEmpty(props.data)) {
       throw new Error(
-        `${props.type.ofType.ofType.name} must be an array or empty`
+        `${(props.type instanceof GraphQLList && "ofType" in props.type && (props.type.ofType as any).name) || (props.type as any).name} must be an array or empty`
       );
     }
-    const fields = props.type.ofType.ofType.getFields();
+    // const fields = props.type.ofType.ofType.getFields();
   }
   const fields = props.type.getFields();
 

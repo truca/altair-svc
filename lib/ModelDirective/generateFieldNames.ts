@@ -1,4 +1,3 @@
-// @ts-nocheck
 import * as pluralize from "pluralize";
 
 const pascalCase = (name: string) => {

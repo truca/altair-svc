@@ -1,6 +1,6 @@
 import { mapCampaignGroup } from "./campaignGroup";
 
-export const ENTITY_MAPPER: { [key: string]: Function } = {
+export const ENTITY_MAPPER: { [key: string]: (entity: any) => any } = {
   CampaignGroup: mapCampaignGroup,
 };
 

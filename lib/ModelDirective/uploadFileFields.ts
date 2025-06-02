@@ -1,9 +1,8 @@
 import { v4 as uuidv4 } from "uuid";
+import * as fs from "fs";
+import * as path from "path";
 
 import { hasDirective } from "./util";
-
-const fs = require(`fs`);
-const path = require(`path`);
 
 export function getFileDirectiveArguments(type: any, fieldName: string) {
   const field = type.getFields()[fieldName];
@@ -16,8 +15,8 @@ export function getFileDirectiveArguments(type: any, fieldName: string) {
         val.value.kind === "IntValue"
           ? parseInt(val.value.value, 10)
           : val.value.kind === "ListValue"
-          ? val.value.values.map((v: any) => v.value)
-          : val.value.value,
+            ? val.value.values.map((v: any) => v.value)
+            : val.value.value,
     };
   }, {});
   return args;
@@ -37,7 +36,7 @@ async function uploadFile(
   const filePath = path.join(__dirname, fileName);
   try {
     const fileArrayBuffer = await file.arrayBuffer();
-    await fs.promises.writeFile(filePath, Buffer.from(fileArrayBuffer));
+    await fs.promises.writeFile(filePath, new Uint8Array(fileArrayBuffer));
   } catch (e) {
     console.log({ e });
     return undefined;

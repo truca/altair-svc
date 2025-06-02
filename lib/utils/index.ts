@@ -5,29 +5,16 @@ import { createStore, DbTypes } from "../stores/utils";
 import { CookieStore, FormsHash, Profile } from "../types";
 
 import { GraphQLID } from "graphql";
-import _, { create } from "lodash";
-import { createPubSub } from "graphql-yoga";
-
-const pubSub = createPubSub();
-
-import { config } from "dotenv";
+import _ from "lodash";
+import * as jwt from "jsonwebtoken";
+import * as fs from "fs";
+import * as path from "path";
 import { Store } from "../stores/types";
-config();
-
-const jwt = require("jsonwebtoken");
-const fs = require(`fs`);
-const path = require(`path`);
 
 // Interface for the function result
 export interface VerifyTokenResult {
   decoded?: object | string;
   error?: string;
-}
-
-interface Message {
-  id: string;
-  chatId: string;
-  text: string;
 }
 
 // Secure token verification method
@@ -89,9 +76,6 @@ export function setTokensAsCookies(
       10
     );
     cookieStore.set("refreshToken", tokens.refreshToken, {
-      // httpOnly: true,
-      // secure: true,
-      // sameSite: "none",
       maxAge: refreshMaxAge,
     });
   }
@@ -101,9 +85,6 @@ export function setTokensAsCookies(
     10
   );
   cookieStore.set("accessToken", tokens.accessToken, {
-    // httpOnly: true,
-    // secure: true,
-    // sameSite: "none",
     maxAge,
   });
 }
@@ -167,9 +148,9 @@ export function makeSchema({
   typeDefs: string;
   formTypes: Record<string, string>;
   forms?: FormsHash;
-  queries?: { [key: string]: () => {} };
-  mutations?: { [key: string]: () => {} };
-  subscriptions?: { [key: string]: () => {} };
+  queries?: { [key: string]: () => object };
+  mutations?: { [key: string]: () => object };
+  subscriptions?: { [key: string]: () => object };
 }) {
   const resolvers = {
     ID: GraphQLID,
@@ -187,7 +168,7 @@ export function makeSchema({
       },
       me: async (
         _: any,
-        params: { email: String },
+        params: { email: string },
         context: any,
         info: any
       ) => {
@@ -213,10 +194,10 @@ export function makeSchema({
           params.startDate && params.endDate
             ? `>=${params.startDate},<=${params.endDate}`
             : params.startDate
-            ? `>=${params.startDate}`
-            : params.endDate
-            ? `<=${params.endDate}`
-            : null;
+              ? `>=${params.startDate}`
+              : params.endDate
+                ? `<=${params.endDate}`
+                : null;
         const args = {
           ...params,
           pageSize: params.pageSize || 10,
@@ -246,7 +227,7 @@ export function makeSchema({
           const fileArrayBuffer = await file.arrayBuffer();
           await fs.promises.writeFile(
             path.join(__dirname, file.name),
-            Buffer.from(fileArrayBuffer)
+            new Uint8Array(fileArrayBuffer)
           );
         } catch (e) {
           console.log({ e });
@@ -261,32 +242,28 @@ export function makeSchema({
       ) => {
         const info = null;
 
-        try {
-          const profile = await context.directives.model.store.findOne(
-            {
-              where: { email: params.email },
-              type: { name: "Profile" },
-            },
-            context,
-            info,
-            true
-          );
+        const profile = await context.directives.model.store.findOne(
+          {
+            where: { email: params.email },
+            type: { name: "Profile" },
+          },
+          context,
+          info,
+          true
+        );
 
-          if (!profile) {
-            throw new Error("Usuario no encontrado");
-          }
-
-          if (profile.password !== params.password) {
-            throw new Error("Contraseña incorrecta");
-          }
-
-          const tokens = generateTokens(profile);
-          setTokensAsCookies(context.cookieStore, tokens);
-
-          return { token: tokens.accessToken, country: profile.country };
-        } catch (error) {
-          throw error;
+        if (!profile) {
+          throw new Error("Usuario no encontrado");
         }
+
+        if (profile.password !== params.password) {
+          throw new Error("Contraseña incorrecta");
+        }
+
+        const tokens = generateTokens(profile);
+        setTokensAsCookies(context.cookieStore, tokens);
+
+        return { token: tokens.accessToken, country: profile.country };
       },
 
       register: async (
@@ -301,58 +278,54 @@ export function makeSchema({
       ) => {
         const info = null;
 
-        try {
-          const existingUser = await context.directives.model.store.findOne(
-            {
-              where: { email: params.email, deletedAt: null },
-              type: { name: "Profile" },
-            },
-            context,
-            info,
-            true
-          );
+        const existingUser = await context.directives.model.store.findOne(
+          {
+            where: { email: params.email, deletedAt: null },
+            type: { name: "Profile" },
+          },
+          context,
+          info,
+          true
+        );
 
-          if (existingUser) {
-            throw new Error("Ya existe un usuario con este email");
-          }
-
-          const profile = await context.directives.model.store.create(
-            {
-              data: {
-                ...params,
-                role: "user",
-                deletedAt: null,
-              },
-              type: { name: "Profile" },
-            },
-            context,
-            info
-          );
-
-          if (!profile) {
-            throw new Error("Error al crear el usuario");
-          }
-
-          const tokens = generateTokens(profile);
-          setTokensAsCookies(context.cookieStore, tokens);
-
-          if (!tokens.accessToken) {
-            throw new Error("Error al generar el token de autenticación");
-          }
-
-          return { token: tokens.accessToken, country: profile.country };
-        } catch (error) {
-          throw error;
+        if (existingUser) {
+          throw new Error("Ya existe un usuario con este email");
         }
+
+        const profile = await context.directives.model.store.create(
+          {
+            data: {
+              ...params,
+              role: "user",
+              deletedAt: null,
+            },
+            type: { name: "Profile" },
+          },
+          context,
+          info
+        );
+
+        if (!profile) {
+          throw new Error("Error al crear el usuario");
+        }
+
+        const tokens = generateTokens(profile);
+        setTokensAsCookies(context.cookieStore, tokens);
+
+        if (!tokens.accessToken) {
+          throw new Error("Error al generar el token de autenticación");
+        }
+
+        return { token: tokens.accessToken, country: profile.country };
       },
       updateMe: async (
         _: any,
-        params: { id: String; profile: Profile },
+        params: { id: string; profile: Profile },
         context: any
       ) => {
         // update the profile of the user
         const info = null;
-        let profile = await context.directives.model.store.update(
+        const profile = await context.directives.model.store.update(
           {
             where: { _id: params.id, deletedAt: null },
             data: {
@@ -367,22 +340,6 @@ export function makeSchema({
         );
         return profile;
       },
-      // createCampaignGroupAndCEPCampaigns: async (
-      //   _: any,
-      //   params: { data: any },
-      //   context: any,
-      //   info: any
-      // ) => {
-      //   const campaignGroupType = context?.typeMap?.CampaignGroup;
-      //   const campaignGroup = await StaticModelDirective.createMutationResolver(
-      //     campaignGroupType
-      //   )(_, params, context, info);
-
-      //   console.log({ campaignGroup });
-
-      //   // Crear campañas y sus acciones comerciales
-
-      // },
       ...mutations,
     },
   };

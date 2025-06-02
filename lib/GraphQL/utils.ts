@@ -1,4 +1,3 @@
-import { FieldDefinitionNode } from "graphql";
 import { ASTNode, FieldDefinitionNodeType } from "./types";
 
 // TODO: check if type is singular, if not, make it singular

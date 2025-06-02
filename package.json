@@ -6,7 +6,9 @@
   "scripts": {
     "dev": "cross-env NODE_ENV=development ts-node-dev --exit-child --respawn src/main.ts",
     "start": "ts-node src/main.ts",
-    "build": "tsc"
+    "build": "tsc",
+    "lint": "eslint . --ext .ts",
+    "lint:fix": "eslint . --ext .ts --fix"
   },
   "keywords": [],
   "author": "",
@@ -19,9 +21,15 @@
     "@types/pg": "^8.11.11",
     "@types/pluralize": "^0.0.33",
     "@types/uuid": "^10.0.0",
+    "@typescript-eslint/eslint-plugin": "^5.62.0",
+    "@typescript-eslint/parser": "^5.62.0",
     "cross-env": "7.0.3",
+    "eslint": "^8.56.0",
+    "eslint-config-prettier": "^10.1.2",
+    "prettier": "^3.5.3",
     "ts-node": "10.9.1",
     "ts-node-dev": "2.0.0",
+    "tsconfig-paths": "^4.2.0",
     "typescript": "5.1.6"
   },
   "dependencies": {

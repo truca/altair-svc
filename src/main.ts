@@ -8,12 +8,10 @@ import { CookieStore } from "../lib/types";
 
 import { readFile, stat } from "node:fs/promises";
 import { join, extname } from "node:path";
+import * as cookie from "cookie";
 
 import { config } from "dotenv";
 config();
-
-const cookie = require("cookie");
-const jwt = require("jsonwebtoken");
 
 function getCookieStore(context: any, cookies: any): CookieStore {
   const ctx: any = context;
@@ -58,7 +56,7 @@ async function getSession(
     // get the user email from the refresh token
     const { email } = decodedRefreshToken.decoded as any;
     // get the user from the database
-    let profile = await context.directives.model.store.findOne({
+    const profile = await context.directives.model.store.findOne({
       where: { email, deletedAt: null },
       type: { name: "Profile" },
     });
@@ -102,7 +100,7 @@ const getContentType = (filePath: string) => {
 };
 
 async function serveFile(req: any, res: any) {
-  let filePath = "/../" + (req.url === "/" ? "index.html" : req.url);
+  const filePath = "/../" + (req.url === "/" ? "index.html" : req.url);
 
   try {
     const absolutePath = join(__dirname, filePath);

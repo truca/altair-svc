@@ -152,7 +152,7 @@ export class FirestoreStore implements Store {
   public async find(
     props: StoreFindProps,
     context: Context,
-    info: any
+    _info: any
   ): Promise<{ list: StoreFindReturn[]; maxPages: number | null }> {
     const directiveParams = extractDirectiveParams(
       props.type.astNode as any,
@@ -226,7 +226,7 @@ export class FirestoreStore implements Store {
   public async create(
     props: StoreCreateProps,
     context: Context,
-    info: any
+    _info: any
   ): Promise<StoreCreateReturn> {
     const directiveParams = extractDirectiveParams(
       props.type.astNode as any,
@@ -297,7 +297,7 @@ export class FirestoreStore implements Store {
   public async remove(
     props: StoreRemoveProps & { hardDelete: boolean },
     context: Context,
-    info: any
+    _info: any
   ): Promise<StoreRemoveReturn> {
     const directiveParams = extractDirectiveParams(
       props.type.astNode as any,
@@ -369,9 +369,6 @@ export class FirestoreStore implements Store {
       return null;
     }
     const formattedWhere = { ...where };
-    if (formattedWhere.id) {
-      formattedWhere.id = formattedWhere.id;
-    }
 
     // [key]: '>=2025-02-27,<=2025-02-28'
     // search between start of day and end of day

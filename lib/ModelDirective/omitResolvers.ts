@@ -1,9 +1,19 @@
-// @ts-nocheck
 import { omitBy } from "lodash";
 
-export const omitResolvers = (fields) => {
-  return Object.keys(fields).reduce((res, key) => {
-    const value = omitBy(fields[key], (value, key) => key === "resolve");
+interface ResolverField {
+  [key: string]: any;
+}
+
+interface Fields {
+  [key: string]: ResolverField;
+}
+
+export const omitResolvers = (fields: Fields): Fields => {
+  return Object.keys(fields).reduce((res: Fields, key: string) => {
+    const value = omitBy(
+      fields[key],
+      (_value: any, key: string) => key === "resolve"
+    );
     return {
       ...res,
       [key]: value,

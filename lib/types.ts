@@ -36,7 +36,7 @@ export interface FieldValidation {
   label: string;
   value: string;
   valueType: ValueType;
-  errorMessage: String;
+  errorMessage: string;
 }
 
 export interface FieldOption {

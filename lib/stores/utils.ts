@@ -14,14 +14,19 @@ export type DbTypes = "firestore";
 //   }
 // }
 
-export function createStore(dbType: DbTypes, options: FirestoreOptions, schema?: any): Store {
+export function createStore(
+  dbType: DbTypes,
+  options: FirestoreOptions,
+  schema?: any
+): Store {
   switch (dbType) {
-    case "firestore":
+    case "firestore": {
       const store = new FirestoreStore(options as FirestoreOptions);
       if (schema) {
         store.initFieldMetadataFromSchema(schema);
       }
       return store;
+    }
     default:
       throw new Error("Unsupported database type");
   }

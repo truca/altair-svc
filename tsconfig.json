@@ -11,6 +11,6 @@
     "strict": true,
     "outDir": "./dist"
   },
-  "include": ["src/main.ts"],
+  "include": ["src/**/*.ts", "lib/**/*.ts"],
   "exclude": ["**/node_modules", "**/dist"]
 }

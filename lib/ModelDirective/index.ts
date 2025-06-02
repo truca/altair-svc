@@ -1,4 +1,3 @@
-// @ts-nocheck
 import {
   __Field,
   defaultFieldResolver,
@@ -11,7 +10,7 @@ import {
   GraphQLObjectType,
 } from "graphql";
 import { SchemaDirectiveVisitor } from "@graphql-tools/utils";
-import _, { isArray, isPlainObject, merge, mergeWith, pickBy } from "lodash";
+import _, { isArray, isPlainObject, mergeWith, pickBy } from "lodash";
 import * as pluralize from "pluralize";
 import { generateFieldNames } from "./generateFieldNames";
 import {
@@ -35,6 +34,15 @@ import admin from "firebase-admin";
 
 import { config } from "dotenv";
 config();
+
+interface Service {
+  startDate?: Date | string | admin.firestore.Timestamp;
+  endDate?: Date | string | admin.firestore.Timestamp;
+  bannerFadStartDate?: string | Date | admin.firestore.Timestamp;
+  bannerFadEndDate?: string | Date | admin.firestore.Timestamp;
+  bannerMenuStartDate?: string | Date | admin.firestore.Timestamp;
+  bannerMenuEndDate?: string | Date | admin.firestore.Timestamp;
+}
 
 export interface ResolverContext {
   directives: {
@@ -78,9 +86,9 @@ export async function visitNestedModels({
   context,
   info,
   localInfo,
-  isCreateOrUpdate = false,
-}) {
-  const res = {};
+  _isCreateOrUpdate = false,
+}: any) {
+  const res: { [key: string]: any } = {};
   const data = { ...dataParam };
 
   // move into its own function
@@ -89,10 +97,13 @@ export async function visitNestedModels({
     info?.fieldNodes?.[0]?.selectionSet?.selections ||
     info?.selectionSet?.selections ||
     [];
-  const selectedFieldsHash = selectedFields.reduce((res, selection) => {
-    res[selection.name.value] = selection;
-    return res;
-  }, {});
+  const selectedFieldsHash = selectedFields.reduce(
+    (res: any, selection: any) => {
+      res[selection.name.value] = selection;
+      return res;
+    },
+    {}
+  );
   Object.keys(selectedFieldsHash).forEach((key) => {
     if (!data[key]) {
       const fieldType = getFieldType(type.astNode, key);
@@ -179,6 +190,8 @@ export class ModelDirective extends SchemaDirectiveVisitor {
       resolve: defaultFieldResolver,
       // @ts-ignore
       isDeprecated: false,
+      deprecationReason: undefined,
+      extensions: undefined,
     };
 
     // Modify schema with input types generated based off of the given type
@@ -205,7 +218,7 @@ export class ModelDirective extends SchemaDirectiveVisitor {
     });
   }
 
-  private pluckModelObjectIds(data) {
+  private pluckModelObjectIds(data: any): Record<string, any> {
     if (!data) return {};
 
     return Object.keys(data).reduce((res, key) => {
@@ -224,8 +237,8 @@ export class ModelDirective extends SchemaDirectiveVisitor {
       }
       if (Array.isArray(data[key])) {
         const value = data[key]
-          .map((value) => this.pluckModelObjectIds(value))
-          .filter((v) =>
+          .map((value: any) => this.pluckModelObjectIds(value))
+          .filter((v: any) =>
             v && typeof v === "object" ? Object.keys(v).length : Boolean(v)
           );
         return {
@@ -237,23 +250,23 @@ export class ModelDirective extends SchemaDirectiveVisitor {
     }, {});
   }
 
-  private getListSelection(info) {
+  private getListSelection(info: any) {
     return (
       info?.fieldNodes?.[0]?.selectionSet?.selections?.[0] ??
       info?.selectionSet?.selections?.[0]
     );
   }
 
-  public findQueryResolver(type) {
+  public findQueryResolver(type: any) {
     return async (
-      root,
+      root: any,
       args: FindResolverArgs,
-      context: ResolverContext,
+      context: any,
       info: any
     ) => {
       const params = getDirectiveParams("model", type);
       const db = params?.db ?? "store";
-      const initialData: object[] = await context.directives.model[db].find(
+      const initialData: any = await context.directives.model[db].find(
         {
           where: args.where,
           page: args.page,
@@ -272,7 +285,7 @@ export class ModelDirective extends SchemaDirectiveVisitor {
       const results = {
         maxPages: initialData.maxPages,
         list: await Promise.all(
-          initialData.list.map(async (data) => {
+          initialData.list.map(async (data: any) => {
             const nestedObjects = await visitNestedModels({
               type,
               data,
@@ -281,7 +294,11 @@ export class ModelDirective extends SchemaDirectiveVisitor {
               localInfo: this.getListSelection
                 ? this.getListSelection(info)
                 : info,
-              modelFunction: async (localType, value, newInfo = null) => {
+              modelFunction: async (
+                localType: any,
+                value: any,
+                newInfo = null
+              ) => {
                 const found = await this.findOneQueryResolver(localType)(
                   root,
                   { ...args, where: value },
@@ -290,7 +307,11 @@ export class ModelDirective extends SchemaDirectiveVisitor {
                 );
                 return found;
               },
-              modelsFunction: async (localType, value, newInfo = null) => {
+              modelsFunction: async (
+                localType: any,
+                value: any,
+                newInfo = null
+              ) => {
                 // We need to get the right type here
                 const found = await this.findQueryResolver(localType)(
                   root,
@@ -316,11 +337,11 @@ export class ModelDirective extends SchemaDirectiveVisitor {
     };
   }
 
-  public findOneQueryResolver(type) {
+  public findOneQueryResolver(type: any) {
     return async (
-      root,
+      root: any,
       args: FindOneResolverArgs,
-      context: ResolverContext,
+      context: any,
       info: any
     ) => {
       const params = getDirectiveParams("model", type);
@@ -343,7 +364,7 @@ export class ModelDirective extends SchemaDirectiveVisitor {
         data: rootObject,
         info,
         context,
-        modelFunction: async (localType, value, newInfo = null) => {
+        modelFunction: async (localType: any, value: any, newInfo = null) => {
           const found = await this.findOneQueryResolver(localType)(
             root,
             { ...args, where: value },
@@ -358,11 +379,11 @@ export class ModelDirective extends SchemaDirectiveVisitor {
     };
   }
 
-  public createMutationResolver(type, parentIdsParam = {}) {
+  public createMutationResolver(type: any, parentIdsParam = {}) {
     return async (
-      root,
+      root: any,
       args: CreateResolverArgs,
-      context: ResolverContext,
+      context: any,
       info: any
     ) => {
       args.data = await mapEntity(args.data, type);
@@ -417,9 +438,11 @@ export class ModelDirective extends SchemaDirectiveVisitor {
           const parentIds = {};
           // This is to add the references to the parent node
           if (hasParentType && isSingular) {
+            // @ts-ignore
             parentIds[parentFieldName] = { _id: parentData._id };
           }
           if (hasParentType && !isSingular) {
+            // @ts-ignore
             parentIds[parentFieldName] = [{ _id: parentData._id }];
           }
 
@@ -449,14 +472,6 @@ export class ModelDirective extends SchemaDirectiveVisitor {
       );
 
       // publish if the model is subscribable
-      // @subscribe(on: "create", topic: "messageAdded")
-      const isSubscribable = hasDirective("subscribe", type);
-      if (isSubscribable) {
-        const subscribeParams = getDirectiveParams("subscribe", type);
-        if (subscribeParams) {
-          const { on = [], topic } = subscribeParams;
-        }
-      }
 
       const mergedObjects = {
         ...rootObject,
@@ -467,11 +482,11 @@ export class ModelDirective extends SchemaDirectiveVisitor {
     };
   }
 
-  public updateResolver(type) {
+  public updateResolver(type: any) {
     return async (
-      root,
+      root: any,
       args: UpdateResolverArgs,
-      context: ResolverContext,
+      context: any,
       info: any
     ) => {
       validateInputData({
@@ -551,9 +566,11 @@ export class ModelDirective extends SchemaDirectiveVisitor {
           const parentIds = {};
           // This is to add the references to the parent node
           if (hasParentType && isSingular) {
+            //@ts-ignore
             parentIds[parentFieldName] = { _id: parentData._id };
           }
           if (hasParentType && !isSingular) {
+            //@ts-ignore
             parentIds[parentFieldName] = [{ _id: parentData._id }];
           }
           // end move
@@ -575,7 +592,7 @@ export class ModelDirective extends SchemaDirectiveVisitor {
         return !relatedObjects[key] && key !== "_id";
       });
 
-      function customizer(objValue, srcValue) {
+      function customizer(objValue: any, srcValue: any) {
         if (isArray(objValue)) {
           return objValue.concat(srcValue);
         }
@@ -665,7 +682,7 @@ export class ModelDirective extends SchemaDirectiveVisitor {
   }
 
   // Helper function for adding mutations to the schema
-  private addMutation(field, replaceExisting = false) {
+  private addMutation(field: any, replaceExisting = false) {
     if (
       replaceExisting ||
       !(this.schema.getMutationType() as any).getFields()[field.name]
@@ -675,7 +692,7 @@ export class ModelDirective extends SchemaDirectiveVisitor {
   }
 
   // Helper function for adding queries to the schema
-  private addQuery(field, replaceExisting = false) {
+  private addQuery(field: any, replaceExisting = false) {
     if (
       replaceExisting ||
       !(this.schema.getQueryType() as any).getFields()[field.name]
@@ -742,13 +759,11 @@ export class ModelDirective extends SchemaDirectiveVisitor {
         } as any,
       ],
       resolve: (
-        root,
+        _root: any,
         args: RemoveResolverArgs,
-        context: ResolverContext,
+        context: any,
         info: any
       ) => {
-        const modelDirective = getDirectiveParams("model", type);
-
         const params = getDirectiveParams("model", type);
         const db = params?.db ?? "store";
         return context.directives.model[db].remove(

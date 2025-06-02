@@ -1,5 +1,4 @@
-// import pg from "pg";
-const pg = require("pg");
+import * as pg from "pg";
 import {
   Store,
   StoreCreateProps,
@@ -63,7 +62,7 @@ export class CloudSQLStore implements Store {
   }
 
   private async getPool(baseOptions: CloudSQLStoreOptions) {
-    const { dbName, ...options } = baseOptions;
+    const { dbName: _dbName, ...options } = baseOptions;
     // TODO: connector.close() when done
     const { clientOpts } = await getConnector(); // , connector
     const pool = new Pool({
@@ -77,7 +76,7 @@ export class CloudSQLStore implements Store {
   public async findOne(
     props: StoreFindOneProps,
     context: Context,
-    info: any,
+    _info: any,
     bypassPermissions?: boolean
   ): Promise<StoreFindOneReturn | null> {
     await createCSQLTableIfNotExists({
@@ -201,7 +200,7 @@ export class CloudSQLStore implements Store {
   public async create(
     props: StoreCreateProps,
     context: Context,
-    info: any
+    _info: any
   ): Promise<StoreCreateReturn> {
     await createCSQLTableIfNotExists({
       pool: this.pool,
@@ -238,7 +237,7 @@ export class CloudSQLStore implements Store {
   public async update(
     props: StoreUpdateProps,
     context: Context,
-    info: any,
+    _info: any,
     bypassPermissions?: boolean
   ): Promise<StoreUpdateReturn> {
     await createCSQLTableIfNotExists({
@@ -282,7 +281,7 @@ export class CloudSQLStore implements Store {
   public async remove(
     props: StoreRemoveProps & { hardDelete?: boolean },
     context: Context,
-    info: any
+    _info: any
   ): Promise<StoreRemoveReturn> {
     await createCSQLTableIfNotExists({
       pool: this.pool,

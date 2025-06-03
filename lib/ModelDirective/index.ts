@@ -31,6 +31,7 @@ import {
 } from "../GraphQL/utils";
 import { mapEntity } from "./mapEntity";
 import admin from "firebase-admin";
+import { constants } from "../../src/constants";
 
 import { config } from "dotenv";
 config();
@@ -176,7 +177,7 @@ export async function visitNestedModels({
 
 export class ModelDirective extends SchemaDirectiveVisitor {
   // public isFirestore = process.env.DB_TYPE === "firestore";
-  public isFirestore = "firestore";
+  public isFirestore = process.env.DB_ENGINE === constants.DB_ENGINES.FIRESTORE;
 
   public visitObject(type: GraphQLObjectType) {
     // TODO check that id field does not already exist on type

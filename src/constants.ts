@@ -5,6 +5,9 @@
  */
 
 export const constants = {
+  DB_ENGINES: {
+    FIRESTORE: "firestore",
+  },
   COLLECTIONS_DATABASES: {
     SERVICE: "Service",
     BRAND: "Brand",

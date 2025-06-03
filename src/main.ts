@@ -151,6 +151,15 @@ async function main() {
   });
 
   const server = createServer(async (req, res) => {
+    // Health check endpoint
+    if (req.url === "/healthcheck" || req.url === "/health") {
+      res.writeHead(200, { "Content-Type": "application/json" });
+      res.end(
+        JSON.stringify({ status: "OK", timestamp: new Date().toISOString() })
+      );
+      return;
+    }
+
     // Serve static files first
     if (req.url?.startsWith("/uploads") || req.url === "/") {
       await serveFile(req, res);

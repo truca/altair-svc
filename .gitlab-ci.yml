@@ -5,7 +5,7 @@ include:
     file: .gitlab-ci-node.yml
 variables:
   DIGITAL_RETAIL: "true"
-  NODE_VERSION: node:22.15.0-alpine3.20
+  NODE_VERSION: node:20.18.1-alpine3.21
   UNIT_TEST_COMMAND: ""
   INTEGRATION_TEST_COMMAND: ""
 deploy:falabella:staging:

@@ -28,4 +28,4 @@ ENV PORT=8080 \
     MAX_AGE=86400
 EXPOSE $PORT
 ENTRYPOINT ["tini", "--"]
-CMD ["node", "--max-http-header-size=24000", "dist/main"]
+CMD ["node", "--max-http-header-size=24000", "dist/src/main"]

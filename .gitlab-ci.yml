@@ -9,6 +9,9 @@ variables:
   UNIT_TEST_COMMAND: ""
   INTEGRATION_TEST_COMMAND: ""
 deploy:falabella:staging:
+  rules:
+    - if: '$CI_MERGE_REQUEST_ID'
+      when: never
   environment:
     name: falabella-staging
 deploy:falabella:prod:

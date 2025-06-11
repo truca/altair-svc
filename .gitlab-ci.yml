@@ -10,69 +10,9 @@ variables:
   INTEGRATION_TEST_COMMAND: ""
 deploy:falabella:staging:
   rules:
-    - if: '$CI_COMMIT_BRANCH && $CI_ENVIRONMENT_NAME'
-    - if: '$CI_MERGE_REQUEST_ID'
-      when: never
+    - !reference [.deploy_always_ci_rules, rules]
   environment:
     name: falabella-staging
 deploy:falabella:prod:
   environment:
     name: falabella-production
-# stages:
-#   - Setup
-#   - Verify
-#   - Build
-#   - Deploy
-
-# # Job only run on merge requests
-
-# install-deps:
-#   stage: Setup
-#   image: node:20
-#   script:
-#     - yarn install --prefer-offline --ignore-scripts --cwd . --cache-folder .yarn
-#   only:
-#     - merge_requests
-#   cache:
-#     paths:
-#       - node_modules/
-
-# dockerfile:
-#   stage: Verify
-#   image: hadolint/hadolint:latest-debian
-#   script:
-#     - hadolint Dockerfile
-#   only:
-#     - merge_requests
-#   needs: ["install-deps"]
-
-# lint:
-#   stage: Verify
-#   image: node:20
-#   script:
-#     - yarn install --frozen-lockfile
-#     - yarn lint
-#     - yarn build
-#   only:
-#     - merge_requests
-#   cache:
-#     paths:
-#       - node_modules/
-#   needs: ["install-deps"]
-
-# build:
-#   stage: Build
-#   image: node:20
-#   script:
-#     - yarn install --frozen-lockfile
-#     - yarn build
-#   only:
-#     - merge_requests
-#   cache:
-#     paths:
-#       - node_modules/
-#   needs: ["lint", "dockerfile"]
-#   artifacts:
-#     paths:
-#       - dist/
-#     expire_in: 1 hour

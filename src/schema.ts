@@ -202,6 +202,9 @@ const typeDefinitions = /* GraphQL */ `
     startDate: String!
     endDate: String!
     campaignTypeId: String!
+    customId: String
+    nomenclature: String
+
     # Service flags
     bannersEnabled: Boolean!
     CRMEnabled: Boolean!
@@ -232,7 +235,6 @@ const typeDefinitions = /* GraphQL */ `
     homeLandingForm: HomeLandingForm
 
     campaignIds: [String!]
-    nomenclature: String
   }
 
   # Middleware types are kept, but if they contained a service type they now reference Service:
@@ -270,6 +272,19 @@ const typeDefinitions = /* GraphQL */ `
     commission: String
     startDate: DateTime
     endDate: DateTime
+  }
+
+  type BannerForm {
+    bannerTypeId: String
+    budget: Float
+    startDate: String
+    endDate: String
+    segmentationTypeId: String
+    categoryId: [String]
+    audienceId: [String]
+    url: String
+    comment: String
+    image: String
   }
 
   # A unified Service type that combines all fields from your service (@model) types.
@@ -320,21 +335,7 @@ const typeDefinitions = /* GraphQL */ `
     images: String
 
     # Fields from BannerFadsForm
-    bannerFadBannerTypeId: [String]
-    bannerFadTotalBudget: Float
-    bannerFadStartDate: String
-    bannerFadEndDate: String
-    bannerFadSegmentationTypeId: String
-    bannerFadCategoryId: [String]
-    bannerFadAudienceId: [String]
-    bannerFadUrl: String
-    bannerFadComment: String
-    bannerMenuTotalBudget: Float
-    bannerMenuStartDate: String
-    bannerMenuEndDate: String
-    bannerMenuUrl: String
-    bannerMenuComment: String
-    image: String
+    bannerForms: [BannerForm]
 
     # Fields from CRMCampaignSubProduct
     type: String

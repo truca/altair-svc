@@ -288,9 +288,9 @@ async function addServiceTypesAndDates(
   const serviceWithoutDatesKeys: (keyof CampaignGroup)[] = [
     "mediaOnForm",
     "homeLandingForm",
+    "bannerForm",
   ];
 
-  // Process top-level service fields - usar Promise.all para manejar los async en paralelo
   const servicePromises = topLevelServiceKeys.map(async (key) => {
     const service = campaignGroup[key];
     if (service && typeof service === "object") {
@@ -299,7 +299,9 @@ async function addServiceTypesAndDates(
       service.country = country;
 
       if (serviceWithoutDatesKeys.includes(key)) {
-        const { startDate, endDate } = calculateDates(service.strategies);
+        const { startDate, endDate } = calculateDates(
+          service.strategies || service.bannerForms
+        );
 
         service.startDate = startDate;
         service.endDate = endDate;

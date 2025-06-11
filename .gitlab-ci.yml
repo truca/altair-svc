@@ -10,6 +10,7 @@ variables:
   INTEGRATION_TEST_COMMAND: ""
 deploy:falabella:staging:
   rules:
+    - if: '$CI_COMMIT_BRANCH && $CI_ENVIRONMENT_NAME'
     - if: '$CI_MERGE_REQUEST_ID'
       when: never
   environment:

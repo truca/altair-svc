@@ -9,8 +9,6 @@ variables:
   UNIT_TEST_COMMAND: ""
   INTEGRATION_TEST_COMMAND: ""
 deploy:falabella:staging:
-  rules:
-    - !reference [.deploy_always_ci_rules, rules]
   environment:
     name: falabella-staging
 deploy:falabella:production:

@@ -13,6 +13,6 @@ deploy:falabella:staging:
     - !reference [.deploy_always_ci_rules, rules]
   environment:
     name: falabella-staging
-deploy:falabella:prod:
+deploy:falabella:production:
   environment:
     name: falabella-production

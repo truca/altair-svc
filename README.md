@@ -21,8 +21,10 @@ A GraphQL-based retail media management service built with TypeScript, GraphQL Y
 
 ## Overview
 
-This service provides a GraphQL API for managing retail media campaigns, brands, products, and related entities.
-It features robust authentication, authorization, file handling, and efficient database operations using Google Cloud Firestore.
+This service provides a GraphQL API for managing retail media 
+campaigns, brands, products, and related entities. It features 
+robust authentication, authorization, file handling, and 
+efficient database operations using Google Cloud Firestore.
 
 ## Features
 

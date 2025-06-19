@@ -389,6 +389,7 @@ export class ModelDirective extends SchemaDirectiveVisitor {
     ) => {
       args.data = await mapEntity(args.data, type);
 
+      console.log({ data: args.data, type })
       validateInputData({
         data: args.data,
         type,
@@ -447,6 +448,7 @@ export class ModelDirective extends SchemaDirectiveVisitor {
             parentIds[parentFieldName] = [{ _id: parentData._id }];
           }
 
+          console.log({ localType, parentIds, value })
           const createdObject = await this.createMutationResolver(
             localType,
             parentIds

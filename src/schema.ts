@@ -272,6 +272,10 @@ const typeDefinitions = /* GraphQL */ `
     commission: String
     startDate: DateTime
     endDate: DateTime
+
+    campaignSellerId: String!
+    campaignBrandId: [String!]!
+    categoryId: [String!]!
   }
 
   type BannerForm {
@@ -280,11 +284,15 @@ const typeDefinitions = /* GraphQL */ `
     startDate: String
     endDate: String
     segmentationTypeId: String
-    categoryId: [String]
+    # categoryId: [String]
     audienceId: [String]
     url: String
     comment: String
     image: String
+
+    campaignSellerId: String!
+    campaignBrandId: [String!]!
+    categoryId: [String!]!
   }
 
   # A unified Service type that combines all fields from your service (@model) types.
@@ -293,6 +301,11 @@ const typeDefinitions = /* GraphQL */ `
     @model
     @auth(read: ["public"], update: ["public"], delete: ["public"]) {
     country: String
+
+    # For filtering
+    campaignSellerId: String!
+    campaignBrandId: [String!]!
+    categoryId: [String!]!
 
     # Common fields
     campaignId: ID
@@ -381,6 +394,11 @@ const typeDefinitions = /* GraphQL */ `
   }
 
   input ServiceInputType2 {
+    nomenclature: String
+    campaignGroupCustomId: String
+    campaignSellerId: String
+    campaignBrandId: [String]
+    categoryId: [String]
     country: String
   }
 

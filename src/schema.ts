@@ -282,9 +282,9 @@ const typeDefinitions = /* GraphQL */ `
   type BannerForm {
     bannerTypeId: String
     budget: Float
-    startDate: String
-    endDate: String
-    implementationDate: String
+    startDate: DateTime
+    endDate: DateTime
+    implementationDate: DateTime
     segmentationTypeId: String
     # categoryId: [String]
     audienceId: [String]

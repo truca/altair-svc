@@ -86,6 +86,36 @@ function mapServiceDates(service: Service): Service {
     service.implementationDate = admin.firestore.Timestamp.fromDate(date);
   }
 
+  // Process dates in bannerForms array if it exists
+  if (service.bannerForms && Array.isArray(service.bannerForms)) {
+    service.bannerForms = service.bannerForms.map(banner => {
+      if (!banner) return banner;
+      
+      // Process start date
+      if (banner.startDate && typeof banner.startDate === 'string') {
+        const date = new Date(banner.startDate);
+        date.setHours(0, 0, 0, 0);
+        banner.startDate = admin.firestore.Timestamp.fromDate(date);
+      }
+
+      // Process end date
+      if (banner.endDate && typeof banner.endDate === 'string') {
+        const date = new Date(banner.endDate);
+        date.setHours(23, 59, 59, 999);
+        banner.endDate = admin.firestore.Timestamp.fromDate(date);
+      }
+
+      // Process implementation date
+      if (banner.implementationDate && typeof banner.implementationDate === 'string') {
+        const date = new Date(banner.implementationDate);
+        date.setHours(12, 0, 0, 0);
+        banner.implementationDate = admin.firestore.Timestamp.fromDate(date);
+      }
+
+      return banner;
+    });
+  }
+
   return service;
 }
 

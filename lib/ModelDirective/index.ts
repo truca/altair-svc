@@ -632,6 +632,32 @@ export class ModelDirective extends SchemaDirectiveVisitor {
         }
       });
 
+      // Procesar fechas en bannerForms si existen
+      if (data.bannerForms && Array.isArray(data.bannerForms)) {
+        data.bannerForms = data.bannerForms.map(banner => {
+          if (!banner) return banner;
+          // Procesar startDate
+          if (banner.startDate && typeof banner.startDate === 'string') {
+            const date = new Date(banner.startDate);
+            date.setUTCHours(0, 0, 0, 0);
+            banner.startDate = admin.firestore.Timestamp.fromDate(date);
+          }
+          // Procesar endDate
+          if (banner.endDate && typeof banner.endDate === 'string') {
+            const date = new Date(banner.endDate);
+            date.setUTCHours(23, 59, 59, 999);
+            banner.endDate = admin.firestore.Timestamp.fromDate(date);
+          }
+          // Procesar implementationDate
+          if (banner.implementationDate && typeof banner.implementationDate === 'string') {
+            const date = new Date(banner.implementationDate);
+            date.setUTCHours(12, 0, 0, 0);
+            banner.implementationDate = admin.firestore.Timestamp.fromDate(date);
+          }
+          return banner;
+        });
+      }
+
       const updated = await context.directives.model[db].update(
         {
           where: args.where,

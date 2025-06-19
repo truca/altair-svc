@@ -335,6 +335,7 @@ const typeDefinitions = /* GraphQL */ `
     images: String
 
     # Fields from BannerFadsForm
+    bannerTypesId: [String]
     bannerForms: [BannerForm]
 
     # Fields from CRMCampaignSubProduct

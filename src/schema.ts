@@ -201,6 +201,7 @@ const typeDefinitions = /* GraphQL */ `
     subCategoryId: [String!]!
     startDate: String!
     endDate: String!
+    implementationDate: String!
     campaignTypeId: String!
     customId: String
     nomenclature: String
@@ -283,6 +284,7 @@ const typeDefinitions = /* GraphQL */ `
     budget: Float
     startDate: String
     endDate: String
+    implementationDate: String
     segmentationTypeId: String
     # categoryId: [String]
     audienceId: [String]
@@ -312,6 +314,7 @@ const typeDefinitions = /* GraphQL */ `
     budget: Float
     startDate: DateTime
     endDate: DateTime
+    implementationDate: DateTime
 
     #Fields from planner
     userAssigned: [String]

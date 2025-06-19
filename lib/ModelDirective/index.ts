@@ -39,6 +39,7 @@ config();
 interface Service {
   startDate?: Date | string | admin.firestore.Timestamp;
   endDate?: Date | string | admin.firestore.Timestamp;
+  implementationDate?: Date | string | admin.firestore.Timestamp;
   bannerFadStartDate?: string | Date | admin.firestore.Timestamp;
   bannerFadEndDate?: string | Date | admin.firestore.Timestamp;
   bannerMenuStartDate?: string | Date | admin.firestore.Timestamp;
@@ -611,6 +612,7 @@ export class ModelDirective extends SchemaDirectiveVisitor {
         "startDate",
         "bannerFadStartDate",
         "bannerMenuStartDate",
+        "implementationDate",
       ];
 
       startDateKeys.forEach((key) => {
@@ -634,6 +636,13 @@ export class ModelDirective extends SchemaDirectiveVisitor {
           data.endDate = admin.firestore.Timestamp.fromDate(date);
         }
       });
+
+      // implementationDate
+      if (data.implementationDate && typeof data.implementationDate === 'string') {
+        const date = new Date(data.implementationDate);
+        date.setUTCHours(12, 0, 0, 0); // Set to noon for implementation date
+        data.implementationDate = admin.firestore.Timestamp.fromDate(date);
+      }
 
       const updated = await context.directives.model[db].update(
         {

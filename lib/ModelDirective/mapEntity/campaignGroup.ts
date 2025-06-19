@@ -46,6 +46,7 @@ interface Service {
   bannerFadEndDate: string;
   bannerMenuEndDate: string;
   endDate: string | Timestamp;
+  implementationDate: string | Timestamp;
 }
 
 function mapServiceDates(service: Service): Service {
@@ -77,6 +78,13 @@ function mapServiceDates(service: Service): Service {
       service.endDate = admin.firestore.Timestamp.fromDate(date);
     }
   });
+
+  // implementationDate
+  if (service.implementationDate && typeof service.implementationDate === 'string') {
+    const date = new Date(service.implementationDate);
+    date.setHours(12, 0, 0, 0); // Set to noon for implementation date
+    service.implementationDate = admin.firestore.Timestamp.fromDate(date);
+  }
 
   return service;
 }

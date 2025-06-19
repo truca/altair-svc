@@ -57,10 +57,10 @@ function mapServiceDates(service: Service): Service {
   ];
 
   startDateKeys.forEach((key) => {
-    if (service[key]) {
+    if (service[key] && typeof service[key] === 'string') {
       const date = new Date(service[key]);
       date.setHours(0, 0, 0, 0);
-      service.startDate = admin.firestore.Timestamp.fromDate(date);
+      service[key] = admin.firestore.Timestamp.fromDate(date);
     }
   });
 
@@ -72,14 +72,14 @@ function mapServiceDates(service: Service): Service {
   ];
 
   endDateKeys.forEach((key) => {
-    if (service[key]) {
+    if (service[key] && typeof service[key] === 'string') {
       const date = new Date(service[key]);
       date.setHours(23, 59, 59, 999);
-      service.endDate = admin.firestore.Timestamp.fromDate(date);
+      service[key] = admin.firestore.Timestamp.fromDate(date);
     }
   });
 
-  // implementationDate
+  // implementationDate SOLO se procesa en su propio campo
   if (service.implementationDate && typeof service.implementationDate === 'string') {
     const date = new Date(service.implementationDate);
     date.setHours(12, 0, 0, 0); // Set to noon for implementation date

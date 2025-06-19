@@ -608,41 +608,29 @@ export class ModelDirective extends SchemaDirectiveVisitor {
         ...objectIds,
       };
 
-      const startDateKeys: (keyof Service)[] = [
+      // Procesar solo los campos de fecha presentes en el input
+      const dateFields = [
         "startDate",
+        "endDate",
+        "implementationDate",
         "bannerFadStartDate",
         "bannerMenuStartDate",
-        "implementationDate",
-      ];
-
-      startDateKeys.forEach((key) => {
-        if (data[key]) {
-          const date = new Date(data[key]);
-          date.setUTCHours(0, 0, 0, 0);
-          data.startDate = admin.firestore.Timestamp.fromDate(date);
-        }
-      });
-
-      const endDateKeys: (keyof Service)[] = [
-        "endDate",
         "bannerFadEndDate",
-        "bannerMenuEndDate",
+        "bannerMenuEndDate"
       ];
-
-      endDateKeys.forEach((key) => {
-        if (data[key]) {
+      dateFields.forEach((key) => {
+        if (data[key] && typeof data[key] === 'string') {
           const date = new Date(data[key]);
-          date.setUTCHours(23, 59, 59, 999);
-          data.endDate = admin.firestore.Timestamp.fromDate(date);
+          if (key === "endDate" || key === "bannerFadEndDate" || key === "bannerMenuEndDate") {
+            date.setUTCHours(23, 59, 59, 999);
+          } else if (key === "implementationDate") {
+            date.setUTCHours(12, 0, 0, 0);
+          } else {
+            date.setUTCHours(0, 0, 0, 0);
+          }
+          data[key] = admin.firestore.Timestamp.fromDate(date);
         }
       });
-
-      // implementationDate
-      if (data.implementationDate && typeof data.implementationDate === 'string') {
-        const date = new Date(data.implementationDate);
-        date.setUTCHours(12, 0, 0, 0); // Set to noon for implementation date
-        data.implementationDate = admin.firestore.Timestamp.fromDate(date);
-      }
 
       const updated = await context.directives.model[db].update(
         {

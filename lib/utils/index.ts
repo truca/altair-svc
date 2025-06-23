@@ -190,7 +190,7 @@ export function makeSchema({
         info: any
       ) => {
         const profileType = context?.typeMap?.Service;
-        const startDateValue =
+        const implementationDateValue =
           params.startDate && params.endDate
             ? `>=${params.startDate},<=${params.endDate}`
             : params.startDate
@@ -205,7 +205,7 @@ export function makeSchema({
           where: {
             ...params.where,
             ...(params.serviceType ? { serviceType: params.serviceType } : {}),
-            ...(startDateValue ? { startDate: startDateValue } : {}),
+            ...(implementationDateValue ? { implementationDate: implementationDateValue } : {}),
           },
         };
         return StaticModelDirective.findQueryResolver(profileType)(

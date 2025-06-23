@@ -36,16 +36,6 @@ import { constants } from "../../src/constants";
 import { config } from "dotenv";
 config();
 
-interface Service {
-  startDate?: Date | string | admin.firestore.Timestamp;
-  endDate?: Date | string | admin.firestore.Timestamp;
-  implementationDate?: Date | string | admin.firestore.Timestamp;
-  bannerFadStartDate?: string | Date | admin.firestore.Timestamp;
-  bannerFadEndDate?: string | Date | admin.firestore.Timestamp;
-  bannerMenuStartDate?: string | Date | admin.firestore.Timestamp;
-  bannerMenuEndDate?: string | Date | admin.firestore.Timestamp;
-}
-
 export interface ResolverContext {
   directives: {
     model: {

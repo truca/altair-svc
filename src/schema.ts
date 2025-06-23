@@ -175,6 +175,73 @@ const typeDefinitions = /* GraphQL */ `
     updatedAt: DateTime
   }
 
+  # Media On Cascade Types
+  type MediaOnMedium
+    @model
+    @auth(read: ["public"], update: ["public"], delete: ["public"]) {
+    country: String
+    name: String!
+    availableObjectives: [String!]
+    externalId: ID!
+    createdAt: DateTime
+    updatedAt: DateTime
+  }
+
+  type MediaOnObjective
+    @model
+    @auth(read: ["public"], update: ["public"], delete: ["public"]) {
+    country: String
+    name: String!
+    externalId: ID!
+    availableObjectives: [String!]
+    createdAt: DateTime
+    updatedAt: DateTime
+  }
+
+  type MediaOnStrategy
+    @model
+    @auth(read: ["public"], update: ["public"], delete: ["public"]) {
+    country: String
+    name: String!
+    externalId: ID!
+    availableObjectives: [String!]
+    createdAt: DateTime
+    updatedAt: DateTime
+  }
+
+  type MediaOnSegmentation
+    @model
+    @auth(read: ["public"], update: ["public"], delete: ["public"]) {
+    country: String
+    name: String!
+    externalId: ID!
+    availableObjectives: [String!]
+    createdAt: DateTime
+    updatedAt: DateTime
+  }
+
+  type MediaOnPurchaseType
+    @model
+    @auth(read: ["public"], update: ["public"], delete: ["public"]) {
+    country: String
+    name: String!
+    externalId: ID!
+    availableObjectives: [String!]
+    createdAt: DateTime
+    updatedAt: DateTime
+  }
+
+  type MediaOnFormat
+    @model
+    @auth(read: ["public"], update: ["public"], delete: ["public"]) {
+    country: String
+    name: String!
+    externalId: ID!
+    availableObjectives: [String!]
+    createdAt: DateTime
+    updatedAt: DateTime
+  }
+
   type Image
     @model(db: "cep")
     @auth(read: ["public"], update: ["public"], delete: ["public"]) {
@@ -261,7 +328,7 @@ const typeDefinitions = /* GraphQL */ `
     date: String!
   }
 
-  type MediaOnStrategy {
+  type MediaCampaignStrategy {
     mediumId: String
     objectiveId: String
     strategyId: String
@@ -327,7 +394,7 @@ const typeDefinitions = /* GraphQL */ `
     strategiesId: String
     commission: String
     totalAmount: Float
-    strategies: [MediaOnStrategy]
+    strategies: [MediaCampaignStrategy]
 
     # Fields from CRM
     crmTypeId: String

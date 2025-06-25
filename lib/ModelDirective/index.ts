@@ -32,6 +32,7 @@ import {
 import { mapEntity } from "./mapEntity";
 import admin from "firebase-admin";
 import { constants } from "../../src/constants";
+import { updateServicesWithCampaignId } from "./mapEntity/campaignGroup";
 
 import { config } from "dotenv";
 config();
@@ -464,6 +465,15 @@ export class ModelDirective extends SchemaDirectiveVisitor {
         context,
         info
       );
+
+      // Update Services with the campaignId if this is a CampaignGroup
+      if (args.data._customIdForPostProcessing && rootObject.id) {
+        try {
+          await updateServicesWithCampaignId(rootObject.id, args.data._customIdForPostProcessing);
+        } catch (error) {
+          console.error("Error updating services with campaignId:", error);
+        }
+      }
 
       // publish if the model is subscribable
 

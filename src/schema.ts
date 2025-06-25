@@ -254,6 +254,9 @@ const typeDefinitions = /* GraphQL */ `
     budget: Float!
     # strategies was [HomeLandingStrategy!]! → [Service!]!
     strategies: [Service]
+    campaignSellerId: String
+    campaignBrandId: [String!]
+    categoryId: [String!]
   }
 
   type PlannerComments {
@@ -388,6 +391,8 @@ const typeDefinitions = /* GraphQL */ `
     # Fields from HomeLandingStrategy
     visualKey: String
     totalBudget: Float
+
+
   }
   # CampaignGroup
 

@@ -276,6 +276,7 @@ const typeDefinitions = /* GraphQL */ `
     commission: String
     startDate: DateTime
     endDate: DateTime
+    implementationDate: DateTime
 
     campaignSellerId: String!
     campaignBrandId: [String!]!

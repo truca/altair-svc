@@ -350,14 +350,15 @@ async function addServiceTypesAndDates(
   const country = campaignGroup.country;
   
   // Create a list to track all service entities that need to be created
-  const servicesToCreate: any[] = [];
+  let servicesToCreate: any[] = [];
 
   const serviceWithoutDatesKeys: (keyof CampaignGroup)[] = [
     "mediaOnForm",
     "homeLandingForm",
   ];
 
-  const servicePromises = topLevelServiceKeys.map(async (key) => {
+  // Esperamos a que todas las promesas se resuelvan
+  await Promise.all(serviceWithoutDatesKeys.map(async (key) => {
     const service = campaignGroup[key];
     if (service && typeof service === "object") {
       service.serviceType = key;
@@ -385,10 +386,7 @@ async function addServiceTypesAndDates(
       // Add top-level service to our creation list
       servicesToCreate.push({...service});
     }
-  });
-
-  // Esperamos a que todas las promesas se resuelvan
-  await Promise.all(servicePromises);
+  }));
 
   // Process nested services in homeLandingForm.strategies
   if (
@@ -406,7 +404,7 @@ async function addServiceTypesAndDates(
           serviceToCreate.campaignGroupCustomId = customId;
           serviceToCreate.country = country;
           
-          if (!serviceToCreate.campaignSellerId && campaignGroup.sellerId) {
+          if (!serviceToCreate.campaignSellerId || serviceToCreate.campaignSellerId === "") {
             serviceToCreate.campaignSellerId = campaignGroup.sellerId;
           }
           
@@ -457,7 +455,7 @@ async function addServiceTypesAndDates(
           serviceToCreate.campaignGroupCustomId = customId;
           serviceToCreate.country = country;
           
-          if (!serviceToCreate.campaignSellerId && campaignGroup.sellerId) {
+          if (!serviceToCreate.campaignSellerId || serviceToCreate.campaignSellerId === "") {
             serviceToCreate.campaignSellerId = campaignGroup.sellerId;
           }
           
@@ -560,7 +558,7 @@ async function addServiceTypesAndDates(
           if (campaignGroup.id) {
             serviceToCreate.campaignId = campaignGroup.id;
           }
-          if (!serviceToCreate.campaignSellerId && campaignGroup.sellerId) {
+          if (!serviceToCreate.campaignSellerId || serviceToCreate.campaignSellerId === "") {
             serviceToCreate.campaignSellerId = campaignGroup.sellerId;
           }
           if ((!serviceToCreate.campaignBrandId || serviceToCreate.campaignBrandId.length === 0) && campaignGroup.brandId) {
@@ -601,6 +599,14 @@ async function addServiceTypesAndDates(
   const serviceReferenceMap = new Map();
   
   console.log(`Creating ${servicesToCreate.length} service entities...`);
+  
+  servicesToCreate = servicesToCreate.filter(
+    s => !(
+      (s.serviceType === "homeLandingForm" && s.strategies && s.strategies.length > 0) ||
+      (s.serviceType === "CRMForm" && s.subProducts && s.subProducts.length > 0) ||
+      (s.serviceType === "mediaOnForm" && s.strategies && s.strategies.length > 0)
+    )
+  );
   
   const serviceCreationPromises = servicesToCreate.map(async (serviceData, index) => {
     try {

@@ -349,12 +349,13 @@ async function addServiceTypesAndDates(
 
   const country = campaignGroup.country;
   
-  // Create a list to track all service entities that need to be created
   let servicesToCreate: any[] = [];
 
   const serviceWithoutDatesKeys: (keyof CampaignGroup)[] = [
     "mediaOnForm",
     "homeLandingForm",
+    "sponsoredProductForm",
+    "sponsoredBrandForm",
   ];
 
   // Esperamos a que todas las promesas se resuelvan

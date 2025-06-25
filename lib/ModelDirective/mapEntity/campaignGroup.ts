@@ -427,6 +427,8 @@ async function addServiceTypesAndDates(
 
           mapServiceDates(serviceToCreate);
           
+          serviceToCreate.deletedAt = null;
+          
           const refId = `homeLandingForm.strategies.${index}`;
           servicesToCreate.push({
             ...serviceToCreate,
@@ -476,6 +478,8 @@ async function addServiceTypesAndDates(
 
           mapServiceDates(serviceToCreate);
           
+          serviceToCreate.deletedAt = null;
+          
           const refId = `mediaOnForm.strategies.${index}`;
           servicesToCreate.push({
             ...serviceToCreate,
@@ -524,6 +528,8 @@ async function addServiceTypesAndDates(
           serviceToCreate.nomenclature = serviceNomemclature;
 
           mapServiceDates(serviceToCreate);
+          
+          serviceToCreate.deletedAt = null;
           
           const refId = `CRMForm.subProducts.${index}`;
           servicesToCreate.push({
@@ -579,6 +585,7 @@ async function addServiceTypesAndDates(
           if (serviceToCreate.bannerForms) {
             delete serviceToCreate.bannerForms;
           }
+          serviceToCreate.deletedAt = null;
           const refId = `bannerForm.bannerForms.${index}`;
           servicesToCreate.push({
             ...serviceToCreate,

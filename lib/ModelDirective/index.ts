@@ -32,7 +32,7 @@ import {
 import { mapEntity } from "./mapEntity";
 import admin from "firebase-admin";
 import { constants } from "../../src/constants";
-import { updateServicesWithCampaignId } from "./mapEntity/campaignGroup";
+import { updateServicesWithCampaignId, topLevelServiceKeys } from "./mapEntity/campaignGroup";
 
 import { config } from "dotenv";
 config();
@@ -108,6 +108,7 @@ export async function visitNestedModels({
   for (const key of Object.keys(data)) {
     if (key === "_id") continue;
     if (!selectedFieldsHash[key]) continue;
+    if (topLevelServiceKeys.includes(key)) continue;
 
     const value = data[key];
     const field = getNamedType(type.getFields()[key]) as any;

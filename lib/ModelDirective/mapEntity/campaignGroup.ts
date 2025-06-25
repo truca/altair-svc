@@ -67,6 +67,14 @@ interface CampaignGroup {
   [key: string]: any;
 }
 
+export const topLevelServiceKeys: (keyof CampaignGroup)[] = [
+  "sponsoredBrandForm",
+  "sponsoredProductForm",
+  "ratingAndReviewForm",
+  "mediaOnForm",
+  "CRMForm",
+];
+
 function mapServiceDates(service: Service): Service {
   const startDateKeys: (keyof Service)[] = [
     "startDate",
@@ -344,15 +352,6 @@ async function addServiceTypesAndDates(
   // Create a list to track all service entities that need to be created
   const servicesToCreate: any[] = [];
 
-  // List of top-level keys that are of type Service.
-  const topLevelServiceKeys: (keyof CampaignGroup)[] = [
-    "sponsoredBrandForm",
-    "sponsoredProductForm",
-    "ratingAndReviewForm",
-    "mediaOnForm",
-    "CRMForm",
-  ];
-
   const serviceWithoutDatesKeys: (keyof CampaignGroup)[] = [
     "mediaOnForm",
     "homeLandingForm",
@@ -364,6 +363,7 @@ async function addServiceTypesAndDates(
       service.serviceType = key;
       service.campaignGroupCustomId = customId;
       service.country = country;
+      service.deletedAt = null;
 
       if (serviceWithoutDatesKeys.includes(key)) {
         const { startDate, endDate } = calculateDates(

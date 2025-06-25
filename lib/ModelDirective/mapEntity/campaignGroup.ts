@@ -348,7 +348,6 @@ async function addServiceTypesAndDates(
   const topLevelServiceKeys: (keyof CampaignGroup)[] = [
     "sponsoredBrandForm",
     "sponsoredProductForm",
-    "bannerForm",
     "ratingAndReviewForm",
     "mediaOnForm",
     "CRMForm",
@@ -357,7 +356,6 @@ async function addServiceTypesAndDates(
   const serviceWithoutDatesKeys: (keyof CampaignGroup)[] = [
     "mediaOnForm",
     "homeLandingForm",
-    "bannerForm",
   ];
 
   const servicePromises = topLevelServiceKeys.map(async (key) => {
@@ -540,6 +538,59 @@ async function addServiceTypesAndDates(
     await Promise.all(subProductPromises);
   }
   
+  // Procesar banners en bannerForm.bannerForms
+  if (
+    campaignGroup.bannerForm?.bannerForms &&
+    Array.isArray(campaignGroup.bannerForm.bannerForms)
+  ) {
+    const originalBanners = JSON.parse(JSON.stringify(campaignGroup.bannerForm.bannerForms));
+    const bannerPromises = originalBanners.map(
+      async (originalBanner: any, index: number) => {
+        if (originalBanner && typeof originalBanner === "object") {
+          const serviceToCreate = { ...originalBanner };
+          // Heredar datos del campaignGroup
+          serviceToCreate.campaignGroupCustomId = customId;
+          serviceToCreate.country = country;
+          if (campaignGroup.id) {
+            serviceToCreate.campaignId = campaignGroup.id;
+          }
+          if (!serviceToCreate.campaignSellerId && campaignGroup.sellerId) {
+            serviceToCreate.campaignSellerId = campaignGroup.sellerId;
+          }
+          if ((!serviceToCreate.campaignBrandId || serviceToCreate.campaignBrandId.length === 0) && campaignGroup.brandId) {
+            serviceToCreate.campaignBrandId = campaignGroup.brandId;
+          }
+          if ((!serviceToCreate.categoryId || serviceToCreate.categoryId.length === 0) && campaignGroup.categoryId) {
+            serviceToCreate.categoryId = campaignGroup.categoryId;
+          }
+          // Asignar serviceType dinámico
+          const bannerTypeId = serviceToCreate.bannerTypeId || "UNKNOWN";
+          serviceToCreate.serviceType = `bannerForm.${bannerTypeId}`;
+          // Guardar bannerTypeId explícitamente
+          serviceToCreate.bannerTypeId = bannerTypeId;
+          // Nomenclatura
+          const serviceNomemclature = await generateNomenclature(
+            campaignGroup,
+            serviceToCreate
+          );
+          serviceToCreate.nomenclature = serviceNomemclature;
+          mapServiceDates(serviceToCreate);
+          // Eliminar bannerForms si existe en el objeto individual
+          if (serviceToCreate.bannerForms) {
+            delete serviceToCreate.bannerForms;
+          }
+          const refId = `bannerForm.bannerForms.${index}`;
+          servicesToCreate.push({
+            ...serviceToCreate,
+            _originalRef: refId,
+            _originalIndex: index
+          });
+        }
+      }
+    );
+    await Promise.all(bannerPromises);
+  }
+  
   const serviceReferenceMap = new Map();
   
   console.log(`Creating ${servicesToCreate.length} service entities...`);
@@ -643,6 +694,10 @@ async function addServiceTypesAndDates(
       
     console.log(`Updating ${crmSubProducts.length} CRM subProducts with IDs`);
     campaignGroup.CRMForm.subProducts = orderedSubProducts;
+  }
+
+  if (campaignGroup.bannerForm) {
+    delete campaignGroup.bannerForm;
   }
 
   return campaignGroup;

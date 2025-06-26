@@ -73,6 +73,7 @@ export const topLevelServiceKeys: (keyof CampaignGroup)[] = [
   "ratingAndReviewForm",
   "mediaOnForm",
   "CRMForm",
+  "bannerForm",
 ];
 
 function mapServiceDates(service: Service): Service {
@@ -545,7 +546,7 @@ async function addServiceTypesAndDates(
   
   // Procesar banners en bannerForm.bannerForms
   if (
-    campaignGroup.bannerForm?.bannerForms &&
+    campaignGroup.bannerForm &&
     Array.isArray(campaignGroup.bannerForm.bannerForms)
   ) {
     const originalBanners = JSON.parse(JSON.stringify(campaignGroup.bannerForm.bannerForms));
@@ -668,6 +669,20 @@ async function addServiceTypesAndDates(
     }
   }
 
+  if (campaignGroup.bannerForm && Array.isArray(campaignGroup.bannerForm.bannerForms)) {
+    const bannerServices = validServices.filter(s => s.type && s.type.startsWith("bannerForm."));
+    const orderedBanners = bannerServices
+      .sort((a, b) => (a.originalIndex || 0) - (b.originalIndex || 0))
+      .map(s => {
+        const originalBanner = campaignGroup.bannerForm!.bannerForms?.[s.originalIndex || 0];
+        return {
+          ...originalBanner,
+          id: s.id
+        };
+      });
+    campaignGroup.bannerForm.bannerForms = orderedBanners;
+  }
+
   if (campaignGroup.homeLandingForm?.strategies) {
     const homeLandingStrategies = validServices.filter(s => s.type === "homeLandingForm.strategies");
     const orderedStrategies = homeLandingStrategies
@@ -715,10 +730,6 @@ async function addServiceTypesAndDates(
       
     console.log(`Updating ${crmSubProducts.length} CRM subProducts with IDs`);
     campaignGroup.CRMForm.subProducts = orderedSubProducts;
-  }
-
-  if (campaignGroup.bannerForm) {
-    delete campaignGroup.bannerForm;
   }
 
   return campaignGroup;

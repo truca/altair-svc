@@ -382,6 +382,7 @@ const typeDefinitions = /* GraphQL */ `
 
     # Common fields
     campaignId: ID
+    campaign: CampaignGroup
     budget: Float
     startDate: DateTime
     endDate: DateTime

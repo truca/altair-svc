@@ -609,7 +609,6 @@ export class ModelDirective extends SchemaDirectiveVisitor {
         ...objectIds,
       };
 
-      // Procesar solo los campos de fecha presentes en el input
       const dateFields = [
         "startDate",
         "endDate",
@@ -633,23 +632,19 @@ export class ModelDirective extends SchemaDirectiveVisitor {
         }
       });
 
-      // Procesar fechas en bannerForms si existen
       if (data.bannerForms && Array.isArray(data.bannerForms)) {
         data.bannerForms = data.bannerForms.map(banner => {
           if (!banner) return banner;
-          // Procesar startDate
           if (banner.startDate && typeof banner.startDate === 'string') {
             const date = new Date(banner.startDate);
             date.setUTCHours(0, 0, 0, 0);
             banner.startDate = admin.firestore.Timestamp.fromDate(date);
           }
-          // Procesar endDate
           if (banner.endDate && typeof banner.endDate === 'string') {
             const date = new Date(banner.endDate);
             date.setUTCHours(23, 59, 59, 999);
             banner.endDate = admin.firestore.Timestamp.fromDate(date);
           }
-          // Procesar implementationDate
           if (banner.implementationDate && typeof banner.implementationDate === 'string') {
             const date = new Date(banner.implementationDate);
             date.setUTCHours(12, 0, 0, 0);
@@ -674,12 +669,12 @@ export class ModelDirective extends SchemaDirectiveVisitor {
         throw new Error(`Failed to update ${type}`);
       }
 
-      // Si es un Service, actualiza el CampaignGroup correspondiente
       if (type.name === "Service" && this.isFirestore) {
         try {
-          const serviceId = args.where.id || args.where._id;
-          const campaignId = data.campaignId || args.data.campaignId;
-          const serviceType = data.serviceType || args.data.serviceType;
+          const serviceId = updated?.id || args?.where.id || args?.where._id;
+          const campaignId = updated?.campaignId || data?.campaignId || args?.data.campaignId;
+          const serviceType = updated?.serviceType || data?.serviceType || args?.data.serviceType;
+
           if (serviceId && campaignId && serviceType) {
             await updateServiceInCampaignGroup(campaignId, serviceId, serviceType, data);
           }

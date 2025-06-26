@@ -658,8 +658,16 @@ async function addServiceTypesAndDates(
     ...validServices.map(s => s.id)
   ];
   
+  for (const singleType of SINGLE_SERVICE_TYPES) {
+    const found = validServices.find(s => s.type === singleType);
+    if (found && campaignGroup[singleType]) {
+      campaignGroup[singleType] = {
+        ...campaignGroup[singleType],
+        id: found.id
+      };
+    }
+  }
 
-  
   if (campaignGroup.homeLandingForm?.strategies) {
     const homeLandingStrategies = validServices.filter(s => s.type === "homeLandingForm.strategies");
     const orderedStrategies = homeLandingStrategies
@@ -671,7 +679,6 @@ async function addServiceTypesAndDates(
           id: s.id
         };
       });
-      
     console.log(`Updating ${homeLandingStrategies.length} homeLandingForm strategies with IDs`);
     campaignGroup.homeLandingForm.strategies = orderedStrategies;
   }
@@ -772,6 +779,7 @@ export async function updateServiceInCampaignGroup(
 ) {
   const campaignGroupCollection = admin.firestore().collection(constants.COLLECTIONS_DATABASES.CAMPAIGN_GROUP);
   const campaignGroupDoc = await campaignGroupCollection.doc(campaignGroupId).get();
+  console.log({campaignGroupId, serviceId, serviceType, newServiceData})
 
   if (!campaignGroupDoc.exists) {
     return;
@@ -780,8 +788,9 @@ export async function updateServiceInCampaignGroup(
   const campaignGroupData: any = campaignGroupDoc.data() || {};
   const updateData: any = {};
 
+ 
+
   if (SERVICE_TYPE_TO_FIELD[serviceType]) {
-    // Es un arreglo (strategies, subProducts, etc)
     const [formField, arrayField] = SERVICE_TYPE_TO_FIELD[serviceType];
     if (campaignGroupData[formField]?.[arrayField]) {
       const arr = [...campaignGroupData[formField][arrayField]];
@@ -795,6 +804,8 @@ export async function updateServiceInCampaignGroup(
       }
     }
   } else if (SINGLE_SERVICE_TYPES.includes(serviceType)) {
+    console.log(`Updating single service type: ${serviceType}`);
+    console.log(`New service data:`, newServiceData);
     updateData[serviceType] = { ...newServiceData };
   } else if (serviceType && serviceType.startsWith("bannerForm.")) {
     if (campaignGroupData.bannerForm?.bannerForms) {

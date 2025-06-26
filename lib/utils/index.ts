@@ -3,7 +3,7 @@ import { ModelDirective } from "../ModelDirective";
 import { StaticModelDirective } from "../StaticModelDirective";
 import { createStore, DbTypes } from "../stores/utils";
 import { CookieStore, FormsHash, Profile } from "../types";
-
+import { v4 as uuidv4 } from 'uuid';
 import { GraphQLID } from "graphql";
 import _ from "lodash";
 import * as jwt from "jsonwebtoken";
@@ -16,7 +16,6 @@ export interface VerifyTokenResult {
   decoded?: object | string;
   error?: string;
 }
-
 // Secure token verification method
 export function verifyToken(token: string, secret: string): VerifyTokenResult {
   if (!token) {
@@ -190,7 +189,7 @@ export function makeSchema({
         info: any
       ) => {
         const profileType = context?.typeMap?.Service;
-        const startDateValue =
+        const implementationDateValue =
           params.startDate && params.endDate
             ? `>=${params.startDate},<=${params.endDate}`
             : params.startDate
@@ -205,7 +204,7 @@ export function makeSchema({
           where: {
             ...params.where,
             ...(params.serviceType ? { serviceType: params.serviceType } : {}),
-            ...(startDateValue ? { startDate: startDateValue } : {}),
+            ...(implementationDateValue ? { implementationDate: implementationDateValue } : {}),
           },
         };
         return StaticModelDirective.findQueryResolver(profileType)(
@@ -218,11 +217,11 @@ export function makeSchema({
       ...queries,
     },
     Mutation: {
-      readTextFile: async (_: any, { file }: { file: File }) => {
+      readTextFile: async (_: any, { file }: { file: any }) => {
         const textContent = await file.text();
         return textContent;
       },
-      saveFile: async (_: any, { file }: { file: File }) => {
+      saveFile: async (_: any, { file }: { file: any }) => {
         try {
           const fileArrayBuffer = await file.arrayBuffer();
           await fs.promises.writeFile(
@@ -352,3 +351,7 @@ export function makeSchema({
     },
   });
 }
+
+export function generateUUID(): string {
+  return uuidv4();
+} 

@@ -249,10 +249,15 @@ export class FirestoreStore implements Store {
     };
 
     const collectionRef = this.getCollection(props.type.name);
-    const docRef = await collectionRef.add(data);
-    const snapshot = await docRef.get();
-
-    return this.formatOutput({ id: snapshot.id, ...snapshot.data() });
+    if (props.data && (props.data as any).id) {
+      await collectionRef.doc((props.data as any).id).set(data);
+      const snapshot = await collectionRef.doc((props.data as any).id).get();
+      return this.formatOutput({ id: (props.data as any).id, ...snapshot.data() });
+    } else {
+      const docRef = await collectionRef.add(data);
+      const snapshot = await docRef.get();
+      return this.formatOutput({ id: snapshot.id, ...snapshot.data() });
+    }
   }
 
   public async update(

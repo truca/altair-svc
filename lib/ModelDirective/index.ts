@@ -32,18 +32,10 @@ import {
 import { mapEntity } from "./mapEntity";
 import admin from "firebase-admin";
 import { constants } from "../../src/constants";
+import { topLevelServiceKeys, updateServiceInCampaignGroup } from "./mapEntity/campaignGroup";
 
 import { config } from "dotenv";
 config();
-
-interface Service {
-  startDate?: Date | string | admin.firestore.Timestamp;
-  endDate?: Date | string | admin.firestore.Timestamp;
-  bannerFadStartDate?: string | Date | admin.firestore.Timestamp;
-  bannerFadEndDate?: string | Date | admin.firestore.Timestamp;
-  bannerMenuStartDate?: string | Date | admin.firestore.Timestamp;
-  bannerMenuEndDate?: string | Date | admin.firestore.Timestamp;
-}
 
 export interface ResolverContext {
   directives: {
@@ -116,6 +108,7 @@ export async function visitNestedModels({
   for (const key of Object.keys(data)) {
     if (key === "_id") continue;
     if (!selectedFieldsHash[key]) continue;
+    if (topLevelServiceKeys.includes(key)) continue;
 
     const value = data[key];
     const field = getNamedType(type.getFields()[key]) as any;
@@ -607,33 +600,50 @@ export class ModelDirective extends SchemaDirectiveVisitor {
         ...objectIds,
       };
 
-      const startDateKeys: (keyof Service)[] = [
+      const dateFields = [
         "startDate",
+        "endDate",
+        "implementationDate",
         "bannerFadStartDate",
         "bannerMenuStartDate",
-      ];
-
-      startDateKeys.forEach((key) => {
-        if (data[key]) {
-          const date = new Date(data[key]);
-          date.setUTCHours(0, 0, 0, 0);
-          data.startDate = admin.firestore.Timestamp.fromDate(date);
-        }
-      });
-
-      const endDateKeys: (keyof Service)[] = [
-        "endDate",
         "bannerFadEndDate",
-        "bannerMenuEndDate",
+        "bannerMenuEndDate"
       ];
-
-      endDateKeys.forEach((key) => {
-        if (data[key]) {
+      dateFields.forEach((key) => {
+        if (data[key] && typeof data[key] === 'string') {
           const date = new Date(data[key]);
-          date.setUTCHours(23, 59, 59, 999);
-          data.endDate = admin.firestore.Timestamp.fromDate(date);
+          if (key === "endDate" || key === "bannerFadEndDate" || key === "bannerMenuEndDate") {
+            date.setUTCHours(23, 59, 59, 999);
+          } else if (key === "implementationDate") {
+            date.setUTCHours(12, 0, 0, 0);
+          } else {
+            date.setUTCHours(0, 0, 0, 0);
+          }
+          data[key] = admin.firestore.Timestamp.fromDate(date);
         }
       });
+
+      if (data.bannerForms && Array.isArray(data.bannerForms)) {
+        data.bannerForms = data.bannerForms.map(banner => {
+          if (!banner) return banner;
+          if (banner.startDate && typeof banner.startDate === 'string') {
+            const date = new Date(banner.startDate);
+            date.setUTCHours(0, 0, 0, 0);
+            banner.startDate = admin.firestore.Timestamp.fromDate(date);
+          }
+          if (banner.endDate && typeof banner.endDate === 'string') {
+            const date = new Date(banner.endDate);
+            date.setUTCHours(23, 59, 59, 999);
+            banner.endDate = admin.firestore.Timestamp.fromDate(date);
+          }
+          if (banner.implementationDate && typeof banner.implementationDate === 'string') {
+            const date = new Date(banner.implementationDate);
+            date.setUTCHours(12, 0, 0, 0);
+            banner.implementationDate = admin.firestore.Timestamp.fromDate(date);
+          }
+          return banner;
+        });
+      }
 
       const updated = await context.directives.model[db].update(
         {
@@ -648,6 +658,20 @@ export class ModelDirective extends SchemaDirectiveVisitor {
 
       if (!updated) {
         throw new Error(`Failed to update ${type}`);
+      }
+
+      if (type.name === "Service" && this.isFirestore) {
+        try {
+          const serviceId = updated?.id || args?.where.id || args?.where._id;
+          const campaignId = updated?.campaignId || data?.campaignId || args?.data.campaignId;
+          const serviceType = updated?.serviceType || data?.serviceType || args?.data.serviceType;
+
+          if (serviceId && campaignId && serviceType) {
+            await updateServiceInCampaignGroup(campaignId, serviceId, serviceType, data);
+          }
+        } catch (error) {
+          console.error("Error updating CampaignGroup from service:", error);
+        }
       }
 
       const rootObject = await context.directives.model[db].findOne(

@@ -201,6 +201,7 @@ const typeDefinitions = /* GraphQL */ `
     subCategoryId: [String!]!
     startDate: String!
     endDate: String!
+    implementationDate: String!
     campaignTypeId: String!
     customId: String
     nomenclature: String
@@ -253,6 +254,9 @@ const typeDefinitions = /* GraphQL */ `
     budget: Float!
     # strategies was [HomeLandingStrategy!]! → [Service!]!
     strategies: [Service]
+    campaignSellerId: String
+    campaignBrandId: [String!]
+    categoryId: [String!]
   }
 
   type PlannerComments {
@@ -272,6 +276,7 @@ const typeDefinitions = /* GraphQL */ `
     commission: String
     startDate: DateTime
     endDate: DateTime
+    implementationDate: DateTime
 
     campaignSellerId: String!
     campaignBrandId: [String!]!
@@ -281,8 +286,9 @@ const typeDefinitions = /* GraphQL */ `
   type BannerForm {
     bannerTypeId: String
     budget: Float
-    startDate: String
-    endDate: String
+    startDate: DateTime
+    endDate: DateTime
+    implementationDate: DateTime
     segmentationTypeId: String
     # categoryId: [String]
     audienceId: [String]
@@ -312,6 +318,7 @@ const typeDefinitions = /* GraphQL */ `
     budget: Float
     startDate: DateTime
     endDate: DateTime
+    implementationDate: DateTime
 
     #Fields from planner
     userAssigned: [String]
@@ -385,6 +392,8 @@ const typeDefinitions = /* GraphQL */ `
     # Fields from HomeLandingStrategy
     visualKey: String
     totalBudget: Float
+
+
   }
   # CampaignGroup
 

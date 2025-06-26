@@ -1,6 +1,7 @@
 import { Timestamp } from "@google-cloud/firestore";
 import admin from "firebase-admin";
 import { constants, SERVICE_TYPE_TO_FIELD, SINGLE_SERVICE_TYPES } from '../../../src/constants';
+import { generateUUID } from '../../../lib/utils';
 
 // Define interfaces for clarity (adjust as needed)
 interface Service {
@@ -345,393 +346,195 @@ function calculateDates(strategies: Service[]): {
 async function addServiceTypesAndDates(
   campaignGroup: CampaignGroup
 ): Promise<CampaignGroup> {
+  // Generar ID de campaña
+  const campaignId = generateUUID();
+  campaignGroup.id = campaignId;
   const customId = await generateCustomId();
   campaignGroup.customId = customId;
-
   const country = campaignGroup.country;
-  
-  let servicesToCreate: any[] = [];
-
+  const servicesToCreate: any[] = [];
+  const serviceIdsMap: Record<string, string> = {};
   const serviceWithoutDatesKeys: (keyof CampaignGroup)[] = [
     "mediaOnForm",
     "homeLandingForm",
     "sponsoredProductForm",
     "sponsoredBrandForm",
   ];
-
-  // Esperamos a que todas las promesas se resuelvan
   await Promise.all(serviceWithoutDatesKeys.map(async (key) => {
     const service = campaignGroup[key];
     if (service && typeof service === "object") {
+      const serviceId = generateUUID();
+      service.id = serviceId;
+      serviceIdsMap[`${key}`] = serviceId;
       service.serviceType = key;
       service.campaignGroupCustomId = customId;
       service.country = country;
+      service.campaignId = campaignId;
       service.deletedAt = null;
-
       if (serviceWithoutDatesKeys.includes(key)) {
         const { startDate, endDate } = calculateDates(
           service.strategies || service.bannerForms
         );
-
         service.startDate = startDate;
         service.endDate = endDate;
       }
-
       const serviceNomemclature = await generateNomenclature(
         campaignGroup,
         service
       );
       service.nomenclature = serviceNomemclature;
-
       mapServiceDates(service);
-      
-      // Add top-level service to our creation list
-      servicesToCreate.push({...service});
+      servicesToCreate.push({ ...service });
     }
   }));
-
-  // Process nested services in homeLandingForm.strategies
+  // Nested services: homeLandingForm.strategies
   if (
     campaignGroup.homeLandingForm?.strategies &&
     Array.isArray(campaignGroup.homeLandingForm.strategies)
   ) {
-    const originalStrategies = JSON.parse(JSON.stringify(campaignGroup.homeLandingForm.strategies));
-    
-    const strategyPromises = originalStrategies.map(
-      async (originalService: any, index: number) => {
-        if (originalService && typeof originalService === "object") {
-          const serviceToCreate = { ...originalService };
-          
-          serviceToCreate.serviceType = "homeLandingForm.strategies";
-          serviceToCreate.campaignGroupCustomId = customId;
-          serviceToCreate.country = country;
-          
-          if (!serviceToCreate.campaignSellerId || serviceToCreate.campaignSellerId === "") {
-            serviceToCreate.campaignSellerId = campaignGroup.sellerId;
-          }
-          
-          if ((!serviceToCreate.campaignBrandId || serviceToCreate.campaignBrandId.length === 0) && campaignGroup.brandId) {
-            serviceToCreate.campaignBrandId = campaignGroup.brandId;
-          }
-          
-          if ((!serviceToCreate.categoryId || serviceToCreate.categoryId.length === 0) && campaignGroup.categoryId) {
-            serviceToCreate.categoryId = campaignGroup.categoryId;
-          }
-
-          // Generate nomenclature
-          const serviceNomemclature = await generateNomenclature(
-            campaignGroup,
-            serviceToCreate
-          );
-          serviceToCreate.nomenclature = serviceNomemclature;
-
-          mapServiceDates(serviceToCreate);
-          
-          serviceToCreate.deletedAt = null;
-          
-          const refId = `homeLandingForm.strategies.${index}`;
-          servicesToCreate.push({
-            ...serviceToCreate,
-            _originalRef: refId,
-            _originalIndex: index
-          });
+    campaignGroup.homeLandingForm.strategies = await Promise.all(campaignGroup.homeLandingForm.strategies.map(async (strategy, idx) => {
+      if (strategy && typeof strategy === "object") {
+        const serviceId = generateUUID();
+        (strategy as any).id = serviceId;
+        serviceIdsMap[`homeLandingForm.strategies.${idx}`] = serviceId;
+        strategy.serviceType = "homeLandingForm.strategies";
+        strategy.campaignGroupCustomId = customId;
+        strategy.country = country;
+        strategy.campaignId = campaignId;
+        if (!strategy.campaignSellerId || strategy.campaignSellerId === "") {
+          strategy.campaignSellerId = campaignGroup.sellerId;
         }
+        if ((!strategy.campaignBrandId || strategy.campaignBrandId.length === 0) && campaignGroup.brandId) {
+          strategy.campaignBrandId = campaignGroup.brandId;
+        }
+        if ((!strategy.categoryId || strategy.categoryId.length === 0) && campaignGroup.categoryId) {
+          strategy.categoryId = campaignGroup.categoryId;
+        }
+        const serviceNomemclature = await generateNomenclature(
+          campaignGroup,
+          strategy
+        );
+        strategy.nomenclature = serviceNomemclature;
+        mapServiceDates(strategy);
+        (strategy as any).deletedAt = null;
+        servicesToCreate.push({ ...strategy, _originalRef: `homeLandingForm.strategies.${idx}`, _originalIndex: idx });
       }
-    );
-
-    await Promise.all(strategyPromises);
+      return strategy;
+    }));
   }
-  
+  // Nested services: mediaOnForm.strategies
   if (
     campaignGroup.mediaOnForm?.strategies &&
     Array.isArray(campaignGroup.mediaOnForm.strategies)
   ) {
-    const originalStrategies = JSON.parse(JSON.stringify(campaignGroup.mediaOnForm.strategies));
-    
-    const strategyPromises = originalStrategies.map(
-      async (originalService: any, index: number) => {
-        if (originalService && typeof originalService === "object") {
-          const serviceToCreate = { ...originalService };
-          
-          serviceToCreate.serviceType = "mediaOnForm.strategies";
-          serviceToCreate.campaignGroupCustomId = customId;
-          serviceToCreate.country = country;
-          
-          if (!serviceToCreate.campaignSellerId || serviceToCreate.campaignSellerId === "") {
-            serviceToCreate.campaignSellerId = campaignGroup.sellerId;
-          }
-          
-          if ((!serviceToCreate.campaignBrandId || serviceToCreate.campaignBrandId.length === 0) && campaignGroup.brandId) {
-            serviceToCreate.campaignBrandId = campaignGroup.brandId;
-          }
-          
-          if ((!serviceToCreate.categoryId || serviceToCreate.categoryId.length === 0) && campaignGroup.categoryId) {
-            serviceToCreate.categoryId = campaignGroup.categoryId;
-          }
-          
-          // Generate nomenclature
-          const serviceNomemclature = await generateNomenclature(
-            campaignGroup,
-            serviceToCreate
-          );
-          serviceToCreate.nomenclature = serviceNomemclature;
-
-          mapServiceDates(serviceToCreate);
-          
-          serviceToCreate.deletedAt = null;
-          
-          const refId = `mediaOnForm.strategies.${index}`;
-          servicesToCreate.push({
-            ...serviceToCreate,
-            _originalRef: refId,
-            _originalIndex: index
-          });
+    campaignGroup.mediaOnForm.strategies = await Promise.all(campaignGroup.mediaOnForm.strategies.map(async (strategy, idx) => {
+      if (strategy && typeof strategy === "object") {
+        const serviceId = generateUUID();
+        (strategy as any).id = serviceId;
+        serviceIdsMap[`mediaOnForm.strategies.${idx}`] = serviceId;
+        strategy.serviceType = "mediaOnForm.strategies";
+        strategy.campaignGroupCustomId = customId;
+        strategy.country = country;
+        strategy.campaignId = campaignId;
+        if (!strategy.campaignSellerId || strategy.campaignSellerId === "") {
+          strategy.campaignSellerId = campaignGroup.sellerId;
         }
+        if ((!strategy.campaignBrandId || strategy.campaignBrandId.length === 0) && campaignGroup.brandId) {
+          strategy.campaignBrandId = campaignGroup.brandId;
+        }
+        if ((!strategy.categoryId || strategy.categoryId.length === 0) && campaignGroup.categoryId) {
+          strategy.categoryId = campaignGroup.categoryId;
+        }
+        const serviceNomemclature = await generateNomenclature(
+          campaignGroup,
+          strategy
+        );
+        strategy.nomenclature = serviceNomemclature;
+        mapServiceDates(strategy);
+        (strategy as any).deletedAt = null;
+        servicesToCreate.push({ ...strategy, _originalRef: `mediaOnForm.strategies.${idx}`, _originalIndex: idx });
       }
-    );
-
-    await Promise.all(strategyPromises);
+      return strategy;
+    }));
   }
-
+  // Nested services: CRMForm.subProducts
   if (
     campaignGroup.CRMForm?.subProducts &&
     Array.isArray(campaignGroup.CRMForm.subProducts)
   ) {
-    const originalSubProducts = JSON.parse(JSON.stringify(campaignGroup.CRMForm.subProducts));
-    
-    const subProductPromises = originalSubProducts.map(
-      async (originalService: any, index: number) => {
-        if (originalService && typeof originalService === "object") {
-          const serviceToCreate = { ...originalService };
-          
-          serviceToCreate.serviceType = "CRMForm.subProducts";
-          serviceToCreate.campaignGroupCustomId = customId;
-          serviceToCreate.country = country;
-          
-          if (!serviceToCreate.campaignSellerId || serviceToCreate.campaignSellerId === "") {
-            serviceToCreate.campaignSellerId = campaignGroup.sellerId;
-          }
-          
-          if ((!serviceToCreate.campaignBrandId || serviceToCreate.campaignBrandId.length === 0) && campaignGroup.brandId) {
-            serviceToCreate.campaignBrandId = campaignGroup.brandId;
-          }
-          
-          if ((!serviceToCreate.categoryId || serviceToCreate.categoryId.length === 0) && campaignGroup.categoryId) {
-            serviceToCreate.categoryId = campaignGroup.categoryId;
-          }
-
-          // Generate nomenclature
-          const serviceNomemclature = await generateNomenclature(
-            campaignGroup,
-            serviceToCreate
-          );
-          serviceToCreate.nomenclature = serviceNomemclature;
-
-          mapServiceDates(serviceToCreate);
-          
-          serviceToCreate.deletedAt = null;
-          
-          const refId = `CRMForm.subProducts.${index}`;
-          servicesToCreate.push({
-            ...serviceToCreate,
-            _originalRef: refId,
-            _originalIndex: index
-          });
+    campaignGroup.CRMForm.subProducts = await Promise.all(campaignGroup.CRMForm.subProducts.map(async (subProduct, idx) => {
+      if (subProduct && typeof subProduct === "object") {
+        const serviceId = generateUUID();
+        (subProduct as any).id = serviceId;
+        serviceIdsMap[`CRMForm.subProducts.${idx}`] = serviceId;
+        subProduct.serviceType = "CRMForm.subProducts";
+        subProduct.campaignGroupCustomId = customId;
+        subProduct.country = country;
+        subProduct.campaignId = campaignId;
+        if (!subProduct.campaignSellerId || subProduct.campaignSellerId === "") {
+          subProduct.campaignSellerId = campaignGroup.sellerId;
         }
+        if ((!subProduct.campaignBrandId || subProduct.campaignBrandId.length === 0) && campaignGroup.brandId) {
+          subProduct.campaignBrandId = campaignGroup.brandId;
+        }
+        if ((!subProduct.categoryId || subProduct.categoryId.length === 0) && campaignGroup.categoryId) {
+          subProduct.categoryId = campaignGroup.categoryId;
+        }
+        const serviceNomemclature = await generateNomenclature(
+          campaignGroup,
+          subProduct
+        );
+        subProduct.nomenclature = serviceNomemclature;
+        mapServiceDates(subProduct);
+        (subProduct as any).deletedAt = null;
+        servicesToCreate.push({ ...subProduct, _originalRef: `CRMForm.subProducts.${idx}`, _originalIndex: idx });
       }
-    );
-
-    await Promise.all(subProductPromises);
+      return subProduct;
+    }));
   }
-  
-  // Procesar banners en bannerForm.bannerForms
+  // Nested services: bannerForm.bannerForms
   if (
     campaignGroup.bannerForm &&
     Array.isArray(campaignGroup.bannerForm.bannerForms)
   ) {
-    const originalBanners = JSON.parse(JSON.stringify(campaignGroup.bannerForm.bannerForms));
-    const bannerPromises = originalBanners.map(
-      async (originalBanner: any, index: number) => {
-        if (originalBanner && typeof originalBanner === "object") {
-          const serviceToCreate = { ...originalBanner };
-          // Heredar datos del campaignGroup
-          serviceToCreate.campaignGroupCustomId = customId;
-          serviceToCreate.country = country;
-          if (campaignGroup.id) {
-            serviceToCreate.campaignId = campaignGroup.id;
-          }
-          if (!serviceToCreate.campaignSellerId || serviceToCreate.campaignSellerId === "") {
-            serviceToCreate.campaignSellerId = campaignGroup.sellerId;
-          }
-          if ((!serviceToCreate.campaignBrandId || serviceToCreate.campaignBrandId.length === 0) && campaignGroup.brandId) {
-            serviceToCreate.campaignBrandId = campaignGroup.brandId;
-          }
-          if ((!serviceToCreate.categoryId || serviceToCreate.categoryId.length === 0) && campaignGroup.categoryId) {
-            serviceToCreate.categoryId = campaignGroup.categoryId;
-          }
-          // Asignar serviceType dinámico
-          const bannerTypeId = serviceToCreate.bannerTypeId || "UNKNOWN";
-          serviceToCreate.serviceType = `bannerForm.${bannerTypeId}`;
-          // Guardar bannerTypeId explícitamente
-          serviceToCreate.bannerTypeId = bannerTypeId;
-          // Nomenclatura
-          const serviceNomemclature = await generateNomenclature(
-            campaignGroup,
-            serviceToCreate
-          );
-          serviceToCreate.nomenclature = serviceNomemclature;
-          mapServiceDates(serviceToCreate);
-          // Eliminar bannerForms si existe en el objeto individual
-          if (serviceToCreate.bannerForms) {
-            delete serviceToCreate.bannerForms;
-          }
-          serviceToCreate.deletedAt = null;
-          const refId = `bannerForm.bannerForms.${index}`;
-          servicesToCreate.push({
-            ...serviceToCreate,
-            _originalRef: refId,
-            _originalIndex: index
-          });
+    campaignGroup.bannerForm.bannerForms = await Promise.all(campaignGroup.bannerForm.bannerForms.map(async (banner, idx) => {
+      if (banner && typeof banner === "object") {
+        const serviceId = generateUUID();
+        (banner as any).id = serviceId;
+        serviceIdsMap[`bannerForm.bannerForms.${idx}`] = serviceId;
+        banner.serviceType = `bannerForm.${banner.bannerTypeId || "UNKNOWN"}`;
+        banner.campaignGroupCustomId = customId;
+        banner.country = country;
+        banner.campaignId = campaignId;
+        if (!banner.campaignSellerId || banner.campaignSellerId === "") {
+          banner.campaignSellerId = campaignGroup.sellerId;
         }
+        if ((!banner.campaignBrandId || banner.campaignBrandId.length === 0) && campaignGroup.brandId) {
+          banner.campaignBrandId = campaignGroup.brandId;
+        }
+        if ((!banner.categoryId || banner.categoryId.length === 0) && campaignGroup.categoryId) {
+          banner.categoryId = campaignGroup.categoryId;
+        }
+        const serviceNomemclature = await generateNomenclature(
+          campaignGroup,
+          banner
+        );
+        banner.nomenclature = serviceNomemclature;
+        mapServiceDates(banner);
+        (banner as any).deletedAt = null;
+        servicesToCreate.push({ ...banner, _originalRef: `bannerForm.bannerForms.${idx}`, _originalIndex: idx });
       }
-    );
-    await Promise.all(bannerPromises);
+      return banner;
+    }));
   }
-  
-  const serviceReferenceMap = new Map();
-  
-  console.log(`Creating ${servicesToCreate.length} service entities...`);
-  
-  servicesToCreate = servicesToCreate.filter(
-    s => !(
-      (s.serviceType === "homeLandingForm" && s.strategies && s.strategies.length > 0) ||
-      (s.serviceType === "CRMForm" && s.subProducts && s.subProducts.length > 0) ||
-      (s.serviceType === "mediaOnForm" && s.strategies && s.strategies.length > 0)
-    )
-  );
-  
-  const serviceCreationPromises = servicesToCreate.map(async (serviceData, index) => {
-    try {
-      console.log(`Creating service ${index + 1}/${servicesToCreate.length}, type: ${serviceData.serviceType}`);
-      
-      const originalRef = serviceData._originalRef;
-      const originalIndex = serviceData._originalIndex;
-      delete serviceData._originalRef;
-      delete serviceData._originalIndex;
-      
-      serviceData.createdAt = new Date();
-      
-      const serviceCollection = admin
-        .firestore()
-        .collection(constants.COLLECTIONS_DATABASES.SERVICE);
-      
-      const docRef = await serviceCollection.add(serviceData);
-      const serviceId = docRef.id;
-      console.log(`Service created with ID: ${serviceId}`);
-      if (originalRef) {
-        serviceReferenceMap.set(originalRef, { id: serviceId, type: serviceData.serviceType, originalIndex });
-      }
-      
-      return { id: serviceId, type: serviceData.serviceType, originalRef, originalIndex };
-    } catch (error) {
-      console.error("Error creating service:", error);
-      console.error(error);
-      return null;
-    }
-  });
-  
-  const createdServices = await Promise.all(serviceCreationPromises);
-  const validServices = createdServices.filter((s) => s !== null) as Array<{
-    id: string;
-    type: string;
-    originalRef?: string;
-    originalIndex?: number;
-  }>;
-  
-  console.log(`Successfully created ${validServices.length} services`);
-  
-  if (!campaignGroup.campaignIds) {
-    campaignGroup.campaignIds = [];
-  }
-  
-  campaignGroup.campaignIds = [
-    ...campaignGroup.campaignIds, 
-    ...validServices.map(s => s.id)
-  ];
-  
-  for (const singleType of SINGLE_SERVICE_TYPES) {
-    const found = validServices.find(s => s.type === singleType);
-    if (found && campaignGroup[singleType]) {
-      campaignGroup[singleType] = {
-        ...campaignGroup[singleType],
-        id: found.id
-      };
-    }
-  }
-
-  if (campaignGroup.bannerForm && Array.isArray(campaignGroup.bannerForm.bannerForms)) {
-    const bannerServices = validServices.filter(s => s.type && s.type.startsWith("bannerForm."));
-    const orderedBanners = bannerServices
-      .sort((a, b) => (a.originalIndex || 0) - (b.originalIndex || 0))
-      .map(s => {
-        const originalBanner = campaignGroup.bannerForm!.bannerForms?.[s.originalIndex || 0];
-        return {
-          ...originalBanner,
-          id: s.id
-        };
-      });
-    campaignGroup.bannerForm.bannerForms = orderedBanners;
-  }
-
-  if (campaignGroup.homeLandingForm?.strategies) {
-    const homeLandingStrategies = validServices.filter(s => s.type === "homeLandingForm.strategies");
-    const orderedStrategies = homeLandingStrategies
-      .sort((a, b) => (a.originalIndex || 0) - (b.originalIndex || 0))
-      .map(s => {
-        const originalStrategy = campaignGroup.homeLandingForm?.strategies?.[s.originalIndex || 0];
-        return {
-          ...originalStrategy,
-          id: s.id
-        };
-      });
-    console.log(`Updating ${homeLandingStrategies.length} homeLandingForm strategies with IDs`);
-    campaignGroup.homeLandingForm.strategies = orderedStrategies;
-  }
-  
-  if (campaignGroup.mediaOnForm?.strategies) {
-    const mediaOnStrategies = validServices.filter(s => s.type === "mediaOnForm.strategies");
-    
-    const orderedStrategies = mediaOnStrategies
-      .sort((a, b) => (a.originalIndex || 0) - (b.originalIndex || 0))
-      .map(s => {
-        const originalStrategy = campaignGroup.mediaOnForm?.strategies?.[s.originalIndex || 0];
-        return {
-          ...originalStrategy,
-          id: s.id
-        };
-      });
-      
-    console.log(`Updating ${mediaOnStrategies.length} mediaOnForm strategies with IDs`);
-    campaignGroup.mediaOnForm.strategies = orderedStrategies;
-  }
-  
-  if (campaignGroup.CRMForm?.subProducts) {
-    const crmSubProducts = validServices.filter(s => s.type === "CRMForm.subProducts");
-    
-    const orderedSubProducts = crmSubProducts
-      .sort((a, b) => (a.originalIndex || 0) - (b.originalIndex || 0))
-      .map(s => {
-        const originalSubProduct = campaignGroup.CRMForm?.subProducts?.[s.originalIndex || 0];
-        return {
-          ...originalSubProduct,
-          id: s.id
-        };
-      });
-      
-    console.log(`Updating ${crmSubProducts.length} CRM subProducts with IDs`);
-    campaignGroup.CRMForm.subProducts = orderedSubProducts;
-  }
-
+  // create service with ids generated
+  const serviceCollection = admin.firestore().collection(constants.COLLECTIONS_DATABASES.SERVICE);
+  await Promise.all(servicesToCreate.map(async (serviceData) => {
+    const { id, ...rest } = serviceData;
+    await serviceCollection.doc(id).set({ ...rest, id });
+  }));
+  // campaignIds campaignGroup
+  campaignGroup.campaignIds = servicesToCreate.map(s => s.id);
   return campaignGroup;
 }
 

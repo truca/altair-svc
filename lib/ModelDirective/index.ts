@@ -32,7 +32,7 @@ import {
 import { mapEntity } from "./mapEntity";
 import admin from "firebase-admin";
 import { constants } from "../../src/constants";
-import { updateServicesWithCampaignId, topLevelServiceKeys } from "./mapEntity/campaignGroup";
+import { updateServicesWithCampaignId, topLevelServiceKeys, updateServiceInCampaignGroup } from "./mapEntity/campaignGroup";
 
 import { config } from "dotenv";
 config();
@@ -672,6 +672,20 @@ export class ModelDirective extends SchemaDirectiveVisitor {
 
       if (!updated) {
         throw new Error(`Failed to update ${type}`);
+      }
+
+      // Si es un Service, actualiza el CampaignGroup correspondiente
+      if (type.name === "Service" && this.isFirestore) {
+        try {
+          const serviceId = args.where.id || args.where._id;
+          const campaignId = data.campaignId || args.data.campaignId;
+          const serviceType = data.serviceType || args.data.serviceType;
+          if (serviceId && campaignId && serviceType) {
+            await updateServiceInCampaignGroup(campaignId, serviceId, serviceType, data);
+          }
+        } catch (error) {
+          console.error("Error updating CampaignGroup from service:", error);
+        }
       }
 
       const rootObject = await context.directives.model[db].findOne(

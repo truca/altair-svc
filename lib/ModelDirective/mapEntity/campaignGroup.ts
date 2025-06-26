@@ -1,6 +1,6 @@
 import { Timestamp } from "@google-cloud/firestore";
 import admin from "firebase-admin";
-import { constants } from "../../../src/constants";
+import { constants, SERVICE_TYPE_TO_FIELD, SINGLE_SERVICE_TYPES } from '../../../src/constants';
 
 // Define interfaces for clarity (adjust as needed)
 interface Service {
@@ -762,4 +762,55 @@ export async function mapCampaignGroup(entity: any): Promise<any> {
   result._customIdForPostProcessing = result.customId;
   
   return result;
+}
+
+export async function updateServiceInCampaignGroup(
+  campaignGroupId: any,
+  serviceId: any,
+  serviceType: any,
+  newServiceData: any
+) {
+  const campaignGroupCollection = admin.firestore().collection(constants.COLLECTIONS_DATABASES.CAMPAIGN_GROUP);
+  const campaignGroupDoc = await campaignGroupCollection.doc(campaignGroupId).get();
+
+  if (!campaignGroupDoc.exists) {
+    return;
+  }
+
+  const campaignGroupData: any = campaignGroupDoc.data() || {};
+  const updateData: any = {};
+
+  if (SERVICE_TYPE_TO_FIELD[serviceType]) {
+    // Es un arreglo (strategies, subProducts, etc)
+    const [formField, arrayField] = SERVICE_TYPE_TO_FIELD[serviceType];
+    if (campaignGroupData[formField]?.[arrayField]) {
+      const arr = [...campaignGroupData[formField][arrayField]];
+      const idx = arr.findIndex((s: any) => s.id === serviceId);
+      if (idx !== -1) {
+        arr[idx] = { ...newServiceData };
+        updateData[formField] = {
+          ...campaignGroupData[formField],
+          [arrayField]: arr
+        };
+      }
+    }
+  } else if (SINGLE_SERVICE_TYPES.includes(serviceType)) {
+    updateData[serviceType] = { ...newServiceData };
+  } else if (serviceType && serviceType.startsWith("bannerForm.")) {
+    if (campaignGroupData.bannerForm?.bannerForms) {
+      const arr = [...campaignGroupData.bannerForm.bannerForms];
+      const idx = arr.findIndex((b: any) => b.id === serviceId);
+      if (idx !== -1) {
+        arr[idx] = { ...newServiceData };
+        updateData.bannerForm = {
+          ...campaignGroupData.bannerForm,
+          bannerForms: arr
+        };
+      }
+    }
+  }
+
+  if (Object.keys(updateData).length > 0) {
+    await campaignGroupDoc.ref.update(updateData);
+  } 
 }

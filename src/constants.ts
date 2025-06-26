@@ -21,3 +21,15 @@ export const constants = {
 };
 
 export const MODEL_TYPES = Object.values(constants.COLLECTIONS_DATABASES);
+
+export const SERVICE_TYPE_TO_FIELD: Record<string, [string, string]> = {
+  "homeLandingForm.strategies": ["homeLandingForm", "strategies"],
+  "mediaOnForm.strategies": ["mediaOnForm", "strategies"],
+  "CRMForm.subProducts": ["CRMForm", "subProducts"],
+};
+
+export const SINGLE_SERVICE_TYPES = [
+  "sponsoredProductForm",
+  "sponsoredBrandForm",
+  "ratingAndReviewForm",
+];

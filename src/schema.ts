@@ -701,7 +701,7 @@ const typeDefinitions = /* GraphQL */ `
     # Rating and Reviews specific fields
     budget: Float
     shippingCost: Float
-    agreedShipments: Int
+    agreedShipments: Float
     startDate: DateTime! @defaultFrom(parentAttribute: "startDate")
     endDate: DateTime! @defaultFrom(parentAttribute: "endDate")
     implementationDate: DateTime! @defaultFrom(parentAttribute: "implementationDate")

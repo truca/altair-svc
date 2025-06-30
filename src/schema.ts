@@ -6,7 +6,22 @@ const typeDefinitions = /* GraphQL */ `
   scalar ID
   scalar File
   scalar DateTime
-  directive @model(db: String) on OBJECT
+  type Option {
+    label: String
+    value: String
+  }
+  type StringOptions {
+    values: [String]
+  }
+  type ObjectOptions {
+    values: [Option]
+  }
+  union SelectOption = StringOptions | ObjectOptions
+  type SelectOptions {
+    values: SelectOption
+  }
+  # Directives
+  directive @model(db: String, table: String) on OBJECT
   directive @file(maxSize: Float!, types: [String!]!) on FIELD_DEFINITION
   directive @auth(
     create: [String]
@@ -16,6 +31,16 @@ const typeDefinitions = /* GraphQL */ `
   ) on OBJECT | FIELD_DEFINITION
   directive @connection(type: String) on FIELD_DEFINITION
   directive @subscribe(on: [String], topic: String) on OBJECT
+  directive @default(value: String) on FIELD_DEFINITION
+  union HiddenValue = String | Boolean
+  type HiddenCondition {
+    field: String
+    value: HiddenValue
+  }
+  directive @hidden(value: Boolean, cond: [HiddenCondition]) on FIELD_DEFINITION
+  directive @selectFrom(values: SelectOptions, table: String, filter: [String]) on FIELD_DEFINITION
+  directive @defaultFrom(parentAttribute: String) on FIELD_DEFINITION
+  directive @from(parentAttribute: String, queryParam: String) on FIELD_DEFINITION
 
   enum FieldType {
     TEXT
@@ -106,12 +131,6 @@ const typeDefinitions = /* GraphQL */ `
     profilePicture: String
     createdAt: DateTime
     updatedAt: DateTime
-    favoriteWarbands: [ObjectId]
-    favoriteCards: [ObjectId]
-    # collection: Collection
-    participatedEvents: [ObjectId] # Events the user participated in
-    wonMatches: [ObjectId] # Matches this user won
-    wonTournaments: [ObjectId] # Tournaments this user won
   }
 
   type ProductManager
@@ -270,10 +289,10 @@ const typeDefinitions = /* GraphQL */ `
     campaignGroup: CampaignGroup
     country: String @from(queryParam: "country")
     productManagerId: String! @selectFrom(table: "ProductManager")
-    businessUnitId: String! @selectFrom([{ label: "1P" }, { label: "3P" }])
+    businessUnitId: String! @selectFrom(values: ["1P", "3P"])
     campaignName: String!
-    eventTypeId: String! @selectFrom(["Cyber Day","Black Friday","14_F","Escolares","Black_Week","DDM","DDP","DDN","Sneaker_Corner","CD","CM","CW","Días_F","Navidad","Otra"])
-    campaignTypeId: String! @selectFrom([{label: "Táctico", value: "tactico"},{label: "Always On", value: "always_on"}])
+    eventTypeId: String! @selectFrom(values: ["Cyber Day","Black Friday","14_F","Escolares","Black_Week","DDM","DDP","DDN","Sneaker_Corner","CD","CM","CW","Días_F","Navidad","Otra"])
+    campaignTypeId: String! @selectFrom(values: [{label: "Táctico", value: "tactico"},{label: "Always On", value: "always_on"}])
     customId: String
     nomenclature: String
 
@@ -285,7 +304,7 @@ const typeDefinitions = /* GraphQL */ `
     
     #dates
     startDate: String!
-    endDate: String! @after(attribute: "startDate")
+    endDate: String!
     implementationDate: String!
 
     
@@ -301,25 +320,23 @@ const typeDefinitions = /* GraphQL */ `
 
 
     # template
-    # mediaOnEnabled: Boolean! @default(false)
+    # mediaOnEnabled: Boolean! @default(value: false)
     # mediaOn: MediaOn @hidden(mediaOnEnabled: false)
-    # bannersEnabled: Boolean! @default(false)
+    # bannersEnabled: Boolean! @default(value: false)
     # banner: Banner @hidden(bannersEnabled: false)
-    # CRMEnabled: Boolean! @default(false)
+    # CRMEnabled: Boolean! @default(value: false)
     # CRM: CRM @hidden(CRMEnabled: false)
-    # homeLandingEnabled: Boolean! @default(false)
+    # homeLandingEnabled: Boolean! @default(value: false)
     # homeLanding: HomeLanding @hidden(homeLandingEnabled: false)
     
     # service
-    sponsoredBrandsEnabled: Boolean! @default(false)
-    sponsoredBrand: SponsoredBrand @hidden(sponsoredBrandsEnabled: false)
-    sponsoredProductEnabled: Boolean! @default(false)
-    sponsoredProduct: SponsoredProduct @hidden(sponsoredProductEnabled: false)
-    ratingsAndReviewsEnabled: Boolean! @default(false)
-    ratingAndReview: RatingAndReview @hidden(ratingsAndReviewsEnabled: false)
+    sponsoredBrandsEnabled: Boolean! @default(value: false)
+    sponsoredBrand: SponsoredBrand @hidden(cond: [{ field: "sponsoredBrandsEnabled", value: false}])
+    sponsoredProductEnabled: Boolean! @default(value: false)
+    sponsoredProduct: SponsoredProduct @hidden(cond: [{ field: "sponsoredProductEnabled", value: false}])
+    ratingsAndReviewsEnabled: Boolean! @default(value: false)
+    ratingAndReview: RatingAndReview @hidden(cond: [{ field: "ratingsAndReviewsEnabled", value: false}])
   }
-
-  
 
   type PlannerComments {
     text: String!
@@ -467,7 +484,7 @@ const typeDefinitions = /* GraphQL */ `
     startDate: DateTime! @defaultFrom(parentAttribute: "startDate")
     endDate: DateTime! @defaultFrom(parentAttribute: "endDate")
     implementationDate: DateTime! @defaultFrom(parentAttribute: "implementationDate")
-    budgetType: String! @selectFrom([{label: "Total", value: "Total"}, {label: "Diario", value: "Diario"}])
+    budgetType: String! @selectFrom(values: [{label: "Total", value: "Total"}, {label: "Diario", value: "Diario"}])
     budget: Float!
     dailyLimitEnabled: Boolean
     dailyBudgetLimit: Float
@@ -478,8 +495,6 @@ const typeDefinitions = /* GraphQL */ `
     campaignSellerId: String! @from(parentAttribute: "sellerId")
     campaignBrandId: [String!]! @from(parentAttribute: "brandId")
     categoryId: [String!]! @from(parentAttribute: "categoryId")
-    createdAt: DateTime
-    updatedAt: DateTime
   }
 
   type SponsoredBrand
@@ -493,21 +508,19 @@ const typeDefinitions = /* GraphQL */ `
     startDate: DateTime! @defaultFrom(parentAttribute: "startDate")
     endDate: DateTime! @defaultFrom(parentAttribute: "endDate")
     implementationDate: DateTime! @defaultFrom(parentAttribute: "implementationDate")
-    budgetType: String! @selectFrom([{label: "Total", value: "Total"}, {label: "Diario", value: "Diario"}])
+    budgetType: String! @selectFrom(values: [{label: "Total", value: "Total"}, {label: "Diario", value: "Diario"}])
     budget: Float!
     dailyLimitEnabled: Boolean
     dailyBudgetLimit: Float
     title: String! # max 42 characters
     skus: String!
     url: String!
-    campaignTypeId: String! @selectFrom([{label: "Táctico", value: "tactico"}, {label: "Always On", value: "always_on"}])
+    campaignTypeId: String! @selectFrom(values: [{label: "Táctico", value: "tactico"}, {label: "Always On", value: "always_on"}])
     
     # Base campaign fields
     campaignSellerId: String! @from(parentAttribute: "sellerId")
     campaignBrandId: [String!]! @from(parentAttribute: "brandId")
     categoryId: [String!]! @from(parentAttribute: "categoryId")
-    createdAt: DateTime
-    updatedAt: DateTime
   }
 
   # type CRMSubProduct
@@ -684,8 +697,8 @@ const typeDefinitions = /* GraphQL */ `
     startDate: DateTime! @defaultFrom(parentAttribute: "startDate")
     endDate: DateTime! @defaultFrom(parentAttribute: "endDate")
     implementationDate: DateTime! @defaultFrom(parentAttribute: "implementationDate")
-    segmentationTypeId: String! @selectFrom(["Total Seller/Proveedor", "Total Marca", "Categoría", "SKU"])
-    sellerId: String! @selectFrom([{label: "1P", value: "1P"}, {label: "3P", value: "3P"}])
+    segmentationTypeId: String! @selectFrom(values: ["Total Seller/Proveedor", "Total Marca", "Categoría", "SKU"])
+    sellerId: String! @selectFrom(values: [{label: "1P", value: "1P"}, {label: "3P", value: "3P"}])
     brandId: String!
     skus: String!
     comment: String
@@ -716,12 +729,11 @@ const typeDefinitions = /* GraphQL */ `
     services: [HomeLandingStrategy]
   }
 
-  scalar HomeLandingLandingType = "landing"
   type HomeLandingLanding
     @model(table: "Service")
     @auth(read: ["public"], update: ["public"], delete: ["public"]) {
     # metadata
-    type: HomeLandingLandingType
+    type: String! @default(value: "landing") @hidden
     country: String @from(queryParam: "country") @hidden
     homeLandingId: ID @from(parentAttribute: "id") @hidden
     campaignSellerId: String! @from(parentAttribute: "campaignSellerId") @hidden
@@ -739,12 +751,11 @@ const typeDefinitions = /* GraphQL */ `
     implementationDate: DateTime! @defaultFrom(parentAttribute: "implementationDate")
   }
 
-  scalar HomeLandingServiceType = "vitrina6" | "loUltimo" | "huincha" | "otros"
   type HomeLandingService
     @model(table: "Service")
     @auth(read: ["public"], update: ["public"], delete: ["public"]) {
     # metadata
-    type: HomeLandingLandingType
+    type: String! @selectFrom(values: ["vitrina6", "loUltimo", "huincha", "otros"])
     country: String @from(queryParam: "country") @hidden
     homeLandingId: ID @from(parentAttribute: "id") @hidden
     campaignSellerId: String! @from(parentAttribute: "campaignSellerId") @hidden
@@ -762,6 +773,8 @@ const typeDefinitions = /* GraphQL */ `
     comment: String!
     implementationDate: DateTime! @defaultFrom(parentAttribute: "implementationDate")
   }
+
+  union HomeLandingStrategy = HomeLandingLanding | HomeLandingService
 
   # A unified Service type that combines all fields from your service (@model) types.
   # All fields (except serviceType) are optional.

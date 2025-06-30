@@ -6,7 +6,12 @@ const typeDefinitions = /* GraphQL */ `
   scalar ID
   scalar File
   scalar DateTime
+  scalar DefaultValue
   type Option {
+    label: String
+    value: String
+  }
+  input OptionInput {
     label: String
     value: String
   }
@@ -31,14 +36,17 @@ const typeDefinitions = /* GraphQL */ `
   ) on OBJECT | FIELD_DEFINITION
   directive @connection(type: String) on FIELD_DEFINITION
   directive @subscribe(on: [String], topic: String) on OBJECT
-  directive @default(value: String) on FIELD_DEFINITION
-  union HiddenValue = String | Boolean
-  type HiddenCondition {
+  directive @default(value: DefaultValue) on FIELD_DEFINITION
+  input HiddenCondition {
     field: String
-    value: HiddenValue
+    valueString: String
+    valueBoolean: Boolean
+    valueNumber: Float
   }
   directive @hidden(value: Boolean, cond: [HiddenCondition]) on FIELD_DEFINITION
-  directive @selectFrom(values: SelectOptions, table: String, filter: [String]) on FIELD_DEFINITION
+  directive @selectFrom(values: [String], optionValues: [OptionInput], table: String, filter: [String]) on FIELD_DEFINITION
+  # Added missing directive definition  
+  directive @selectManyFrom(values: [String], optionValues: [OptionInput]) on FIELD_DEFINITION
   directive @defaultFrom(parentAttribute: String) on FIELD_DEFINITION
   directive @from(parentAttribute: String, queryParam: String) on FIELD_DEFINITION
 
@@ -292,7 +300,7 @@ const typeDefinitions = /* GraphQL */ `
     businessUnitId: String! @selectFrom(values: ["1P", "3P"])
     campaignName: String!
     eventTypeId: String! @selectFrom(values: ["Cyber Day","Black Friday","14_F","Escolares","Black_Week","DDM","DDP","DDN","Sneaker_Corner","CD","CM","CW","Días_F","Navidad","Otra"])
-    campaignTypeId: String! @selectFrom(values: [{label: "Táctico", value: "tactico"},{label: "Always On", value: "always_on"}])
+    campaignTypeId: String! @selectFrom(optionValues: [{label: "Táctico", value: "tactico"},{label: "Always On", value: "always_on"}])
     customId: String
     nomenclature: String
 
@@ -331,11 +339,11 @@ const typeDefinitions = /* GraphQL */ `
     
     # service
     sponsoredBrandsEnabled: Boolean! @default(value: false)
-    sponsoredBrand: SponsoredBrand @hidden(cond: [{ field: "sponsoredBrandsEnabled", value: false}])
+    sponsoredBrand: SponsoredBrand @hidden(cond: [{ field: "sponsoredBrandsEnabled", valueBoolean: false}])
     sponsoredProductEnabled: Boolean! @default(value: false)
-    sponsoredProduct: SponsoredProduct @hidden(cond: [{ field: "sponsoredProductEnabled", value: false}])
+    sponsoredProduct: SponsoredProduct @hidden(cond: [{ field: "sponsoredProductEnabled", valueBoolean: false}])
     ratingsAndReviewsEnabled: Boolean! @default(value: false)
-    ratingAndReview: RatingAndReview @hidden(cond: [{ field: "ratingsAndReviewsEnabled", value: false}])
+    ratingAndReview: RatingAndReview @hidden(cond: [{ field: "ratingsAndReviewsEnabled", valueBoolean: false}])
   }
 
   type PlannerComments {
@@ -484,7 +492,7 @@ const typeDefinitions = /* GraphQL */ `
     startDate: DateTime! @defaultFrom(parentAttribute: "startDate")
     endDate: DateTime! @defaultFrom(parentAttribute: "endDate")
     implementationDate: DateTime! @defaultFrom(parentAttribute: "implementationDate")
-    budgetType: String! @selectFrom(values: [{label: "Total", value: "Total"}, {label: "Diario", value: "Diario"}])
+    budgetType: String! @selectFrom(optionValues: [{label: "Total", value: "Total"}, {label: "Diario", value: "Diario"}])
     budget: Float!
     dailyLimitEnabled: Boolean
     dailyBudgetLimit: Float
@@ -508,14 +516,14 @@ const typeDefinitions = /* GraphQL */ `
     startDate: DateTime! @defaultFrom(parentAttribute: "startDate")
     endDate: DateTime! @defaultFrom(parentAttribute: "endDate")
     implementationDate: DateTime! @defaultFrom(parentAttribute: "implementationDate")
-    budgetType: String! @selectFrom(values: [{label: "Total", value: "Total"}, {label: "Diario", value: "Diario"}])
+    budgetType: String! @selectFrom(optionValues: [{label: "Total", value: "Total"}, {label: "Diario", value: "Diario"}])
     budget: Float!
     dailyLimitEnabled: Boolean
     dailyBudgetLimit: Float
     title: String! # max 42 characters
     skus: String!
     url: String!
-    campaignTypeId: String! @selectFrom(values: [{label: "Táctico", value: "tactico"}, {label: "Always On", value: "always_on"}])
+    campaignTypeId: String! @selectFrom(optionValues: [{label: "Táctico", value: "tactico"}, {label: "Always On", value: "always_on"}])
     
     # Base campaign fields
     campaignSellerId: String! @from(parentAttribute: "sellerId")
@@ -698,7 +706,7 @@ const typeDefinitions = /* GraphQL */ `
     endDate: DateTime! @defaultFrom(parentAttribute: "endDate")
     implementationDate: DateTime! @defaultFrom(parentAttribute: "implementationDate")
     segmentationTypeId: String! @selectFrom(values: ["Total Seller/Proveedor", "Total Marca", "Categoría", "SKU"])
-    sellerId: String! @selectFrom(values: [{label: "1P", value: "1P"}, {label: "3P", value: "3P"}])
+    sellerId: String! @selectFrom(optionValues: [{label: "1P", value: "1P"}, {label: "3P", value: "3P"}])
     brandId: String!
     skus: String!
     comment: String

@@ -1,4 +1,4 @@
-import { createServer } from "node:http";
+import { createServer } from "http";
 import { createYoga } from "graphql-yoga";
 
 import { schema } from "./schema";
@@ -6,8 +6,8 @@ import { context } from "./context";
 import { generateTokens, setTokensAsCookies, verifyToken } from "../lib/utils";
 import { CookieStore } from "../lib/types";
 
-import { readFile, stat } from "node:fs/promises";
-import { join, extname } from "node:path";
+import { promises as fs } from "fs";
+import { join, extname } from "path";
 import * as cookie from "cookie";
 
 import { config } from "dotenv";
@@ -104,7 +104,7 @@ async function serveFile(req: any, res: any) {
 
   try {
     const absolutePath = join(__dirname, filePath);
-    const fileStat = await stat(absolutePath);
+    const fileStat = await fs.stat(absolutePath);
 
     if (!fileStat.isFile()) {
       res.writeHead(404, { "Content-Type": "text/plain" });
@@ -113,7 +113,7 @@ async function serveFile(req: any, res: any) {
     }
 
     res.writeHead(200, { "Content-Type": getContentType(absolutePath) });
-    const fileContent = await readFile(absolutePath);
+    const fileContent = await fs.readFile(absolutePath);
     res.end(fileContent);
   } catch (err) {
     res.writeHead(404, { "Content-Type": "text/plain" });

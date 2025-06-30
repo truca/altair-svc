@@ -11,6 +11,19 @@ import * as fs from "fs";
 import * as path from "path";
 import { Store } from "../stores/types";
 
+// Add these imports for schema introspection and directive parsing
+import { 
+  GraphQLObjectType, 
+  GraphQLType, 
+  isObjectType, 
+  isScalarType, 
+  isListType, 
+  isNonNullType,
+  GraphQLSchema,
+  DirectiveNode,
+  FieldDefinitionNode
+} from "graphql";
+
 // Interface for the function result
 export interface VerifyTokenResult {
   decoded?: object | string;
@@ -137,30 +150,311 @@ export function makeContext({
   return context;
 }
 
+// Field types mapping
+enum FieldType {
+  TEXT = "TEXT",
+  TEXTAREA = "TEXTAREA", 
+  NUMBER = "NUMBER",
+  EMAIL = "EMAIL",
+  PASSWORD = "PASSWORD",
+  CHECKBOX = "CHECKBOX",
+  RADIO = "RADIO",
+  SELECT = "SELECT",
+  DATE = "DATE",
+  TIME = "TIME",
+  DATETIME = "DATETIME",
+  FILE = "FILE",
+  IMAGE = "IMAGE",
+  URL = "URL",
+  TEL = "TEL",
+  COLOR = "COLOR",
+  RANGE = "RANGE",
+  SEARCH = "SEARCH",
+  HIDDEN = "HIDDEN",
+  SUBMIT = "SUBMIT",
+  RESET = "RESET",
+  BUTTON = "BUTTON"
+}
+
+enum ValueType {
+  STRING = "STRING",
+  BOOLEAN = "BOOLEAN", 
+  NUMBER = "NUMBER",
+  FILE = "FILE",
+  MIXED = "MIXED"
+}
+
+interface FieldOption {
+  label: string;
+  value: string;
+}
+
+interface FieldValidation {
+  label: string;
+  value: string;
+  valueType: ValueType;
+  errorMessage: string;
+}
+
+interface Field {
+  label: string;
+  field?: string;
+  type: FieldType;
+  defaultValue?: string | number | boolean | string[] | number[];
+  options?: FieldOption[];
+  validation?: FieldValidation[];
+}
+
+// Function to extract directive arguments
+function getDirectiveArgument(directives: readonly DirectiveNode[], directiveName: string, argName: string): any {
+  const directive = directives.find(d => d.name.value === directiveName);
+  if (!directive) return null;
+  
+  const arg = directive.arguments?.find(a => a.name.value === argName);
+  if (!arg) return null;
+  
+  // Helper function to parse any value type
+  function parseValue(value: any): any {
+    switch (value.kind) {
+      case 'StringValue':
+        return value.value;
+      case 'BooleanValue':
+        return value.value;
+      case 'IntValue':
+        return parseInt(value.value);
+      case 'FloatValue':
+        return parseFloat(value.value);
+      case 'ListValue':
+        return value.values.map((v: any) => parseValue(v));
+      case 'ObjectValue':
+        const obj: any = {};
+        value.fields.forEach((field: any) => {
+          obj[field.name.value] = parseValue(field.value);
+        });
+        return obj;
+      case 'NullValue':
+        return null;
+      default:
+        console.warn(`Unhandled directive argument type: ${value.kind}`);
+        return null;
+    }
+  }
+  
+  return parseValue(arg.value);
+}
+
+// Function to derive field type from GraphQL type and directives
+function deriveFieldType(field: any, directives: readonly DirectiveNode[]): FieldType {
+  // Check for directive-specific types first
+  if (getDirectiveArgument(directives, 'selectFrom', 'values') || 
+      getDirectiveArgument(directives, 'selectFrom', 'optionValues') ||
+      getDirectiveArgument(directives, 'selectFrom', 'table')) {
+    return FieldType.SELECT;
+  }
+  
+  if (getDirectiveArgument(directives, 'selectManyFrom', 'values') ||
+      getDirectiveArgument(directives, 'selectManyFrom', 'optionValues')) {
+    return FieldType.SELECT; // Will be handled as multi-select in options
+  }
+  
+  if (getDirectiveArgument(directives, 'hidden', 'value') === true ||
+      getDirectiveArgument(directives, 'hidden', 'cond')) {
+    return FieldType.HIDDEN;
+  }
+  
+  // Derive from GraphQL type
+  let baseType = field.type;
+  while (isNonNullType(baseType) || isListType(baseType)) {
+    baseType = baseType.ofType;
+  }
+  
+  if (baseType.name === 'Boolean') return FieldType.CHECKBOX;
+  if (baseType.name === 'DateTime') return FieldType.DATETIME;
+  if (baseType.name === 'Int' || baseType.name === 'Float') return FieldType.NUMBER;
+  if (baseType.name === 'File') return FieldType.FILE;
+  
+  return FieldType.TEXT;
+}
+
+// Function to generate field options from directives
+function generateFieldOptions(directives: readonly DirectiveNode[]): FieldOption[] | undefined {
+  // Check @selectFrom directive
+  const stringValues = getDirectiveArgument(directives, 'selectFrom', 'values');
+  const optionValues = getDirectiveArgument(directives, 'selectFrom', 'optionValues'); 
+  const table = getDirectiveArgument(directives, 'selectFrom', 'table');
+  
+  // Check @selectManyFrom directive
+  const manyStringValues = getDirectiveArgument(directives, 'selectManyFrom', 'values');
+  const manyOptionValues = getDirectiveArgument(directives, 'selectManyFrom', 'optionValues');
+  
+  const values = stringValues || manyStringValues;
+  const options = optionValues || manyOptionValues;
+  
+  console.log('generateFieldOptions debug:', {
+    stringValues,
+    optionValues,
+    table,
+    manyStringValues,
+    manyOptionValues,
+    values,
+    options
+  });
+  
+  if (options && Array.isArray(options)) {
+    const mappedOptions = options.map(opt => ({
+      label: opt.label || opt.value,
+      value: opt.value
+    }));
+    console.log('Generated options from optionValues:', mappedOptions);
+    return mappedOptions;
+  }
+  
+  if (values && Array.isArray(values)) {
+    const mappedValues = values.map(val => ({
+      label: val,
+      value: val
+    }));
+    console.log('Generated options from values:', mappedValues);
+    return mappedValues;
+  }
+  
+  // For table-based options, we'll return empty array and let the frontend handle it
+  if (table) {
+    console.log('Table-based options detected:', table);
+    return [];
+  }
+  
+  return undefined;
+}
+
+// Function to generate default value from directives
+function generateDefaultValue(directives: readonly DirectiveNode[]): any {
+  const defaultValue = getDirectiveArgument(directives, 'default', 'value');
+  if (defaultValue !== null) return defaultValue;
+  
+  const parentAttribute = getDirectiveArgument(directives, 'defaultFrom', 'parentAttribute');
+  if (parentAttribute) {
+    // This would be resolved at runtime with parent context
+    return undefined;
+  }
+  
+  return undefined;
+}
+
+// Function to generate validation rules
+function generateValidation(field: any, directives: readonly DirectiveNode[]): FieldValidation[] {
+  const validations: FieldValidation[] = [];
+  
+  // Add required validation for NonNull types
+  let baseType = field.type;
+  let isRequired = false;
+  if (isNonNullType(baseType)) {
+    isRequired = true;
+    baseType = baseType.ofType;
+  }
+  
+  if (isRequired) {
+    validations.push({
+      label: "required",
+      value: "true", 
+      valueType: ValueType.BOOLEAN,
+      errorMessage: "This field is required"
+    });
+  }
+  
+  // Add type validation
+  let valueType = ValueType.STRING;
+  if (baseType.name === 'Boolean') valueType = ValueType.BOOLEAN;
+  if (baseType.name === 'Int' || baseType.name === 'Float') valueType = ValueType.NUMBER;
+  
+  validations.push({
+    label: "type",
+    value: valueType.toLowerCase(),
+    valueType: ValueType.STRING,
+    errorMessage: `${field.name} should be a ${valueType.toLowerCase()}`
+  });
+  
+  return validations;
+}
+
+// Main function to generate fields from GraphQL type
+function generateFieldsFromType(schema: GraphQLSchema, typeName: string): Field[] {
+  const type = schema.getType(typeName) as GraphQLObjectType;
+  if (!type || !isObjectType(type)) {
+    return [];
+  }
+  
+  const fields = type.getFields();
+  const generatedFields: Field[] = [];
+  
+  Object.values(fields).forEach(field => {
+    const directives = field.astNode?.directives || [];
+    
+    // Skip if field has @hidden directive with value: true
+    const hiddenValue = getDirectiveArgument(directives, 'hidden', 'value');
+    if (hiddenValue === true) return;
+    
+    // Skip system fields
+    if (['createdAt', 'updatedAt', 'id'].includes(field.name)) return;
+    
+    const fieldType = deriveFieldType(field, directives);
+    const options = generateFieldOptions(directives);
+    const defaultValue = generateDefaultValue(directives);
+    const validation = generateValidation(field, directives);
+    
+    // Get field name override from @from directive
+    const fromParent = getDirectiveArgument(directives, 'from', 'parentAttribute');
+    const actualFieldName = fromParent || field.name;
+    
+    const generatedField = {
+      label: field.name,
+      field: actualFieldName !== field.name ? actualFieldName : undefined,
+      type: fieldType,
+      defaultValue,
+      options,
+      validation
+    };
+    
+    console.log(`Generated field for ${field.name}:`, generatedField);
+    generatedFields.push(generatedField);
+  });
+  
+  return generatedFields;
+}
+
 export function makeSchema({
   typeDefs,
   formTypes,
-  forms = {},
   queries = {},
   mutations = {},
 }: {
   typeDefs: string;
   formTypes: Record<string, string>;
-  forms?: FormsHash;
   queries?: { [key: string]: () => object };
   mutations?: { [key: string]: () => object };
   subscriptions?: { [key: string]: () => object };
 }) {
   const resolvers = {
     ID: GraphQLID,
-    FormType: {
-      ...formTypes,
-    },
     Query: {
-      form: async (_: any, { type }: { id: string; type: string }) => {
-        if (forms[type]) {
-          return { fields: forms[type] };
+      form: async (_: any, { type }: { type: string }, context: any) => {
+        // Generate fields from schema directives
+        try {
+          const schema = context.schema;
+          console.log({ type, schema });
+          if (schema) {
+            // Convert form type to GraphQL type name
+            const graphqlTypeName = type.charAt(0).toUpperCase() + type.slice(1).toLowerCase();
+            const generatedFields = generateFieldsFromType(schema, graphqlTypeName);
+            
+            if (generatedFields.length > 0) {
+              return { fields: generatedFields };
+            }
+          }
+        } catch (error) {
+          console.error('Error generating fields from schema:', error);
         }
+        
         return {
           fields: [],
         };
@@ -343,13 +637,26 @@ export function makeSchema({
     },
   };
 
-  return makeExecutableSchema({
+  const schema = makeExecutableSchema({
     typeDefs,
     resolvers,
     schemaDirectives: {
       model: ModelDirective,
     },
   });
+
+  // Ensure schema is available in context for resolvers
+  const originalQuery = resolvers.Query;
+  resolvers.Query = {
+    ...originalQuery,
+    form: async (_: any, { type }: { type: string }, context: any) => {
+      // Add schema to context
+      const contextWithSchema = { ...context, schema };
+      return originalQuery.form(_, { type }, contextWithSchema);
+    }
+  };
+
+  return schema;
 }
 
 export function generateUUID(): string {

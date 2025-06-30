@@ -108,14 +108,6 @@ const typeDefinitions = /* GraphQL */ `
     fields: [Field]
   }
 
-  enum FormType {
-    CAMPAIGNGROUP
-    SELLER
-    BRAND
-    CATEGORY
-    SUBCATEGORY
-    PRODUCTMANAGER
-  }
 
   # Represents a user.  Supports: User Registration and Login, Profile Customization, In-App Messaging, Integration with Other Platforms, Notifications and Updates.
   type Profile @model @auth(read: ["public"]) {
@@ -734,7 +726,7 @@ const typeDefinitions = /* GraphQL */ `
     
     # Home Landing specific fields
     budget: Float
-    services: [HomeLandingStrategy]
+    # services: [HomeLandingStrategy]
   }
 
   type HomeLandingLanding
@@ -901,7 +893,7 @@ const typeDefinitions = /* GraphQL */ `
   type Query {
     _: Boolean
     me(uid: String): Profile
-    form(type: FormType): Form
+    form(type: String): Form
     getServicesBetweenDates(
       startDate: DateTime
       endDate: DateTime
@@ -930,6 +922,7 @@ const typeDefinitions = /* GraphQL */ `
 
 const formTypes: FormTypes = {
   CAMPAIGNGROUP: "campaignGroup",
+  CAMPAIGN: "campaign",
   SELLER: "seller",
   BRAND: "brand",
   CATEGORY: "category",
@@ -940,7 +933,6 @@ const formTypes: FormTypes = {
 export const schema = makeSchema({
   typeDefs: typeDefinitions,
   formTypes,
-  forms: FORMS,
   queries: {},
   mutations: {},
 });

@@ -300,19 +300,32 @@ function generateFieldOptions(directives: readonly DirectiveNode[]): FieldOption
     options
   });
   
+  // Handle optionValues array: [{label: "Táctico", value: "tactico"}, {label: "Always On", value: "always_on"}]
+  // Should produce: [{label: "Táctico", value: "tactico"}, {label: "Always On", value: "always_on"}]
   if (options && Array.isArray(options)) {
-    const mappedOptions = options.map(opt => ({
-      label: opt.label || opt.value,
-      value: opt.value
-    }));
+    const mappedOptions = options.map(opt => {
+      if (typeof opt === 'object' && opt.label && opt.value) {
+        return {
+          label: opt.label,
+          value: opt.value
+        };
+      }
+      // Fallback if object doesn't have expected structure
+      return {
+        label: opt.label || opt.value || String(opt),
+        value: opt.value || String(opt)
+      };
+    });
     console.log('Generated options from optionValues:', mappedOptions);
     return mappedOptions;
   }
   
+  // Handle values array: ["1P", "3P"]
+  // Should produce: [{label: "1P", value: "1P"}, {label: "3P", value: "3P"}]
   if (values && Array.isArray(values)) {
     const mappedValues = values.map(val => ({
-      label: val,
-      value: val
+      label: String(val),
+      value: String(val)
     }));
     console.log('Generated options from values:', mappedValues);
     return mappedValues;

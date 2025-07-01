@@ -160,6 +160,9 @@ enum FieldType {
   CHECKBOX = "CHECKBOX",
   RADIO = "RADIO",
   SELECT = "SELECT",
+  MULTISELECT = "MULTISELECT",
+  SMART_SELECT = "SMART_SELECT",
+  SMART_MULTISELECT = "SMART_MULTISELECT",
   DATE = "DATE",
   TIME = "TIME",
   DATETIME = "DATETIME",
@@ -244,17 +247,21 @@ function getDirectiveArgument(directives: readonly DirectiveNode[], directiveNam
 }
 
 // Function to derive field type from GraphQL type and directives
-function deriveFieldType(field: any, directives: readonly DirectiveNode[]): FieldType {
-  // Check for directive-specific types first
-  if (getDirectiveArgument(directives, 'selectFrom', 'values') || 
-      getDirectiveArgument(directives, 'selectFrom', 'optionValues') ||
-      getDirectiveArgument(directives, 'selectFrom', 'table')) {
-    return FieldType.SELECT;
+export function deriveFieldType(type: GraphQLType, directives: readonly DirectiveNode[]): FieldType {
+  // Check for select directives first
+  const selectFromDirective = directives.find(d => d.name.value === 'selectFrom');
+  const selectManyFromDirective = directives.find(d => d.name.value === 'selectManyFrom');
+  
+  if (selectFromDirective) {
+    const tableArg = getDirectiveArgument(directives, 'selectFrom', 'table');
+    // Use SMART_SELECT if table is specified, otherwise regular SELECT
+    return tableArg ? FieldType.SMART_SELECT : FieldType.SELECT;
   }
   
-  if (getDirectiveArgument(directives, 'selectManyFrom', 'values') ||
-      getDirectiveArgument(directives, 'selectManyFrom', 'optionValues')) {
-    return FieldType.SELECT; // Will be handled as multi-select in options
+  if (selectManyFromDirective) {
+    const tableArg = getDirectiveArgument(directives, 'selectManyFrom', 'table');
+    // Use SMART_MULTISELECT if table is specified, otherwise MULTISELECT
+    return tableArg ? FieldType.SMART_MULTISELECT : FieldType.MULTISELECT;
   }
   
   if (getDirectiveArgument(directives, 'hidden', 'value') === true ||
@@ -263,7 +270,7 @@ function deriveFieldType(field: any, directives: readonly DirectiveNode[]): Fiel
   }
   
   // Derive from GraphQL type
-  let baseType = field.type;
+  let baseType = type;
   while (isNonNullType(baseType) || isListType(baseType)) {
     baseType = baseType.ofType;
   }
@@ -410,7 +417,7 @@ function generateFieldsFromType(schema: GraphQLSchema, typeName: string): Field[
     // Skip system fields
     if (['createdAt', 'updatedAt', 'id'].includes(field.name)) return;
     
-    const fieldType = deriveFieldType(field, directives);
+    const fieldType = deriveFieldType(field.type, directives);
     const options = generateFieldOptions(directives);
     const defaultValue = generateDefaultValue(directives);
     const validation = generateValidation(field, directives);
@@ -419,7 +426,7 @@ function generateFieldsFromType(schema: GraphQLSchema, typeName: string): Field[
     const fromParent = getDirectiveArgument(directives, 'from', 'parentAttribute');
     const actualFieldName = fromParent || field.name;
     
-    const generatedField = {
+    const generatedField: any = {
       label: field.name,
       field: actualFieldName !== field.name ? actualFieldName : undefined,
       type: fieldType,
@@ -427,6 +434,45 @@ function generateFieldsFromType(schema: GraphQLSchema, typeName: string): Field[
       options,
       validation
     };
+    
+    // Add SMART_SELECT specific properties
+    if (fieldType === FieldType.SMART_SELECT || fieldType === FieldType.SMART_MULTISELECT) {
+      const table = getDirectiveArgument(directives, fieldType === FieldType.SMART_SELECT ? 'selectFrom' : 'selectManyFrom', 'table');
+      const labelAttribute = getDirectiveArgument(directives, fieldType === FieldType.SMART_SELECT ? 'selectFrom' : 'selectManyFrom', 'labelAttribute');
+      const valueAttribute = getDirectiveArgument(directives, fieldType === FieldType.SMART_SELECT ? 'selectFrom' : 'selectManyFrom', 'valueAttribute');
+      const dependentField = getDirectiveArgument(directives, fieldType === FieldType.SMART_SELECT ? 'selectFrom' : 'selectManyFrom', 'dependentField');
+      const where = getDirectiveArgument(directives, fieldType === FieldType.SMART_SELECT ? 'selectFrom' : 'selectManyFrom', 'where');
+      const queryVariables = getDirectiveArgument(directives, fieldType === FieldType.SMART_SELECT ? 'selectFrom' : 'selectManyFrom', 'queryVariables');
+      
+      // Add smart select properties
+      generatedField.entity = table;
+      generatedField.labelAttribute = labelAttribute;
+      generatedField.valueAttribute = valueAttribute;
+      generatedField.dependentField = dependentField;
+      
+      if (where) {
+        try {
+          generatedField.where = JSON.parse(where);
+        } catch (e) {
+          console.warn(`Invalid JSON in where clause for field ${field.name}:`, where);
+        }
+      }
+      
+      if (queryVariables) {
+        try {
+          generatedField.inputProps = {
+            queryVariables: JSON.parse(queryVariables)
+          };
+        } catch (e) {
+          console.warn(`Invalid JSON in queryVariables for field ${field.name}:`, queryVariables);
+        }
+      }
+      
+      // Set isMulti for multi-select fields
+      if (fieldType === FieldType.SMART_MULTISELECT) {
+        generatedField.isMulti = true;
+      }
+    }
     
     console.log(`Generated field for ${field.name}:`, generatedField);
     generatedFields.push(generatedField);

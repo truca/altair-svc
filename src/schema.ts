@@ -44,9 +44,8 @@ const typeDefinitions = /* GraphQL */ `
     valueNumber: Float
   }
   directive @hidden(value: Boolean, cond: [HiddenCondition]) on FIELD_DEFINITION
-  directive @selectFrom(values: [String], optionValues: [OptionInput], table: String, filter: [String]) on FIELD_DEFINITION
-  # Added missing directive definition  
-  directive @selectManyFrom(values: [String], optionValues: [OptionInput]) on FIELD_DEFINITION
+  directive @selectFrom(values:[String],optionValues:[OptionInput],table:String,labelAttribute:String,valueAttribute:String,dependentField:String,where:String,queryVariables:String) on FIELD_DEFINITION
+  directive @selectManyFrom(values:[String],optionValues:[OptionInput],table:String,labelAttribute:String,valueAttribute:String,dependentField:String,where:String,queryVariables:String) on FIELD_DEFINITION
   directive @defaultFrom(parentAttribute: String) on FIELD_DEFINITION
   directive @from(parentAttribute: String, queryParam: String) on FIELD_DEFINITION
 
@@ -59,6 +58,9 @@ const typeDefinitions = /* GraphQL */ `
     CHECKBOX
     RADIO
     SELECT
+    MULTISELECT
+    SMART_SELECT
+    SMART_MULTISELECT
     DATE
     TIME
     DATETIME
@@ -102,6 +104,12 @@ const typeDefinitions = /* GraphQL */ `
     defaultValue: String
     options: [FieldOption]
     validation: [FieldValidation]
+    # Smart select properties
+    entity: String
+    labelAttribute: String
+    valueAttribute: String
+    dependentField: String
+    isMulti: Boolean
   }
 
   type Form {
@@ -297,10 +305,9 @@ const typeDefinitions = /* GraphQL */ `
     nomenclature: String
 
     # filters
-    sellerId: String! @selectFrom(table: "Seller", filter: ["country", "businessUnitId"])
-    brandId: [String!]! @selectFrom(table: "Brand", filter: ["country", "sellerIds"])
-    categoryId: [String!]! @selectFrom(table: "Category", filter: ["country", "brandIds"])
-    subCategoryId: [String!]! @selectFrom(table: "Subcategory", filter: ["country", "categoryIds"])
+    sellerId: String @selectFrom(table: "sellers", labelAttribute: "name", valueAttribute: "id", dependentField: "businessUnitId")
+    brandId: [String!]! @selectManyFrom(table: "brands", labelAttribute: "name", valueAttribute: "id", dependentField: "sellerId")
+    categoryId: [String!]! @selectManyFrom(table: "categories", labelAttribute: "name", valueAttribute: "id", dependentField: "brandId")
     
     #dates
     startDate: String!

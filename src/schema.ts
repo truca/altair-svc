@@ -49,6 +49,7 @@ const typeDefinitions = /* GraphQL */ `
   directive @selectManyFrom(values:[String],optionValues:[OptionInput],table:String,labelAttribute:String,valueAttribute:String,dependentField:String,where:String,queryVariables:String) on FIELD_DEFINITION
   directive @defaultFrom(parentAttribute: String) on FIELD_DEFINITION
   directive @from(parentAttribute: String, queryParam: String) on FIELD_DEFINITION
+  directive @position(step: Float, row: Float) on FIELD_DEFINITION
 
   enum FieldType {
     TEXT
@@ -61,7 +62,6 @@ const typeDefinitions = /* GraphQL */ `
     SELECT
     MULTISELECT
     SMART_SELECT
-    SMART_MULTISELECT
     DATE
     TIME
     DATETIME
@@ -294,10 +294,10 @@ const typeDefinitions = /* GraphQL */ `
     @model
     @auth(read: ["public"], update: ["public"], delete: ["public"]) {
     # metadata
-    campaignGroupId: ID
-    campaignGroup: CampaignGroup
-    country: String @from(queryParam: "country")
-    productManagerId: String! @selectFrom(table: "ProductManager")
+    campaignGroupId: ID @hidden(value: true)
+    campaignGroup: CampaignGroup @hidden(value: true)
+    country: String @from(queryParam: "country") @hidden(value: true)
+    productManagerId: String! @selectFrom(table: "productManagers", labelAttribute: "name", valueAttribute: "externalId")
     businessUnitId: String! @selectFrom(values: ["1P", "3P"])
     campaignName: String!
     eventTypeId: String! @selectFrom(values: ["Cyber Day","Black Friday","14_F","Escolares","Black_Week","DDM","DDP","DDN","Sneaker_Corner","CD","CM","CW","Días_F","Navidad","Otra"])
@@ -306,9 +306,9 @@ const typeDefinitions = /* GraphQL */ `
     nomenclature: String
 
     # filters
-    sellerId: String @selectFrom(table: "sellers", labelAttribute: "name", valueAttribute: "id", dependentField: "businessUnitId")
-    brandId: [String!]! @selectManyFrom(table: "brands", labelAttribute: "name", valueAttribute: "id", dependentField: "sellerId")
-    categoryId: [String!]! @selectManyFrom(table: "categories", labelAttribute: "name", valueAttribute: "id", dependentField: "brandId")
+    sellerId: String @selectFrom(table: "sellers", labelAttribute: "name", valueAttribute: "externalId", dependentField: "businessUnitId")
+    brandId: [String!]! @selectManyFrom(table: "brands", labelAttribute: "name", valueAttribute: "externalId", dependentField: "sellerId")
+    categoryId: [String!]! @selectManyFrom(table: "categories", labelAttribute: "name", valueAttribute: "externalId", dependentField: "brandId")
     
     #dates
     startDate: String! @type(value: DATE)

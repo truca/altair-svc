@@ -209,46 +209,63 @@ interface Field {
 }
 
 // Function to extract directive arguments
-function getDirectiveArgument(directives: readonly DirectiveNode[], directiveName: string, argName: string): any {
+function getDirectiveArgument(directives: readonly DirectiveNode[], directiveName: string, argumentName: string): any {
   const directive = directives.find(d => d.name.value === directiveName);
-  if (!directive) return null;
+  if (!directive || !directive.arguments) return null;
   
-  const arg = directive.arguments?.find(a => a.name.value === argName);
-  if (!arg) return null;
+  const argument = directive.arguments.find(arg => arg.name.value === argumentName);
+  if (!argument) return null;
   
-  // Helper function to parse any value type
-  function parseValue(value: any): any {
-    switch (value.kind) {
-      case 'StringValue':
-        return value.value;
-      case 'BooleanValue':
-        return value.value;
-      case 'IntValue':
-        return parseInt(value.value);
-      case 'FloatValue':
-        return parseFloat(value.value);
-      case 'ListValue':
-        return value.values.map((v: any) => parseValue(v));
-      case 'ObjectValue':
-        const obj: any = {};
-        value.fields.forEach((field: any) => {
-          obj[field.name.value] = parseValue(field.value);
-        });
-        return obj;
-      case 'NullValue':
+  const value = argument.value;
+  
+  switch (value.kind) {
+    case 'StringValue':
+      return value.value;
+    case 'BooleanValue':
+      return value.value;
+    case 'IntValue':
+      return parseInt(value.value, 10);
+    case 'FloatValue':
+      return parseFloat(value.value);
+    case 'EnumValue':
+      return value.value; // Handle enum values like DATE, TEXT, etc.
+    case 'ListValue':
+      return value.values.map(v => {
+        if (v.kind === 'StringValue') return v.value;
+        if (v.kind === 'ObjectValue') {
+          const obj: any = {};
+          v.fields.forEach(field => {
+            if (field.value.kind === 'StringValue') {
+              obj[field.name.value] = field.value.value;
+            }
+          });
+          return obj;
+        }
         return null;
-      default:
-        console.warn(`Unhandled directive argument type: ${value.kind}`);
-        return null;
-    }
+      }).filter(Boolean);
+    case 'ObjectValue':
+      const obj: any = {};
+      value.fields.forEach(field => {
+        if (field.value.kind === 'StringValue') {
+          obj[field.name.value] = field.value.value;
+        }
+      });
+      return obj;
+    default:
+      console.warn(`Unhandled directive argument type: ${value.kind}`);
+      return null;
   }
-  
-  return parseValue(arg.value);
 }
 
 // Function to derive field type from GraphQL type and directives
 export function deriveFieldType(type: GraphQLType, directives: readonly DirectiveNode[]): FieldType {
-  // Check for select directives first
+  // Check for explicit @type directive first - this takes precedence
+  const explicitType = getDirectiveArgument(directives, 'type', 'value');
+  if (explicitType && Object.values(FieldType).includes(explicitType as FieldType)) {
+    return explicitType as FieldType;
+  }
+
+  // Check for select directives next
   const selectFromDirective = directives.find(d => d.name.value === 'selectFrom');
   const selectManyFromDirective = directives.find(d => d.name.value === 'selectManyFrom');
   
@@ -263,13 +280,14 @@ export function deriveFieldType(type: GraphQLType, directives: readonly Directiv
     // Use SMART_MULTISELECT if table is specified, otherwise MULTISELECT
     return tableArg ? FieldType.SMART_MULTISELECT : FieldType.MULTISELECT;
   }
-  
+
+  // Check for hidden directive
   if (getDirectiveArgument(directives, 'hidden', 'value') === true ||
       getDirectiveArgument(directives, 'hidden', 'cond')) {
     return FieldType.HIDDEN;
   }
-  
-  // Derive from GraphQL type
+
+  // Derive from GraphQL type as fallback
   let baseType = type;
   while (isNonNullType(baseType) || isListType(baseType)) {
     baseType = baseType.ofType;
@@ -414,8 +432,9 @@ function generateFieldsFromType(schema: GraphQLSchema, typeName: string): Field[
     const hiddenValue = getDirectiveArgument(directives, 'hidden', 'value');
     if (hiddenValue === true) return;
     
-    // Skip system fields
-    if (['createdAt', 'updatedAt', 'id'].includes(field.name)) return;
+    // Skip system fields unless they have explicit type directives
+    const hasExplicitType = getDirectiveArgument(directives, 'type', 'value');
+    if (!hasExplicitType && ['createdAt', 'updatedAt', 'id'].includes(field.name)) return;
     
     const fieldType = deriveFieldType(field.type, directives);
     const options = generateFieldOptions(directives);

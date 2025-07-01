@@ -44,6 +44,7 @@ const typeDefinitions = /* GraphQL */ `
     valueNumber: Float
   }
   directive @hidden(value: Boolean, cond: [HiddenCondition]) on FIELD_DEFINITION
+  directive @type(value: FieldType) on FIELD_DEFINITION
   directive @selectFrom(values:[String],optionValues:[OptionInput],table:String,labelAttribute:String,valueAttribute:String,dependentField:String,where:String,queryVariables:String) on FIELD_DEFINITION
   directive @selectManyFrom(values:[String],optionValues:[OptionInput],table:String,labelAttribute:String,valueAttribute:String,dependentField:String,where:String,queryVariables:String) on FIELD_DEFINITION
   directive @defaultFrom(parentAttribute: String) on FIELD_DEFINITION
@@ -310,10 +311,11 @@ const typeDefinitions = /* GraphQL */ `
     categoryId: [String!]! @selectManyFrom(table: "categories", labelAttribute: "name", valueAttribute: "id", dependentField: "brandId")
     
     #dates
-    startDate: String!
-    endDate: String!
-    implementationDate: String!
-
+    startDate: String! @type(value: DATE)
+    endDate: String! @type(value: DATE)
+    implementationDate: String! @type(value: DATE)
+    createdAt: String @type(value: DATETIME)
+    updatedAt: String @type(value: DATETIME)
     
     mediaOffEnabled: Boolean!
     mediaOffBudget: Float

@@ -697,7 +697,12 @@ function generateFieldsFromType(schema: GraphQLSchema, typeName: string, visited
      const metaPlaceholder = getDirectiveArgument(directives, 'meta', 'placeholder');
      
      // Extract hidden conditions from @hidden(cond: ...)
-     const hiddenCondition = processHiddenConditions(directives);
+     let hiddenCondition = processHiddenConditions(directives);
+     // Automatically hide fields that use @from directive (inherit-only attributes)
+     const hasFromDirective = directives.some(d => d.name.value === 'from');
+     if (!hiddenCondition && hasFromDirective) {
+       hiddenCondition = '{}'; // Empty condition hides field unconditionally
+     }
      
      // Extract table-related attributes from @selectFrom and @selectManyFrom directives
      const table = getDirectiveArgument(directives, 'selectFrom', 'table') || 
@@ -711,6 +716,12 @@ function generateFieldsFromType(schema: GraphQLSchema, typeName: string, visited
      
      // Check if this is a multi-select field (selectManyFrom directive)
      const isMultiSelect = directives.some(d => d.name.value === 'selectManyFrom');
+     
+     // Skip inherit-only attributes coming from @from directive
+     const hasFromDirectiveOnly = hasFromDirective && directives.length === 1; // only @from present
+     if (hasFromDirectiveOnly) {
+       return; // do not generate this field at all
+     }
      
      // Generate subform-specific properties based on field type
      const subformProperties = generateSubformProperties(schema, field, fieldType, directives, visitedTypes);

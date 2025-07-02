@@ -353,23 +353,17 @@ const typeDefinitions = /* GraphQL */ `
     othersBudget: Float @position(step: 1, row: 21) @meta(label: "", placeholder: "Presupuesto Otros")
     mediaPlan: String @position(step: 2, row: 1) @meta(label: "Plan de Medios", placeholder: "Ingresa el Plan de Medios")
 
-    # template
-    # mediaOnEnabled: Boolean! @default(value: false)
-    # mediaOn: MediaOn @hidden(mediaOnEnabled: false)
-    # bannersEnabled: Boolean! @default(value: false)
-    # banner: Banner @hidden(bannersEnabled: false)
-    # CRMEnabled: Boolean! @default(value: false)
-    # CRM: CRM @hidden(CRMEnabled: false)
-    # homeLandingEnabled: Boolean! @default(value: false)
-    # homeLanding: HomeLanding @hidden(homeLandingEnabled: false)
-    
     # service
-    # sponsoredBrandsEnabled: Boolean! @default(value: false)
-    sponsoredBrand: SponsoredBrand @hidden(cond: [{ field: "sponsoredBrandsEnabled", valueBoolean: false}])
-    # sponsoredProductEnabled: Boolean! @default(value: false)
-    sponsoredProduct: SponsoredProduct @hidden(cond: [{ field: "sponsoredProductEnabled", valueBoolean: false}])
-    # ratingsAndReviewsEnabled: Boolean! @default(value: false)
-    ratingAndReview: RatingAndReview @hidden(cond: [{ field: "ratingsAndReviewsEnabled", valueBoolean: false}])
+    sponsoredProduct: SponsoredProduct @hidden(cond: [{ field: "sponsoredProductEnabled", valueBoolean: false}]) @position(step: 2, row: 1)
+    sponsoredBrand: SponsoredBrand @hidden(cond: [{ field: "sponsoredBrandsEnabled", valueBoolean: false}]) @position(step: 2, row: 2)
+    ratingAndReview: RatingAndReview @hidden(cond: [{ field: "ratingsAndReviewsEnabled", valueBoolean: false}]) @position(step: 2, row: 3)
+
+    # template
+    banner: Banner @hidden(bannersEnabled: false) @position(step: 2, row: 4)
+    CRM: CRM @hidden(CRMEnabled: false) @position(step: 2, row: 5)
+    homeLanding: HomeLanding @hidden(homeLandingEnabled: false) @position(step: 2, row: 6)
+    mediaOn: MediaOn @hidden(mediaOnEnabled: false) @position(step: 2, row: 7)
+    
   }
 
   type PlannerComments {

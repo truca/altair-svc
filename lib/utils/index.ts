@@ -750,14 +750,13 @@ function generateGridTemplateAreas(stepFields: Map<number, Field[]>): string {
     const rowFields = stepFields.get(rowNumber)!;
     const fieldNames = rowFields.map(field => field.label.replace(/\s+/g, '_')); // Replace spaces with underscores for CSS grid
     
-    // For rows with single fields (typically unpositioned fields at bottom),
-    // place them in the first column and fill remaining columns with dots
+    // For rows with single fields, make them span all columns
     if (fieldNames.length === 1 && maxFieldsInAnyRow > 1) {
       const singleField = fieldNames[0];
-      const result = [singleField];
-      // Fill remaining columns with dots
+      const result = [];
+      // Fill all columns with the same field name to make it span
       while (result.length < maxFieldsInAnyRow) {
-        result.push('.');
+        result.push(singleField);
       }
       return `"${result.join(' ')}"`;
     }

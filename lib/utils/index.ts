@@ -206,6 +206,7 @@ interface Field {
   options?: FieldOption[];
   validation?: FieldValidation[];
   placeholder?: string; // From @meta directive
+  hidden?: string; // Stringified condition object from @hidden(cond: ...)
   // Table-related attributes for SmartForm
   entity?: string; // Table name from @selectFrom/@selectManyFrom
   labelAttribute?: string; // Label attribute from directive
@@ -289,8 +290,8 @@ function deriveFieldType(field: any, directives: readonly DirectiveNode[]): Fiel
      return FieldType.MULTISELECT;
    }
   
-  if (getDirectiveArgument(directives, 'hidden', 'value') === true ||
-      getDirectiveArgument(directives, 'hidden', 'cond')) {
+  // Only treat as HIDDEN field if @hidden(value: true), not for conditional hiding
+  if (getDirectiveArgument(directives, 'hidden', 'value') === true) {
     return FieldType.HIDDEN;
   }
   
@@ -413,6 +414,48 @@ function generateDefaultValue(directives: readonly DirectiveNode[]): any {
   return undefined;
 }
 
+// Function to process @hidden(cond: ...) conditions into stringified object
+function processHiddenConditions(directives: readonly DirectiveNode[]): string | undefined {
+  const hiddenConditions = getDirectiveArgument(directives, 'hidden', 'cond');
+  
+  if (!hiddenConditions || !Array.isArray(hiddenConditions)) {
+    return undefined;
+  }
+  
+  // Process conditions array into a simple object
+  const conditionObject: Record<string, any> = {};
+  
+  hiddenConditions.forEach((condition: any) => {
+    if (!condition || typeof condition !== 'object') return;
+    
+    const field = condition.field;
+    if (!field) return;
+    
+    // Extract value based on type
+    let value: any;
+    if (condition.hasOwnProperty('valueBoolean')) {
+      value = condition.valueBoolean;
+    } else if (condition.hasOwnProperty('valueString')) {
+      value = condition.valueString;
+    } else if (condition.hasOwnProperty('valueNumber')) {
+      value = condition.valueNumber;
+    } else if (condition.hasOwnProperty('valueFloat')) {
+      value = condition.valueFloat;
+    } else if (condition.hasOwnProperty('valueInt')) {
+      value = condition.valueInt;
+    } else {
+      // If no typed value found, skip this condition
+      return;
+    }
+    
+    // Add to condition object (multiple conditions = AND logic)
+    conditionObject[field] = value;
+  });
+  
+  // Return stringified object if we have conditions, otherwise undefined
+  return Object.keys(conditionObject).length > 0 ? JSON.stringify(conditionObject) : undefined;
+}
+
 // Function to generate validation rules
 function generateValidation(field: any, directives: readonly DirectiveNode[]): FieldValidation[] {
   const validations: FieldValidation[] = [];
@@ -492,6 +535,9 @@ function generateFieldsFromType(schema: GraphQLSchema, typeName: string): Field[
      const metaLabel = getDirectiveArgument(directives, 'meta', 'label');
      const metaPlaceholder = getDirectiveArgument(directives, 'meta', 'placeholder');
      
+     // Extract hidden conditions from @hidden(cond: ...)
+     const hiddenCondition = processHiddenConditions(directives);
+     
      // Extract table-related attributes from @selectFrom and @selectManyFrom directives
      const table = getDirectiveArgument(directives, 'selectFrom', 'table') || 
                    getDirectiveArgument(directives, 'selectManyFrom', 'table');
@@ -515,6 +561,7 @@ function generateFieldsFromType(schema: GraphQLSchema, typeName: string): Field[
        step: fieldStep,
        row: fieldRow,
        ...(metaPlaceholder && { placeholder: metaPlaceholder }), // Add placeholder if specified
+       ...(hiddenCondition && { hidden: hiddenCondition }), // Add stringified hidden conditions if specified
        ...(table && { entity: table }), // Add entity (table name) if specified
        ...(labelAttribute && { labelAttribute }), // Add labelAttribute if specified
        ...(valueAttribute && { valueAttribute }), // Add valueAttribute if specified

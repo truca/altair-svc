@@ -106,6 +106,8 @@ const typeDefinitions = /* GraphQL */ `
     defaultValue: String
     options: [FieldOption]
     validation: [FieldValidation]
+    # From @meta directive
+    placeholder: String
     # Smart select properties
     entity: String
     labelAttribute: String
@@ -115,6 +117,8 @@ const typeDefinitions = /* GraphQL */ `
     # Position properties for multistep forms
     step: Float
     row: Float
+    # Conditional visibility - stringified condition object from @hidden(cond: ...)
+    hidden: String
   }
 
   type FormStep {
@@ -353,16 +357,15 @@ const typeDefinitions = /* GraphQL */ `
     mediaPlan: File @position(step: 2, row: 22) @meta(label: "Plan de Medios", placeholder: "Ingresa el Plan de Medios")
 
     # service
-    sponsoredProduct: SponsoredProduct @hidden(cond: [{ field: "sponsoredProductEnabled", valueBoolean: false}]) @position(step: 2, row: 1)
-    sponsoredBrand: SponsoredBrand @hidden(cond: [{ field: "sponsoredBrandsEnabled", valueBoolean: false}]) @position(step: 2, row: 2)
-    ratingAndReview: RatingAndReview @hidden(cond: [{ field: "ratingsAndReviewsEnabled", valueBoolean: false}]) @position(step: 2, row: 3)
+    sponsoredProduct: SponsoredProduct @hidden(cond: [{ field: "Sponsored Product", valueBoolean: false}]) @position(step: 2, row: 1)
+    sponsoredBrand: SponsoredBrand @hidden(cond: [{ field: "Sponsored Brands", valueBoolean: false}]) @position(step: 2, row: 2)
+    ratingAndReview: RatingAndReview @hidden(cond: [{ field: "Ratings and Reviews", valueBoolean: false}]) @position(step: 2, row: 3)
 
     # template
-    banner: Banner @hidden(cond: [{ field: "bannersEnabled", valueBoolean: false}]) @position(step: 2, row: 4)
-    CRM: CRM @hidden(cond: [{ field: "CRMEnabled", valueBoolean: false}]) @position(step: 2, row: 5)
-    homeLanding: HomeLanding @hidden(cond: [{ field: "homeLandingEnabled", valueBoolean: false}]) @position(step: 2, row: 6)
-    mediaOn: MediaOn @hidden(cond: [{ field: "mediaOnEnabled", valueBoolean: false}]) @position(step: 2, row: 7)
-    
+    banner: Banner @hidden(cond: [{ field: "Banners", valueBoolean: false}]) @position(step: 1, row: 23)
+    CRM: CRM @hidden(cond: [{ field: "CRM", valueBoolean: false}]) @position(step: 2, row: 5)
+    homeLanding: HomeLanding @hidden(cond: [{ field: "Home Landing", valueBoolean: false}]) @position(step: 2, row: 6)
+    mediaOn: MediaOn @hidden(cond: [{ field: "Media On", valueBoolean: false}]) @position(step: 2, row: 7)
   }
 
   type PlannerComments {

@@ -59,6 +59,7 @@ export interface Field {
   optionsMap?: { label: string; value: string } & Record<string, string>;
   validation?: FieldValidation[];
   placeholder?: string; // From @meta directive
+  hidden?: string; // Stringified condition object from @hidden(cond: ...)
   // Table-related attributes for SmartForm
   entity?: string; // Table name from @selectFrom/@selectManyFrom
   labelAttribute?: string; // Label attribute from directive

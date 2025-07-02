@@ -56,6 +56,7 @@ export interface Field {
   // When the options exist in a model, what attribute use as label and value
   optionsMap?: { label: string; value: string } & Record<string, string>;
   validation?: FieldValidation[];
+  placeholder?: string; // From @meta directive
   maxValue?: string;
   valuePerOption?: string;
   component?: string;

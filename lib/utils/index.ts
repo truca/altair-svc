@@ -203,6 +203,7 @@ interface Field {
   defaultValue?: string | number | boolean | string[] | number[];
   options?: FieldOption[];
   validation?: FieldValidation[];
+  placeholder?: string; // From @meta directive
   // Position properties for multistep forms
   step?: number;
   row?: number | null; // null for unpositioned fields, gets assigned during processing
@@ -425,15 +426,20 @@ function generateFieldsFromType(schema: GraphQLSchema, typeName: string): Field[
      const fieldStep = hasPositionDirective ? (positionStep ?? 1) - 1 : 0;
      const fieldRow = hasPositionDirective ? (positionRow ?? 1) : null; // null indicates it needs to be calculated
      
+     // Extract meta directive values for label and placeholder
+     const metaLabel = getDirectiveArgument(directives, 'meta', 'label');
+     const metaPlaceholder = getDirectiveArgument(directives, 'meta', 'placeholder');
+     
      const generatedField = {
-       label: field.name,
+       label: metaLabel || field.name, // Use meta label if available, otherwise field name
        field: actualFieldName !== field.name ? actualFieldName : undefined,
        type: fieldType,
        defaultValue,
        options,
        validation,
        step: fieldStep,
-       row: fieldRow
+       row: fieldRow,
+       ...(metaPlaceholder && { placeholder: metaPlaceholder }) // Add placeholder if specified
      };
     
     console.log(`Generated field for ${field.name}:`, generatedField);

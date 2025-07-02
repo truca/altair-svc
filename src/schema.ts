@@ -50,6 +50,7 @@ const typeDefinitions = /* GraphQL */ `
   directive @defaultFrom(parentAttribute: String) on FIELD_DEFINITION
   directive @from(parentAttribute: String, queryParam: String) on FIELD_DEFINITION
   directive @position(step: Float, row: Float) on FIELD_DEFINITION
+  directive @meta(label: String, placeholder: String) on FIELD_DEFINITION
 
   enum FieldType {
     TEXT
@@ -308,39 +309,49 @@ const typeDefinitions = /* GraphQL */ `
     campaignGroupId: ID @hidden(value: true)
     campaignGroup: CampaignGroup @hidden(value: true)
     country: String @from(queryParam: "country") @hidden(value: true)
-    productManagerId: String! @selectFrom(table: "productManagers", labelAttribute: "name", valueAttribute: "externalId") @position(step: 1, row: 1)
-    businessUnitId: String! @selectFrom(values: ["1P", "3P"]) @position(step: 1, row: 2)
-    campaignName: String! @position(step: 1, row: 3)
-    eventTypeId: String! @selectFrom(values: ["Cyber Day", "Black Friday", "14_F", "Escolares", "Black_Week", "DDM", "DDP", "DDN", "Sneaker_Corner", "CD", "CM", "CW", "Días_F", "Navidad", "Otra"]) @position(step: 1, row: 3)
+    productManagerId: String! @selectFrom(table: "productManagers", labelAttribute: "name", valueAttribute: "externalId") @position(step: 1, row: 1) @meta(label: "Product Manager", placeholder: "Selecciona una Opción")
+    businessUnitId: String! @selectFrom(values: ["1P", "3P"]) @position(step: 1, row: 2) @meta(label: "Unidad de Negocio", placeholder: "Selecciona una Opción")
+    campaignName: String! @position(step: 1, row: 3) @meta(label: "Nombre de campaña", placeholder: "Ingresa el Nombre de la Campaña")
+    eventTypeId: String! @selectFrom(values: ["Cyber Day", "Black Friday", "14_F", "Escolares", "Black_Week", "DDM", "DDP", "DDN", "Sneaker_Corner", "CD", "CM", "CW", "Días_F", "Navidad", "Otra"]) @position(step: 1, row: 3) @meta(label: "Evento", placeholder: "Selecciona una Opción")
+    customId: String @hidden(value: true)
+    nomenclature: String @hidden(value: true)
+
+    # filters
+    sellerId: String @selectFrom(table: "sellers", labelAttribute: "name", valueAttribute: "externalId", dependentField: "businessUnitId") @meta(label: "Seller", placeholder: "Selecciona una Opción") @position(step: 1, row: 4)
+    brandId: [String!]! @selectManyFrom(table: "brands", labelAttribute: "name", valueAttribute: "externalId", dependentField: "sellerId") @meta(label: "Marca", placeholder: "Selecciona una Opción") @position(step: 1, row: 5)
+    categoryId: [String!]! @selectManyFrom(table: "categories", labelAttribute: "name", valueAttribute: "externalId", dependentField: "brandId") @meta(label: "Categoría", placeholder: "Selecciona una Opción") @position(step: 1, row: 6)
+    subCategoryId: [String!]! @selectManyFrom(table: "subcategories", labelAttribute: "name", valueAttribute: "externalId", dependentField: "categoryId") @meta(label: "Subcategoría", placeholder: "Selecciona una Opción") @position(step: 1, row: 7)
+    
+    #dates
+    startDate: String! @type(value: DATE) @position(step: 1, row: 8) @meta(label: "Fecha de Inicio", placeholder: "Selecciona una fecha")
+    endDate: String! @type(value: DATE) @position(step: 1, row: 8) @meta(label: "Fecha de Término", placeholder: "Selecciona una fecha")
+    implementationDate: String! @type(value: DATE) @position(step: 1, row: 9) @meta(label: "Fecha de Implementación", placeholder: "Selecciona una fecha")
     campaignTypeId: String @selectFrom(optionValues: [
       {label: "Táctico", value: "tactico"}
       {label: "Always On", value: "always_on"}
-    ]) @position(step: 2, row: 1)
-    customId: String @position(step: 1, row: 6)
-    nomenclature: String
+    ]) @position(step: 1, row: 10) @meta(label: "Tipo de campaña", placeholder: "Selecciona una Opción")
+    createdAt: String @type(value: DATETIME) @hidden(value: true)
+    updatedAt: String @type(value: DATETIME) @hidden(value: true)
 
-    # filters
-    sellerId: String @selectFrom(table: "sellers", labelAttribute: "name", valueAttribute: "externalId", dependentField: "businessUnitId")
-    brandId: [String!]! @selectManyFrom(table: "brands", labelAttribute: "name", valueAttribute: "externalId", dependentField: "sellerId")
-    categoryId: [String!]! @selectManyFrom(table: "categories", labelAttribute: "name", valueAttribute: "externalId", dependentField: "brandId")
-    
-    #dates
-    startDate: String! @type(value: DATE)
-    endDate: String! @type(value: DATE)
-    implementationDate: String! @type(value: DATE)
-    createdAt: String @type(value: DATETIME)
-    updatedAt: String @type(value: DATETIME)
-    
-    mediaOffEnabled: Boolean!
-    mediaOffBudget: Float
-    storeEnabled: Boolean!
-    storeBudget: Float
-    graphicsEnabled: Boolean!
-    graphicsBudget: Float
-    othersEnabled: Boolean!
-    othersBudget: Float
-    mediaPlan: String
 
+
+    bannersEnabled: Boolean! @default(value: false) @position(step: 1, row: 11) @meta(label: "Banners", placeholder: "Selecciona una Opción")
+    CRMEnabled: Boolean! @default(value: false) @position(step: 1, row: 12) @meta(label: "CRM", placeholder: "Selecciona una Opción")
+    homeLandingEnabled: Boolean! @default(value: false) @position(step: 1, row: 13) @meta(label: "Home Landing", placeholder: "Selecciona una Opción")
+    mediaOnEnabled: Boolean! @default(value: false) @position(step: 1, row: 14) @meta(label: "Media On", placeholder: "Selecciona una Opción")
+    ratingsAndReviewsEnabled: Boolean! @default(value: false) @position(step: 1, row: 15) @meta(label: "Ratings and Reviews", placeholder: "Selecciona una Opción")
+    sponsoredBrandsEnabled: Boolean! @default(value: false) @position(step: 1, row: 16) @meta(label: "Sponsored Brands", placeholder: "Selecciona una Opción")
+    sponsoredProductEnabled: Boolean! @default(value: false) @position(step: 1, row: 17) @meta(label: "Sponsored Product", placeholder: "Selecciona una Opción")
+
+    mediaOffEnabled: Boolean! @position(step: 1, row: 18) @meta(label: "Media Off", placeholder: "Selecciona una Opción")
+    mediaOffBudget: Float @position(step: 1, row: 18) @meta(label: "", placeholder: "Presupuesto Media Off")
+    storeEnabled: Boolean! @position(step: 1, row: 19) @meta(label: "Tienda", placeholder: "Selecciona una Opción")
+    storeBudget: Float @position(step: 1, row: 19) @meta(label: "", placeholder: "Presupuesto Tienda")
+    graphicsEnabled: Boolean! @position(step: 1, row: 20) @meta(label: "Gráficos", placeholder: "Selecciona una Opción")
+    graphicsBudget: Float @position(step: 1, row: 20) @meta(label: "", placeholder: "Presupuesto Gráficos")
+    othersEnabled: Boolean! @position(step: 1, row: 21) @meta(label: "Otros", placeholder: "Selecciona una Opción")
+    othersBudget: Float @position(step: 1, row: 21) @meta(label: "", placeholder: "Presupuesto Otros")
+    mediaPlan: String @position(step: 2, row: 1) @meta(label: "Plan de Medios", placeholder: "Ingresa el Plan de Medios")
 
     # template
     # mediaOnEnabled: Boolean! @default(value: false)
@@ -353,11 +364,11 @@ const typeDefinitions = /* GraphQL */ `
     # homeLanding: HomeLanding @hidden(homeLandingEnabled: false)
     
     # service
-    sponsoredBrandsEnabled: Boolean! @default(value: false)
+    # sponsoredBrandsEnabled: Boolean! @default(value: false)
     sponsoredBrand: SponsoredBrand @hidden(cond: [{ field: "sponsoredBrandsEnabled", valueBoolean: false}])
-    sponsoredProductEnabled: Boolean! @default(value: false)
+    # sponsoredProductEnabled: Boolean! @default(value: false)
     sponsoredProduct: SponsoredProduct @hidden(cond: [{ field: "sponsoredProductEnabled", valueBoolean: false}])
-    ratingsAndReviewsEnabled: Boolean! @default(value: false)
+    # ratingsAndReviewsEnabled: Boolean! @default(value: false)
     ratingAndReview: RatingAndReview @hidden(cond: [{ field: "ratingsAndReviewsEnabled", valueBoolean: false}])
   }
 

@@ -647,9 +647,9 @@ const typeDefinitions = /* GraphQL */ `
   type CRM
     @model(table: "Template")
     @auth(read: ["public"], update: ["public"], delete: ["public"]) {
-    country: String @from(queryParam: "country")
-    campaignId: ID @from(parentAttribute: "id")
-    campaign: Campaign
+    country: String @from(queryParam: "country") @hidden(value: true)
+    campaignId: ID @from(parentAttribute: "id") @hidden(value: true)
+    campaign: Campaign @hidden(value: true)
     
     # CRM specific fields
     crmTypeId: String! @selectFrom(optionValues: [{label: "Propenso", value: "Propenso"}, {label: "Segmentado", value: "Segmentado"}])

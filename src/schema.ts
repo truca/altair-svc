@@ -346,13 +346,13 @@ const typeDefinitions = /* GraphQL */ `
     sponsoredProductEnabled: Boolean! @default(value: false) @position(step: 1, row: 17) @meta(label: "Sponsored Product", placeholder: "Selecciona una Opción")
 
     mediaOffEnabled: Boolean! @position(step: 1, row: 18) @meta(label: "Media Off", placeholder: "Selecciona una Opción")
-    mediaOffBudget: Float @position(step: 1, row: 18) @meta(label: "", placeholder: "Presupuesto Media Off")
+    mediaOffBudget: Float @position(step: 1, row: 18) @meta(label: "", placeholder: "Presupuesto Media Off") @hidden(cond: [{ field: "Media Off", valueBoolean: false}])
     storeEnabled: Boolean! @position(step: 1, row: 19) @meta(label: "Tienda", placeholder: "Selecciona una Opción")
-    storeBudget: Float @position(step: 1, row: 19) @meta(label: "", placeholder: "Presupuesto Tienda")
+    storeBudget: Float @position(step: 1, row: 19) @meta(label: "", placeholder: "Presupuesto Tienda") @hidden(cond: [{ field: "Tienda", valueBoolean: false}])
     graphicsEnabled: Boolean! @position(step: 1, row: 20) @meta(label: "Gráficos", placeholder: "Selecciona una Opción")
-    graphicsBudget: Float @position(step: 1, row: 20) @meta(label: "", placeholder: "Presupuesto Gráficos")
+    graphicsBudget: Float @position(step: 1, row: 20) @meta(label: "", placeholder: "Presupuesto Gráficos") @hidden(cond: [{ field: "Gráficos", valueBoolean: false}])
     othersEnabled: Boolean! @position(step: 1, row: 21) @meta(label: "Otros", placeholder: "Selecciona una Opción")
-    othersBudget: Float @position(step: 1, row: 21) @meta(label: "", placeholder: "Presupuesto Otros")
+    othersBudget: Float @position(step: 1, row: 21) @meta(label: "", placeholder: "Presupuesto Otros") @hidden(cond: [{ field: "Otros", valueBoolean: false}])
     # change to step 1
     mediaPlan: File @position(step: 2, row: 22) @meta(label: "Plan de Medios", placeholder: "Ingresa el Plan de Medios")
 
@@ -362,7 +362,7 @@ const typeDefinitions = /* GraphQL */ `
     ratingAndReview: RatingAndReview @hidden(cond: [{ field: "Ratings and Reviews", valueBoolean: false}]) @position(step: 2, row: 3)
 
     # template
-    banner: Banner @hidden(cond: [{ field: "Banners", valueBoolean: false}]) @position(step: 1, row: 23)
+    banner: Banner @hidden(cond: [{ field: "Banners", valueBoolean: false}]) @position(step: 2, row: 4) #@position(step: 1, row: 23)
     CRM: CRM @hidden(cond: [{ field: "CRM", valueBoolean: false}]) @position(step: 2, row: 5)
     homeLanding: HomeLanding @hidden(cond: [{ field: "Home Landing", valueBoolean: false}]) @position(step: 2, row: 6)
     mediaOn: MediaOn @hidden(cond: [{ field: "Media On", valueBoolean: false}]) @position(step: 2, row: 7)
@@ -756,7 +756,7 @@ const typeDefinitions = /* GraphQL */ `
     
     # Home Landing specific fields
     budget: Float
-    # services: [HomeLandingStrategy]
+    services: [HomeLandingStrategy]
   }
 
   type HomeLandingLanding

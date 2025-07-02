@@ -205,7 +205,13 @@ interface Field {
   validation?: FieldValidation[];
   // Position properties for multistep forms
   step?: number;
-  row?: number;
+  row?: number | null; // null for unpositioned fields, gets assigned during processing
+}
+
+interface FormStep {
+  stepNumber: number;
+  gridTemplateAreas: string;
+  gridTemplateColumns: string;
 }
 
 // Function to extract directive arguments
@@ -410,8 +416,14 @@ function generateFieldsFromType(schema: GraphQLSchema, typeName: string): Field[
     const actualFieldName = fromParent || field.name;
     
          // Extract position properties from @position directive
-     const positionStep = getDirectiveArgument(directives, 'position', 'step') ?? 1;
-     const positionRow = getDirectiveArgument(directives, 'position', 'row') ?? 1;
+     const hasPositionDirective = directives.some(d => d.name.value === 'position');
+     const positionStep = getDirectiveArgument(directives, 'position', 'step');
+     const positionRow = getDirectiveArgument(directives, 'position', 'row');
+     
+     // For fields with position directive, use specified values
+     // For fields without position directive, assign to step 0 with row TBD (will be calculated later)
+     const fieldStep = hasPositionDirective ? (positionStep ?? 1) - 1 : 0;
+     const fieldRow = hasPositionDirective ? (positionRow ?? 1) : null; // null indicates it needs to be calculated
      
      const generatedField = {
        label: field.name,
@@ -420,8 +432,8 @@ function generateFieldsFromType(schema: GraphQLSchema, typeName: string): Field[
        defaultValue,
        options,
        validation,
-       step: positionStep - 1,
-       row: positionRow
+       step: fieldStep,
+       row: fieldRow
      };
     
     console.log(`Generated field for ${field.name}:`, generatedField);
@@ -456,17 +468,24 @@ export function makeSchema({
             const graphqlTypeName = type.charAt(0).toUpperCase() + type.slice(1).toLowerCase();
             const generatedFields = generateFieldsFromType(schema, graphqlTypeName);
             
-            if (generatedFields.length > 0) {
-              return { fields: generatedFields };
-            }
+                         if (generatedFields.length > 0) {
+               // Generate FormStep objects with CSS Grid layout information
+               const formSteps = organizeFieldsIntoSteps(generatedFields);
+               
+               return { 
+                 fields: generatedFields,
+                 steps: formSteps
+               };
+             }
           }
         } catch (error) {
           console.error('Error generating fields from schema:', error);
         }
         
-        return {
-          fields: [],
-        };
+                 return {
+           fields: [],
+           steps: []
+         };
       },
       me: async (
         _: any,
@@ -666,6 +685,121 @@ export function makeSchema({
   };
 
   return schema;
+}
+
+// Function to group fields by step and row
+function groupFieldsByStepAndRow(fields: Field[]): Map<number, Map<number, Field[]>> {
+  const stepMap = new Map<number, Map<number, Field[]>>();
+  
+  // First pass: group positioned fields (those with explicit row numbers)
+  const positionedFields = fields.filter(field => field.row !== null);
+  const unpositionedFields = fields.filter(field => field.row === null);
+  
+  // Process positioned fields first
+  positionedFields.forEach(field => {
+    const step = field.step!;
+    const row = field.row!;
+    
+    if (!stepMap.has(step)) {
+      stepMap.set(step, new Map<number, Field[]>());
+    }
+    
+    const rowMap = stepMap.get(step)!;
+    if (!rowMap.has(row)) {
+      rowMap.set(row, []);
+    }
+    
+    rowMap.get(row)!.push(field);
+  });
+  
+  // Process unpositioned fields - assign rows within their designated steps
+  unpositionedFields.forEach((field) => {
+    const step = field.step!; // Step is already assigned (0 for unpositioned fields)
+    
+    // Find the highest row number in this step to stack unpositioned fields at the bottom
+    const stepRowMap = stepMap.get(step) || new Map<number, Field[]>();
+    const maxRowInStep = stepRowMap.size > 0 ? Math.max(...stepRowMap.keys()) : 0;
+    
+    // Assign the next available row
+    const row = maxRowInStep + 1;
+    
+    // Update the field object with the calculated row
+    field.row = row;
+    
+    if (!stepMap.has(step)) {
+      stepMap.set(step, new Map<number, Field[]>());
+    }
+    
+    const rowMap = stepMap.get(step)!;
+    if (!rowMap.has(row)) {
+      rowMap.set(row, []);
+    }
+    
+    rowMap.get(row)!.push(field);
+  });
+  
+  return stepMap;
+}
+
+// Function to generate grid-template-areas for a step
+function generateGridTemplateAreas(stepFields: Map<number, Field[]>): string {
+  const sortedRows = Array.from(stepFields.keys()).sort((a, b) => a - b);
+  const maxFieldsInAnyRow = Math.max(...Array.from(stepFields.values()).map(fields => fields.length));
+  
+  const rowStrings = sortedRows.map(rowNumber => {
+    const rowFields = stepFields.get(rowNumber)!;
+    const fieldNames = rowFields.map(field => field.label.replace(/\s+/g, '_')); // Replace spaces with underscores for CSS grid
+    
+    // For rows with single fields (typically unpositioned fields at bottom),
+    // place them in the first column and fill remaining columns with dots
+    if (fieldNames.length === 1 && maxFieldsInAnyRow > 1) {
+      const singleField = fieldNames[0];
+      const result = [singleField];
+      // Fill remaining columns with dots
+      while (result.length < maxFieldsInAnyRow) {
+        result.push('.');
+      }
+      return `"${result.join(' ')}"`;
+    }
+    
+    // For rows with multiple fields, pad to match maximum if needed
+    while (fieldNames.length < maxFieldsInAnyRow) {
+      fieldNames.push('.'); // Use '.' for empty grid cells
+    }
+    
+    return `"${fieldNames.join(' ')}"`;
+  });
+  
+  return rowStrings.join(' ');
+}
+
+// Function to generate grid-template-columns for a step
+function generateGridTemplateColumns(stepFields: Map<number, Field[]>): string {
+  const maxFieldsInAnyRow = Math.max(...Array.from(stepFields.values()).map(fields => fields.length));
+  return Array(maxFieldsInAnyRow).fill('1fr').join(' ');
+}
+
+// Function to organize fields into FormStep objects (without including fields)
+function organizeFieldsIntoSteps(fields: Field[]): FormStep[] {
+  const stepMap = groupFieldsByStepAndRow(fields);
+  const formSteps: FormStep[] = [];
+  
+  // Sort steps by step number
+  const sortedStepNumbers = Array.from(stepMap.keys()).sort((a, b) => a - b);
+  
+  sortedStepNumbers.forEach(stepNumber => {
+    const stepRowMap = stepMap.get(stepNumber)!;
+    
+    const formStep: FormStep = {
+      stepNumber,
+      gridTemplateAreas: generateGridTemplateAreas(stepRowMap),
+      gridTemplateColumns: generateGridTemplateColumns(stepRowMap)
+    };
+    
+    formSteps.push(formStep);
+  });
+  
+  return formSteps;
 }
 
 export function generateUUID(): string {

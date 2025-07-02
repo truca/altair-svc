@@ -1,10 +1,12 @@
 import {
   getNamedType,
+  GraphQLUnionType,
   GraphQLInputObjectType,
   GraphQLList,
   GraphQLNonNull,
   GraphQLObjectType,
   GraphQLSchema,
+  getNullableType,
 } from "graphql";
 import {
   getInputType,
@@ -93,7 +95,30 @@ export const addInputTypesForObjectType = ({
   const inputObjectFields = Object.keys(fields).reduce((res, key) => {
     let field = fields[key];
 
-    if (!isValidInputFieldType(field.type)) {
+    // Special handling for union types (not allowed in input). Merge member fields
+    const named = getNamedType(field.type) as any;
+    if (named instanceof GraphQLUnionType) {
+      const unionName = named.name;
+      const inputName = `${unionName}Input`;
+      let unionInput = schema.getType(inputName) as GraphQLInputObjectType;
+      if (!unionInput) {
+        // Collect fields from all member types
+        const memberFields: Record<string, any> = {};
+        named.getTypes().forEach((t: GraphQLObjectType) => {
+          Object.values(t.getFields()).forEach((f: any) => {
+            if (!memberFields[f.name]) {
+              memberFields[f.name] = { type: getNullableType(f.type) };
+            }
+          });
+        });
+        // Add discriminator
+        const { GraphQLString } = require("graphql");
+        memberFields["type"] = { type: new GraphQLNonNull(GraphQLString) };
+        unionInput = new GraphQLInputObjectType({ name: inputName, fields: memberFields });
+        schema.getTypeMap()[inputName] = unionInput;
+      }
+      field = createInputField(field, unionInput);
+    } else if (!isValidInputFieldType(field.type)) {
       // Check if the input type already exists
       const inputType = getInputType(
         `${prefix}${(getNamedType(field.type) as any).name}`,

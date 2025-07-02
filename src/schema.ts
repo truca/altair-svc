@@ -582,67 +582,117 @@ const typeDefinitions = /* GraphQL */ `
     categoryId: [String!]! @from(parentAttribute: "categoryId")
   }
 
-  type CRMSubProduct
-    @model(table: "Service")
-    @auth(read: ["public"], update: ["public"], delete: ["public"]) {
+  ### CRM SUBPRODUCTS ###
+
+  interface CRMSubProductInterface {
     country: String @from(queryParam: "country")
     crmFormId: ID @from(parentAttribute: "id")
     
-    # Common fields for all CRM subproducts
-    type: String! @selectFrom(values: ["email", "trigger", "banner", "sms", "whatsapp", "push", "pushSmsNrt", "preheader", "cupon", "sampling", "whatsappCarrousel"])
     budget: Float!
     base: Float!
     internalCampaignName: String!
     comments: String
     implementationDate: DateTime! @defaultFrom(parentAttribute: "implementationDate")
     
-    # Email specific
-    shippingDate: DateTime
-    
-    # Trigger specific
-    quantityMonths: Float
-    triggerTypeId: String
-    
-    # Banner specific
-    startDate: DateTime @defaultFrom(parentAttribute: "startDate")
-    endDate: DateTime @defaultFrom(parentAttribute: "endDate")
-    sku: String
-    callToAction: String
-    url: String
-    
-    # SMS/WhatsApp specific
-    smsText: String
-    
-    # Push specific
-    link: String
-    title: String
-    
-    # Push SMS NRT specific
-    text: String
-    storeId: String
-    
-    # Cupon specific
-    cuponTypeId: String
-    benefit: String
-    benefitAmount: Float
-    trigger: String
-    message: String
-    
-    # Sampling specific
-    typeId: String
-    units: Float
-    segmentation: String
-    
-    # WhatsApp Carousel specific
-    skus: [String]
-    
-    # Base campaign fields
     campaignSellerId: String! @from(parentAttribute: "campaignSellerId")
     campaignBrandId: [String!]! @from(parentAttribute: "campaignBrandId")
     categoryId: [String!]! @from(parentAttribute: "categoryId")
-    createdAt: DateTime
-    updatedAt: DateTime
+    createdAt: DateTime @hidden(value: true)
+    updatedAt: DateTime @hidden(value: true)
   }
+
+  # Email sub-product
+  type CRMEmail implements CRMSubProductInterface
+    @model(table: "Service")
+    @auth(read: ["public"], update: ["public"], delete: ["public"]) {
+    country: String @from(queryParam: "country")
+    crmFormId: ID @from(parentAttribute: "id")
+    
+    budget: Float! @meta(label: "Presupuesto")
+    base: Float! @meta(label: "Base")
+    internalCampaignName: String! @meta(label: "Cadena")
+    comments: String @meta(label: "Comentarios")
+    implementationDate: DateTime! @defaultFrom(parentAttribute: "implementationDate") @meta(label: "Fecha de implementación")
+    shippingDate: DateTime @meta(label: "Fecha de envío")
+    
+    campaignSellerId: String! @from(parentAttribute: "campaignSellerId")
+    campaignBrandId: [String!]! @from(parentAttribute: "campaignBrandId")
+    categoryId: [String!]! @from(parentAttribute: "categoryId")
+    createdAt: DateTime @hidden(value: true)
+    updatedAt: DateTime @hidden(value: true)
+  }
+
+  # Trigger sub-product
+  type CRMTrigger implements CRMSubProductInterface
+    @model(table: "Service")
+    @auth(read: ["public"], update: ["public"], delete: ["public"]) {
+    country: String @from(queryParam: "country")
+    crmFormId: ID @from(parentAttribute: "id")
+    
+    budget: Float! @meta(label: "Presupuesto")
+    base: Float! @meta(label: "Base")
+    internalCampaignName: String! @meta(label: "Cadena")
+    comments: String @meta(label: "Comentarios")
+    implementationDate: DateTime! @defaultFrom(parentAttribute: "implementationDate") @meta(label: "Fecha de implementación")
+    quantityMonths: Float @meta(label: "Cantidad de meses")
+    triggerTypeId: String @meta(label: "Tipo de trigger")
+    
+    campaignSellerId: String! @from(parentAttribute: "campaignSellerId")
+    campaignBrandId: [String!]! @from(parentAttribute: "campaignBrandId")
+    categoryId: [String!]! @from(parentAttribute: "categoryId")
+    createdAt: DateTime @hidden(value: true)
+    updatedAt: DateTime @hidden(value: true)
+  }
+
+  # Banner CRM sub-product
+  type CRMBanner implements CRMSubProductInterface
+    @model(table: "Service")
+    @auth(read: ["public"], update: ["public"], delete: ["public"]) {
+    country: String @from(queryParam: "country")
+    crmFormId: ID @from(parentAttribute: "id")
+
+    budget: Float! @meta(label: "Presupuesto")
+    base: Float! @meta(label: "Base")
+    internalCampaignName: String! @meta(label: "Cadena")
+    comments: String @meta(label: "Comentarios")
+    implementationDate: DateTime! @defaultFrom(parentAttribute: "implementationDate") @meta(label: "Fecha de implementación")
+    
+    startDate: DateTime @defaultFrom(parentAttribute: "startDate") @meta(label: "Fecha de inicio")
+    endDate: DateTime @defaultFrom(parentAttribute: "endDate") @meta(label: "Fecha de fin")
+    sku: String @meta(label: "SKU")
+    callToAction: String @meta(label: "Call to Action")
+    url: String @meta(label: "URL")
+    
+    campaignSellerId: String! @from(parentAttribute: "campaignSellerId")
+    campaignBrandId: [String!]! @from(parentAttribute: "campaignBrandId")
+    categoryId: [String!]! @from(parentAttribute: "categoryId")
+    createdAt: DateTime @hidden(value: true)
+    updatedAt: DateTime @hidden(value: true)
+  }
+
+  # Generic CRM sub-product – SMS, WhatsApp, Push, etc.
+  type CRMGeneric implements CRMSubProductInterface
+    @model(table: "Service")
+    @auth(read: ["public"], update: ["public"], delete: ["public"]) {
+    country: String @from(queryParam: "country")
+    crmFormId: ID @from(parentAttribute: "id")
+
+    budget: Float! @meta(label: "Presupuesto")
+    base: Float! @meta(label: "Base")
+    internalCampaignName: String! @meta(label: "Cadena")
+    comments: String @meta(label: "Comentarios")
+    implementationDate: DateTime! @defaultFrom(parentAttribute: "implementationDate") @meta(label: "Fecha de implementación")
+    
+    type: String! @selectFrom(values: ["SMS", "WHATSAPP", "PUSH", "PUSH SMS NRT", "PREHEADER", "CUPÓN", "SAMPLING", "WHATSAPP CARRUSEL"]) @meta(label: "Tipo")
+
+    campaignSellerId: String! @from(parentAttribute: "campaignSellerId")
+    campaignBrandId: [String!]! @from(parentAttribute: "campaignBrandId")
+    categoryId: [String!]! @from(parentAttribute: "categoryId")
+    createdAt: DateTime @hidden(value: true)
+    updatedAt: DateTime @hidden(value: true)
+  }
+
+  union CRMSubProductUnion = CRMEmail | CRMTrigger | CRMBanner | CRMGeneric
 
   type CRM
     @model(table: "Template")
@@ -652,17 +702,17 @@ const typeDefinitions = /* GraphQL */ `
     campaign: Campaign @hidden(value: true)
     
     # CRM specific fields
-    crmTypeId: String! @selectFrom(optionValues: [{label: "Propenso", value: "Propenso"}, {label: "Segmentado", value: "Segmentado"}])
-    templateId: String!
-    numberTouches: Float
-    subProducts: [CRMSubProduct]
+    crmTypeId: String! @selectFrom(values: ["Propenso", "Segmentado"]) @meta(label: "Tipo de CRM")
+    templateId: String! @selectFrom(values: ["1P", "3P"]) @meta(label: "Template")
+    numberTouches: Float @meta(label: "Número de toques")
+    subProducts: [CRMSubProductUnion] @polymorphicArray(types: ["CRMEmail", "CRMTrigger", "CRMBanner", "CRMGeneric"])
     
     # Base campaign fields
     campaignSellerId: String! @from(parentAttribute: "sellerId")
     campaignBrandId: [String!]! @from(parentAttribute: "brandId")
     categoryId: [String!]! @from(parentAttribute: "categoryId")
-    createdAt: DateTime
-    updatedAt: DateTime
+    createdAt: DateTime @hidden(value: true)
+    updatedAt: DateTime @hidden(value: true)
   }
 
   type MediaOnService

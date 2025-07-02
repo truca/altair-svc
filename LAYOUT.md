@@ -57,29 +57,29 @@ budget
 base
 cadena
 comments
-shippingDate
 implementationDate
+shippingDate
 
 CRM trigger
 budget
 base
 cadena
 comments
+implementationDate
 quantity months
 triggerTypeId
-implementationDate
 
 CRM banner
 budget
 base
 cadena
 comments
+implementationDate
 startDate
 endDate
 SKU
 Call to Action
 URL
-implementationDate
 
 CRM SMS, WSP, push, push sms nrt, preheader, cupón, sampling, wsp carrusel
 budget

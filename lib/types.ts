@@ -32,6 +32,10 @@ export enum FieldType {
   SUBMIT = "SUBMIT",
   RESET = "RESET",
   BUTTON = "BUTTON",
+  // Subform types for complex nested objects
+  SUBFORM = "SUBFORM",
+  POLYMORPHIC_SUBFORM = "POLYMORPHIC_SUBFORM", 
+  POLYMORPHIC_ARRAY = "POLYMORPHIC_ARRAY",
 }
 
 export interface FieldValidation {
@@ -69,6 +73,13 @@ export interface Field {
   maxValue?: string;
   valuePerOption?: string;
   component?: string;
+  // Subform properties
+  subformType?: string; // Target GraphQL type for SUBFORM
+  subformTypes?: string[]; // Available types for POLYMORPHIC_SUBFORM/POLYMORPHIC_ARRAY
+  subformFields?: Field[]; // Nested fields for SUBFORM
+  subformLayout?: "cards" | "tabs"; // Layout style
+  addButtonText?: string; // Text for add button in POLYMORPHIC_ARRAY
+  typeOptions?: FieldOption[]; // User-friendly type options for polymorphic fields
 }
 
 export interface Profile {

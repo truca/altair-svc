@@ -51,6 +51,24 @@ const typeDefinitions = /* GraphQL */ `
   directive @from(parentAttribute: String, queryParam: String) on FIELD_DEFINITION
   directive @position(step: Float, row: Float) on FIELD_DEFINITION
   directive @meta(label: String, placeholder: String) on FIELD_DEFINITION
+  
+  # Subform directives for complex nested objects
+  enum SubformLayout {
+    CARDS
+    TABS
+  }
+  directive @subform(layout: SubformLayout = CARDS) on FIELD_DEFINITION
+  directive @polymorphicSubform(
+    types: [String!]
+    optionTypes: [OptionInput!]
+    layout: SubformLayout = CARDS
+  ) on FIELD_DEFINITION
+  directive @polymorphicArray(
+    types: [String!] 
+    optionTypes: [OptionInput!]
+    addButtonText: String = "Agregar"
+    layout: SubformLayout = CARDS
+  ) on FIELD_DEFINITION
 
   enum FieldType {
     TEXT
@@ -77,6 +95,10 @@ const typeDefinitions = /* GraphQL */ `
     SUBMIT
     RESET
     BUTTON
+    # Subform types for complex nested objects
+    SUBFORM
+    POLYMORPHIC_SUBFORM
+    POLYMORPHIC_ARRAY
   }
 
   enum ValueType {
@@ -119,6 +141,13 @@ const typeDefinitions = /* GraphQL */ `
     row: Float
     # Conditional visibility - stringified condition object from @hidden(cond: ...)
     hidden: String
+    # Subform properties
+    subformType: String # Target GraphQL type for SUBFORM
+    subformTypes: [String] # Available types for POLYMORPHIC_SUBFORM/POLYMORPHIC_ARRAY
+    subformFields: [Field] # Nested fields for SUBFORM (recursive)
+    subformLayout: String # Layout style: "cards" or "tabs"
+    addButtonText: String # Text for add button in POLYMORPHIC_ARRAY
+    typeOptions: [FieldOption] # User-friendly type options for polymorphic fields
   }
 
   type FormStep {
@@ -756,7 +785,7 @@ const typeDefinitions = /* GraphQL */ `
     
     # Home Landing specific fields
     budget: Float
-    services: [HomeLandingStrategy]
+    services: [Service] # Using unified Service type instead of union to support input types
   }
 
   type HomeLandingLanding

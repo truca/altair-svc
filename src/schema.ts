@@ -359,10 +359,10 @@ const typeDefinitions = /* GraphQL */ `
     ratingAndReview: RatingAndReview @hidden(cond: [{ field: "ratingsAndReviewsEnabled", valueBoolean: false}]) @position(step: 2, row: 3)
 
     # template
-    banner: Banner @hidden(bannersEnabled: false) @position(step: 2, row: 4)
-    CRM: CRM @hidden(CRMEnabled: false) @position(step: 2, row: 5)
-    homeLanding: HomeLanding @hidden(homeLandingEnabled: false) @position(step: 2, row: 6)
-    mediaOn: MediaOn @hidden(mediaOnEnabled: false) @position(step: 2, row: 7)
+    banner: Banner @hidden(cond: [{ field: "bannersEnabled", valueBoolean: false}]) @position(step: 2, row: 4)
+    CRM: CRM @hidden(cond: [{ field: "CRMEnabled", valueBoolean: false}]) @position(step: 2, row: 5)
+    homeLanding: HomeLanding @hidden(cond: [{ field: "homeLandingEnabled", valueBoolean: false}]) @position(step: 2, row: 6)
+    mediaOn: MediaOn @hidden(cond: [{ field: "mediaOnEnabled", valueBoolean: false}]) @position(step: 2, row: 7)
     
   }
 
@@ -551,165 +551,165 @@ const typeDefinitions = /* GraphQL */ `
     categoryId: [String!]! @from(parentAttribute: "categoryId")
   }
 
-  # type CRMSubProduct
-  #   @model(table: "Service")
-  #   @auth(read: ["public"], update: ["public"], delete: ["public"]) {
-  #   country: String @from(queryParam: "country")
-  #   crmFormId: ID @from(parentAttribute: "id")
+  type CRMSubProduct
+    @model(table: "Service")
+    @auth(read: ["public"], update: ["public"], delete: ["public"]) {
+    country: String @from(queryParam: "country")
+    crmFormId: ID @from(parentAttribute: "id")
     
-  #   # Common fields for all CRM subproducts
-  #   type: String! @selectFrom(["email", "trigger", "banner", "sms", "whatsapp", "push", "pushSmsNrt", "preheader", "cupon", "sampling", "whatsappCarrousel"])
-  #   budget: Float!
-  #   base: Float!
-  #   internalCampaignName: String!
-  #   comments: String
-  #   implementationDate: DateTime! @defaultFrom(parentAttribute: "implementationDate")
+    # Common fields for all CRM subproducts
+    type: String! @selectFrom(values: ["email", "trigger", "banner", "sms", "whatsapp", "push", "pushSmsNrt", "preheader", "cupon", "sampling", "whatsappCarrousel"])
+    budget: Float!
+    base: Float!
+    internalCampaignName: String!
+    comments: String
+    implementationDate: DateTime! @defaultFrom(parentAttribute: "implementationDate")
     
-  #   # Email specific
-  #   shippingDate: DateTime
+    # Email specific
+    shippingDate: DateTime
     
-  #   # Trigger specific
-  #   quantityMonths: Int
-  #   triggerTypeId: String
+    # Trigger specific
+    quantityMonths: Float
+    triggerTypeId: String
     
-  #   # Banner specific
-  #   startDate: DateTime @defaultFrom(parentAttribute: "startDate")
-  #   endDate: DateTime @defaultFrom(parentAttribute: "endDate")
-  #   sku: String
-  #   callToAction: String
-  #   url: String
+    # Banner specific
+    startDate: DateTime @defaultFrom(parentAttribute: "startDate")
+    endDate: DateTime @defaultFrom(parentAttribute: "endDate")
+    sku: String
+    callToAction: String
+    url: String
     
-  #   # SMS/WhatsApp specific
-  #   smsText: String
+    # SMS/WhatsApp specific
+    smsText: String
     
-  #   # Push specific
-  #   link: String
-  #   title: String
+    # Push specific
+    link: String
+    title: String
     
-  #   # Push SMS NRT specific
-  #   text: String
-  #   storeId: String
+    # Push SMS NRT specific
+    text: String
+    storeId: String
     
-  #   # Cupon specific
-  #   cuponTypeId: String
-  #   benefit: String
-  #   benefitAmount: Float
-  #   trigger: String
-  #   message: String
+    # Cupon specific
+    cuponTypeId: String
+    benefit: String
+    benefitAmount: Float
+    trigger: String
+    message: String
     
-  #   # Sampling specific
-  #   typeId: String
-  #   units: Int
-  #   segmentation: String
+    # Sampling specific
+    typeId: String
+    units: Float
+    segmentation: String
     
-  #   # WhatsApp Carousel specific
-  #   skus: [String]
+    # WhatsApp Carousel specific
+    skus: [String]
     
-  #   # Base campaign fields
-  #   campaignSellerId: String! @from(parentAttribute: "campaignSellerId")
-  #   campaignBrandId: [String!]! @from(parentAttribute: "campaignBrandId")
-  #   categoryId: [String!]! @from(parentAttribute: "categoryId")
-  #   createdAt: DateTime
-  #   updatedAt: DateTime
-  # }
+    # Base campaign fields
+    campaignSellerId: String! @from(parentAttribute: "campaignSellerId")
+    campaignBrandId: [String!]! @from(parentAttribute: "campaignBrandId")
+    categoryId: [String!]! @from(parentAttribute: "categoryId")
+    createdAt: DateTime
+    updatedAt: DateTime
+  }
 
-  # type CRM
-  #   @model(table: "Template")
-  #   @auth(read: ["public"], update: ["public"], delete: ["public"]) {
-  #   country: String @from(queryParam: "country")
-  #   campaignId: ID @from(parentAttribute: "id")
-  #   campaign: Campaign
+  type CRM
+    @model(table: "Template")
+    @auth(read: ["public"], update: ["public"], delete: ["public"]) {
+    country: String @from(queryParam: "country")
+    campaignId: ID @from(parentAttribute: "id")
+    campaign: Campaign
     
-  #   # CRM specific fields
-  #   crmTypeId: String! @selectFrom([{label: "Propenso", value: "Propenso"}, {label: "Segmentado", value: "Segmentado"}])
-  #   templateId: String!
-  #   numberTouches: Int
-  #   subProducts: [CRMSubProduct]
+    # CRM specific fields
+    crmTypeId: String! @selectFrom(optionValues: [{label: "Propenso", value: "Propenso"}, {label: "Segmentado", value: "Segmentado"}])
+    templateId: String!
+    numberTouches: Float
+    subProducts: [CRMSubProduct]
     
-  #   # Base campaign fields
-  #   campaignSellerId: String! @from(parentAttribute: "sellerId")
-  #   campaignBrandId: [String!]! @from(parentAttribute: "brandId")
-  #   categoryId: [String!]! @from(parentAttribute: "categoryId")
-  #   createdAt: DateTime
-  #   updatedAt: DateTime
-  # }
+    # Base campaign fields
+    campaignSellerId: String! @from(parentAttribute: "sellerId")
+    campaignBrandId: [String!]! @from(parentAttribute: "brandId")
+    categoryId: [String!]! @from(parentAttribute: "categoryId")
+    createdAt: DateTime
+    updatedAt: DateTime
+  }
 
-  # type MediaOnStrategy
-  #   @model(table: "Service")
-  #   @auth(read: ["public"], update: ["public"], delete: ["public"]) {
-  #   country: String @from(queryParam: "country")
-  #   mediaOnFormId: ID @from(parentAttribute: "id")
+  type MediaOnService
+    @model(table: "Service")
+    @auth(read: ["public"], update: ["public"], delete: ["public"]) {
+    country: String @from(queryParam: "country")
+    mediaOnFormId: ID @from(parentAttribute: "id")
     
-  #   # Media On Strategy fields
-  #   mediumId: String! @selectFrom(["DIGITAL", "SOCIAL", "SEARCH"])
-  #   objectiveId: String! @selectFrom(["AWARENESS", "CONVERSION", "TRAFFIC"])
-  #   strategyId: String! @selectFrom(["DISPLAY", "VIDEO", "SEM"])
-  #   segmentationId: String! @selectFrom(["DEMOGRAPHIC", "BEHAVIORAL", "KEYWORD"])
-  #   purchaseTypeId: String! @selectFrom(["PROGRAMMATIC", "DIRECT", "AUCTION"])
-  #   formatsId: String! @selectFrom(["BANNER_300x250", "VIDEO_16x9", "TEXT_AD"])
-  #   budget: Float!
-  #   commission: String! @selectFrom([{label: "20%", value: "20%"}, {label: "30%", value: "30%"}])
-  #   startDate: DateTime! @defaultFrom(parentAttribute: "startDate")
-  #   endDate: DateTime! @defaultFrom(parentAttribute: "endDate")
-  #   implementationDate: DateTime! @defaultFrom(parentAttribute: "implementationDate")
+    # Media On Strategy fields
+    mediumId: String! @selectFrom(values:["DIGITAL", "SOCIAL", "SEARCH"])
+    objectiveId: String! @selectFrom(values:["AWARENESS", "CONVERSION", "TRAFFIC"])
+    strategyId: String! @selectFrom(values:["DISPLAY", "VIDEO", "SEM"])
+    segmentationId: String! @selectFrom(values:["DEMOGRAPHIC", "BEHAVIORAL", "KEYWORD"])
+    purchaseTypeId: String! @selectFrom(values:["PROGRAMMATIC", "DIRECT", "AUCTION"])
+    formatsId: String! @selectFrom(values:["BANNER_300x250", "VIDEO_16x9", "TEXT_AD"])
+    budget: Float!
+    commission: String! @selectFrom(optionValues: [{label: "20%", value: "20%"}, {label: "30%", value: "30%"}])
+    startDate: DateTime! @defaultFrom(parentAttribute: "startDate")
+    endDate: DateTime! @defaultFrom(parentAttribute: "endDate")
+    implementationDate: DateTime! @defaultFrom(parentAttribute: "implementationDate")
     
-  #   # Base campaign fields
-  #   campaignSellerId: String! @from(parentAttribute: "campaignSellerId")
-  #   campaignBrandId: [String!]! @from(parentAttribute: "campaignBrandId")
-  #   categoryId: [String!]! @from(parentAttribute: "categoryId")
-  #   createdAt: DateTime
-  #   updatedAt: DateTime
-  # }
+    # Base campaign fields
+    campaignSellerId: String! @from(parentAttribute: "campaignSellerId")
+    campaignBrandId: [String!]! @from(parentAttribute: "campaignBrandId")
+    categoryId: [String!]! @from(parentAttribute: "categoryId")
+    createdAt: DateTime
+    updatedAt: DateTime
+  }
 
-  # type MediaOn
-  #   @model(table: "Template")
-  #   @auth(read: ["public"], update: ["public"], delete: ["public"]) {
-  #   country: String @from(queryParam: "country")
-  #   campaignId: ID @from(parentAttribute: "id")
-  #   campaign: Campaign
+  type MediaOn
+    @model(table: "Template")
+    @auth(read: ["public"], update: ["public"], delete: ["public"]) {
+    country: String @from(queryParam: "country")
+    campaignId: ID @from(parentAttribute: "id")
+    campaign: Campaign
     
-  #   # Media On specific fields
-  #   strategiesId: String
-  #   budget: Float # Calculated automatically
-  #   commission: String # Default "20%"
-  #   totalAmount: Float # Calculated automatically
-  #   strategies: [MediaOnStrategy]
+    # Media On specific fields
+    strategiesId: String
+    budget: Float # Calculated automatically
+    commission: String # Default "20%"
+    totalAmount: Float # Calculated automatically
+    strategies: [MediaOnService]
     
-  #   # Base campaign fields
-  #   campaignSellerId: String! @from(parentAttribute: "sellerId")
-  #   campaignBrandId: [String!]! @from(parentAttribute: "brandId")
-  #   categoryId: [String!]! @from(parentAttribute: "categoryId")
-  #   createdAt: DateTime
-  #   updatedAt: DateTime
-  # }
+    # Base campaign fields
+    campaignSellerId: String! @from(parentAttribute: "sellerId")
+    campaignBrandId: [String!]! @from(parentAttribute: "brandId")
+    categoryId: [String!]! @from(parentAttribute: "categoryId")
+    createdAt: DateTime
+    updatedAt: DateTime
+  }
 
-  # type Banner
-  #   @model(table: "Template")
-  #   @auth(read: ["public"], update: ["public"], delete: ["public"]) {
-  #   country: String @from(queryParam: "country")
-  #   campaignId: ID @from(parentAttribute: "id")
-  #   campaign: Campaign
+  type Banner
+    @model(table: "Template")
+    @auth(read: ["public"], update: ["public"], delete: ["public"]) {
+    country: String @from(queryParam: "country")
+    campaignId: ID @from(parentAttribute: "id")
+    campaign: Campaign
     
-  #   # Banner specific fields
-  #   bannerTypesId: [String!]! @selectManyFrom([{label: "Banners Fads", value: "FADS"}, {label: "Banners Menú", value: "MENU"}])
+    # Banner specific fields
+    bannerTypesId: [String!]! @selectManyFrom(optionValues: [{label: "Banners Fads", value: "FADS"}, {label: "Banners Menú", value: "MENU"}])
     
-  #   # Banner Fads fields
-  #   startDate: DateTime @defaultFrom(parentAttribute: "startDate")
-  #   endDate: DateTime @defaultFrom(parentAttribute: "endDate")
-  #   implementationDate: DateTime! @defaultFrom(parentAttribute: "implementationDate")
-  #   segmentationTypeId: String @selectFrom(["ROS (abierta)", "Por categoría (Gs)", "Audiencias"])
-  #   categoryIds: [String] @selectManyFrom([{ label: "J01 - MODA", value: "J01" }, { label: "J04 - DAMAS", value: "J04" }, { label: "J08 - PERFUMERIA", value: "J08" }, { label: "J10 - CALZADO", value: "J10" }, { label: "J11 - ELECTRO", value: "J11" }, { label: "J12 - BLANCO", value: "J12" }, { label: "J13 - MUEBLES", value: "J13" }, { label: "J14 - DORMITORIO", value: "J14" }, { label: "J15 - MENAJE", value: "J15" }, { label: "J16 - DECORACION", value: "J16" }, { label: "J17 - REGALOS", value: "J17" }, { label: "J18 - GOURMET", value: "J18" }, { label: "J99 - EXTERNA", value: "J99" }, { label: "J32 - CRATE & BARREL", value: "J32" }, { label: "J21 - BIENESTAR SEXUAL", value: "J21" }])
-  #   budget: Float
-  #   url: String!
-  #   comment: String
+    # Banner Fads fields
+    startDate: DateTime @defaultFrom(parentAttribute: "startDate")
+    endDate: DateTime @defaultFrom(parentAttribute: "endDate")
+    implementationDate: DateTime! @defaultFrom(parentAttribute: "implementationDate")
+    segmentationTypeId: String @selectFrom(optionValues: [{label: "ROS (abierta)", value: "ROS (abierta)"}, {label: "Por categoría (Gs)", value: "Por categoría (Gs)"}, {label: "Audiencias", value: "Audiencias"}])
+    categoryIds: [String] @selectManyFrom(optionValues: [{ label: "J01 - MODA", value: "J01" }, { label: "J04 - DAMAS", value: "J04" }, { label: "J08 - PERFUMERIA", value: "J08" }, { label: "J10 - CALZADO", value: "J10" }, { label: "J11 - ELECTRO", value: "J11" }, { label: "J12 - BLANCO", value: "J12" }, { label: "J13 - MUEBLES", value: "J13" }, { label: "J14 - DORMITORIO", value: "J14" }, { label: "J15 - MENAJE", value: "J15" }, { label: "J16 - DECORACION", value: "J16" }, { label: "J17 - REGALOS", value: "J17" }, { label: "J18 - GOURMET", value: "J18" }, { label: "J99 - EXTERNA", value: "J99" }, { label: "J32 - CRATE & BARREL", value: "J32" }, { label: "J21 - BIENESTAR SEXUAL", value: "J21" }])
+    budget: Float
+    url: String!
+    comment: String
     
-  #   # Base campaign fields
-  #   campaignSellerId: String! @from(parentAttribute: "sellerId")
-  #   campaignBrandId: [String!]! @from(parentAttribute: "brandId")
-  #   categoryId: [String!]! @from(parentAttribute: "categoryId")
-  #   createdAt: DateTime
-  #   updatedAt: DateTime
-  # }
+    # Base campaign fields
+    campaignSellerId: String! @from(parentAttribute: "sellerId")
+    campaignBrandId: [String!]! @from(parentAttribute: "brandId")
+    categoryId: [String!]! @from(parentAttribute: "categoryId")
+    createdAt: DateTime
+    updatedAt: DateTime
+  }
 
   type RatingAndReview
     @model(table: "Service")

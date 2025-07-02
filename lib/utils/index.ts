@@ -294,6 +294,46 @@ function deriveFieldType(field: any, directives: readonly DirectiveNode[]): Fiel
     return FieldType.HIDDEN;
   }
   
+  // Check @type directive first (overrides GraphQL type)
+  // Now finding the directive
+  const typeDirectiveValue = getDirectiveArgument(directives, 'type', 'value');
+  // console.log('typeDirectiveValue', field.name, typeDirectiveValue);
+  if (typeDirectiveValue) {
+    switch (typeDirectiveValue) {
+      case 'DATE':
+        return FieldType.DATE;
+      case 'TIME':
+        return FieldType.TIME;
+      case 'DATETIME':
+        return FieldType.DATETIME;
+      case 'EMAIL':
+        return FieldType.EMAIL;
+      case 'PASSWORD':
+        return FieldType.PASSWORD;
+      case 'URL':
+        return FieldType.URL;
+      case 'TEL':
+        return FieldType.TEL;
+      case 'NUMBER':
+        return FieldType.NUMBER;
+      case 'TEXTAREA':
+        return FieldType.TEXTAREA;
+      case 'FILE':
+        return FieldType.FILE;
+      case 'IMAGE':
+        return FieldType.IMAGE;
+      case 'COLOR':
+        return FieldType.COLOR;
+      case 'RANGE':
+        return FieldType.RANGE;
+      case 'SEARCH':
+        return FieldType.SEARCH;
+      default:
+        // If unknown @type value, fall through to GraphQL type derivation
+        break;
+    }
+  }
+  
   // Derive from GraphQL type
   let baseType = field.type;
   while (isNonNullType(baseType) || isListType(baseType)) {
@@ -301,7 +341,7 @@ function deriveFieldType(field: any, directives: readonly DirectiveNode[]): Fiel
   }
   
   if (baseType.name === 'Boolean') return FieldType.CHECKBOX;
-  if (baseType.name === 'DateTime') return FieldType.DATETIME;
+  if (baseType.name === 'DateTime') return FieldType.DATE;
   if (baseType.name === 'Int' || baseType.name === 'Float') return FieldType.NUMBER;
   if (baseType.name === 'File') return FieldType.FILE;
   

@@ -323,17 +323,15 @@ const typeDefinitions = /* GraphQL */ `
     subCategoryId: [String!]! @selectManyFrom(table: "subcategories", labelAttribute: "name", valueAttribute: "externalId", dependentField: "categoryId") @meta(label: "Subcategoría", placeholder: "Selecciona una Opción") @position(step: 1, row: 7)
     
     #dates
-    startDate: String! @type(value: DATE) @position(step: 1, row: 8) @meta(label: "Fecha de Inicio", placeholder: "Selecciona una fecha")
-    endDate: String! @type(value: DATE) @position(step: 1, row: 8) @meta(label: "Fecha de Término", placeholder: "Selecciona una fecha")
-    implementationDate: String! @type(value: DATE) @position(step: 1, row: 9) @meta(label: "Fecha de Implementación", placeholder: "Selecciona una fecha")
+    startDate: DateTime! @type(value: DATE) @position(step: 1, row: 8) @meta(label: "Fecha de Inicio", placeholder: "Selecciona una fecha")
+    endDate: DateTime! @type(value: DATE) @position(step: 1, row: 8) @meta(label: "Fecha de Término", placeholder: "Selecciona una fecha")
+    implementationDate: DateTime! @type(value: DATE) @position(step: 1, row: 9) @meta(label: "Fecha de Implementación", placeholder: "Selecciona una fecha")
     campaignTypeId: String @selectFrom(optionValues: [
       {label: "Táctico", value: "tactico"}
       {label: "Always On", value: "always_on"}
     ]) @position(step: 1, row: 10) @meta(label: "Tipo de campaña", placeholder: "Selecciona una Opción")
     createdAt: String @type(value: DATETIME) @hidden(value: true)
     updatedAt: String @type(value: DATETIME) @hidden(value: true)
-
-
 
     bannersEnabled: Boolean! @default(value: false) @position(step: 1, row: 11) @meta(label: "Banners", placeholder: "Selecciona una Opción")
     CRMEnabled: Boolean! @default(value: false) @position(step: 1, row: 12) @meta(label: "CRM", placeholder: "Selecciona una Opción")
@@ -351,7 +349,8 @@ const typeDefinitions = /* GraphQL */ `
     graphicsBudget: Float @position(step: 1, row: 20) @meta(label: "", placeholder: "Presupuesto Gráficos")
     othersEnabled: Boolean! @position(step: 1, row: 21) @meta(label: "Otros", placeholder: "Selecciona una Opción")
     othersBudget: Float @position(step: 1, row: 21) @meta(label: "", placeholder: "Presupuesto Otros")
-    mediaPlan: String @position(step: 2, row: 1) @meta(label: "Plan de Medios", placeholder: "Ingresa el Plan de Medios")
+    # change to step 1
+    mediaPlan: File @position(step: 2, row: 22) @meta(label: "Plan de Medios", placeholder: "Ingresa el Plan de Medios")
 
     # service
     sponsoredProduct: SponsoredProduct @hidden(cond: [{ field: "sponsoredProductEnabled", valueBoolean: false}]) @position(step: 2, row: 1)

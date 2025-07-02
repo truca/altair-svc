@@ -111,10 +111,21 @@ const typeDefinitions = /* GraphQL */ `
     valueAttribute: String
     dependentField: String
     isMulti: Boolean
+    # Position properties for multistep forms
+    step: Float
+    row: Float
+  }
+
+  type FormStep {
+    stepNumber: Float
+    gridTemplateAreas: String
+    gridTemplateColumns: String
+    # fields: [Field]
   }
 
   type Form {
     fields: [Field]
+    steps: [FormStep]
   }
 
 
@@ -297,12 +308,15 @@ const typeDefinitions = /* GraphQL */ `
     campaignGroupId: ID @hidden(value: true)
     campaignGroup: CampaignGroup @hidden(value: true)
     country: String @from(queryParam: "country") @hidden(value: true)
-    productManagerId: String! @selectFrom(table: "productManagers", labelAttribute: "name", valueAttribute: "externalId")
-    businessUnitId: String! @selectFrom(values: ["1P", "3P"])
-    campaignName: String!
-    eventTypeId: String! @selectFrom(values: ["Cyber Day","Black Friday","14_F","Escolares","Black_Week","DDM","DDP","DDN","Sneaker_Corner","CD","CM","CW","Días_F","Navidad","Otra"])
-    campaignTypeId: String! @selectFrom(optionValues: [{label: "Táctico", value: "tactico"},{label: "Always On", value: "always_on"}])
-    customId: String
+    productManagerId: String! @selectFrom(table: "productManagers", labelAttribute: "name", valueAttribute: "externalId") @position(step: 1, row: 1)
+    businessUnitId: String! @selectFrom(values: ["1P", "3P"]) @position(step: 1, row: 2)
+    campaignName: String! @position(step: 1, row: 3)
+    eventTypeId: String! @selectFrom(values: ["Cyber Day", "Black Friday", "14_F", "Escolares", "Black_Week", "DDM", "DDP", "DDN", "Sneaker_Corner", "CD", "CM", "CW", "Días_F", "Navidad", "Otra"]) @position(step: 1, row: 3)
+    campaignTypeId: String @selectFrom(optionValues: [
+      {label: "Táctico", value: "tactico"}
+      {label: "Always On", value: "always_on"}
+    ]) @position(step: 2, row: 1)
+    customId: String @position(step: 1, row: 6)
     nomenclature: String
 
     # filters

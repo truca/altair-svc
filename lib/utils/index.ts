@@ -160,8 +160,6 @@ enum FieldType {
   CHECKBOX = "CHECKBOX",
   RADIO = "RADIO",
   SELECT = "SELECT",
-  MULTISELECT = "MULTISELECT",
-  SMART_SELECT = "SMART_SELECT",
   DATE = "DATE",
   TIME = "TIME",
   DATETIME = "DATETIME",
@@ -205,90 +203,70 @@ interface Field {
   defaultValue?: string | number | boolean | string[] | number[];
   options?: FieldOption[];
   validation?: FieldValidation[];
+  // Position properties for multistep forms
+  step?: number;
+  row?: number;
 }
 
 // Function to extract directive arguments
-function getDirectiveArgument(directives: readonly DirectiveNode[], directiveName: string, argumentName: string): any {
+function getDirectiveArgument(directives: readonly DirectiveNode[], directiveName: string, argName: string): any {
   const directive = directives.find(d => d.name.value === directiveName);
-  if (!directive || !directive.arguments) return null;
+  if (!directive) return null;
   
-  const argument = directive.arguments.find(arg => arg.name.value === argumentName);
-  if (!argument) return null;
+  const arg = directive.arguments?.find(a => a.name.value === argName);
+  if (!arg) return null;
   
-  const value = argument.value;
-  
-  switch (value.kind) {
-    case 'StringValue':
-      return value.value;
-    case 'BooleanValue':
-      return value.value;
-    case 'IntValue':
-      return parseInt(value.value, 10);
-    case 'FloatValue':
-      return parseFloat(value.value);
-    case 'EnumValue':
-      return value.value; // Handle enum values like DATE, TEXT, etc.
-    case 'ListValue':
-      return value.values.map(v => {
-        if (v.kind === 'StringValue') return v.value;
-        if (v.kind === 'ObjectValue') {
-          const obj: any = {};
-          v.fields.forEach(field => {
-            if (field.value.kind === 'StringValue') {
-              obj[field.name.value] = field.value.value;
-            }
-          });
-          return obj;
-        }
+  // Helper function to parse any value type
+  function parseValue(value: any): any {
+    switch (value.kind) {
+      case 'StringValue':
+        return value.value;
+      case 'BooleanValue':
+        return value.value;
+      case 'IntValue':
+        return parseInt(value.value);
+      case 'FloatValue':
+        return parseFloat(value.value);
+      case 'ListValue':
+        return value.values.map((v: any) => parseValue(v));
+      case 'ObjectValue':
+        const obj: any = {};
+        value.fields.forEach((field: any) => {
+          obj[field.name.value] = parseValue(field.value);
+        });
+        return obj;
+      case 'NullValue':
         return null;
-      }).filter(Boolean);
-    case 'ObjectValue':
-      const obj: any = {};
-      value.fields.forEach(field => {
-        if (field.value.kind === 'StringValue') {
-          obj[field.name.value] = field.value.value;
-        }
-      });
-      return obj;
-    default:
-      console.warn(`Unhandled directive argument type: ${value.kind}`);
-      return null;
+      default:
+        console.warn(`Unhandled directive argument type: ${value.kind}`);
+        return null;
+    }
   }
+  
+  return parseValue(arg.value);
 }
 
 // Function to derive field type from GraphQL type and directives
-export function deriveFieldType(type: GraphQLType, directives: readonly DirectiveNode[]): FieldType {
-  // Check for explicit @type directive first - this takes precedence
-  const explicitType = getDirectiveArgument(directives, 'type', 'value');
-  if (explicitType && Object.values(FieldType).includes(explicitType as FieldType)) {
-    return explicitType as FieldType;
-  }
-
-  // Check for select directives next
-  const selectFromDirective = directives.find(d => d.name.value === 'selectFrom');
-  const selectManyFromDirective = directives.find(d => d.name.value === 'selectManyFrom');
-  
-  if (selectFromDirective) {
-    const tableArg = getDirectiveArgument(directives, 'selectFrom', 'table');
-    // Use SMART_SELECT if table is specified, otherwise regular SELECT
-    return tableArg ? FieldType.SMART_SELECT : FieldType.SELECT;
+function deriveFieldType(field: any, directives: readonly DirectiveNode[]): FieldType {
+  // Check for directive-specific types first
+  if (getDirectiveArgument(directives, 'selectFrom', 'values') || 
+      getDirectiveArgument(directives, 'selectFrom', 'optionValues') ||
+      getDirectiveArgument(directives, 'selectFrom', 'table')) {
+    return FieldType.SELECT;
   }
   
-  if (selectManyFromDirective) {
-    const tableArg = getDirectiveArgument(directives, 'selectManyFrom', 'table');
-    // Use SMART_SELECT if table is specified, otherwise MULTISELECT
-    // The isMulti property will be set separately in field generation
-    return tableArg ? FieldType.SMART_SELECT : FieldType.MULTISELECT;
+  if (getDirectiveArgument(directives, 'selectManyFrom', 'values') ||
+      getDirectiveArgument(directives, 'selectManyFrom', 'optionValues')) {
+    return FieldType.SELECT; // Will be handled as multi-select in options
   }
-
-  // Check for hidden directive
+  
   if (getDirectiveArgument(directives, 'hidden', 'value') === true ||
       getDirectiveArgument(directives, 'hidden', 'cond')) {
     return FieldType.HIDDEN;
   }
-
-  // Derive from GraphQL type as fallback
-  let baseType = type;
+  
+  // Derive from GraphQL type
+  let baseType = field.type;
   while (isNonNullType(baseType) || isListType(baseType)) {
     baseType = baseType.ofType;
   }
@@ -325,32 +303,19 @@ function generateFieldOptions(directives: readonly DirectiveNode[]): FieldOption
     options
   });
   
-  // Handle optionValues array: [{label: "Táctico", value: "tactico"}, {label: "Always On", value: "always_on"}]
-  // Should produce: [{label: "Táctico", value: "tactico"}, {label: "Always On", value: "always_on"}]
   if (options && Array.isArray(options)) {
-    const mappedOptions = options.map(opt => {
-      if (typeof opt === 'object' && opt.label && opt.value) {
-        return {
-          label: opt.label,
-          value: opt.value
-        };
-      }
-      // Fallback if object doesn't have expected structure
-      return {
-        label: opt.label || opt.value || String(opt),
-        value: opt.value || String(opt)
-      };
-    });
+    const mappedOptions = options.map(opt => ({
+      label: opt.label || opt.value,
+      value: opt.value
+    }));
     console.log('Generated options from optionValues:', mappedOptions);
     return mappedOptions;
   }
   
-  // Handle values array: ["1P", "3P"]
-  // Should produce: [{label: "1P", value: "1P"}, {label: "3P", value: "3P"}]
   if (values && Array.isArray(values)) {
     const mappedValues = values.map(val => ({
-      label: String(val),
-      value: String(val)
+      label: val,
+      value: val
     }));
     console.log('Generated options from values:', mappedValues);
     return mappedValues;
@@ -432,11 +397,10 @@ function generateFieldsFromType(schema: GraphQLSchema, typeName: string): Field[
     const hiddenValue = getDirectiveArgument(directives, 'hidden', 'value');
     if (hiddenValue === true) return;
     
-    // Skip system fields unless they have explicit type directives
-    const hasExplicitType = getDirectiveArgument(directives, 'type', 'value');
-    if (!hasExplicitType && ['createdAt', 'updatedAt', 'id'].includes(field.name)) return;
+    // Skip system fields
+    if (['createdAt', 'updatedAt', 'id'].includes(field.name)) return;
     
-    const fieldType = deriveFieldType(field.type, directives);
+    const fieldType = deriveFieldType(field, directives);
     const options = generateFieldOptions(directives);
     const defaultValue = generateDefaultValue(directives);
     const validation = generateValidation(field, directives);
@@ -445,35 +409,20 @@ function generateFieldsFromType(schema: GraphQLSchema, typeName: string): Field[
     const fromParent = getDirectiveArgument(directives, 'from', 'parentAttribute');
     const actualFieldName = fromParent || field.name;
     
-    // Generate smart select properties if needed
-    let smartSelectProps: any = {};
-    if (fieldType === FieldType.SMART_SELECT) {
-      const selectFromDirective = directives.find(d => d.name.value === 'selectFrom');
-      const selectManyFromDirective = directives.find(d => d.name.value === 'selectManyFrom');
-      
-      const directive = selectFromDirective || selectManyFromDirective;
-      if (directive) {
-        smartSelectProps = {
-          entity: getDirectiveArgument(directives, directive.name.value, 'table'),
-          labelAttribute: getDirectiveArgument(directives, directive.name.value, 'labelAttribute'),
-          valueAttribute: getDirectiveArgument(directives, directive.name.value, 'valueAttribute'),
-          dependentField: getDirectiveArgument(directives, directive.name.value, 'dependentField'),
-          // Set isMulti to true for selectManyFrom directives
-          isMulti: directive.name.value === 'selectManyFrom'
-        };
-      }
-    }
-    
-    // Create the base field
-    const generatedField: Field = {
-      label: field.name,
-      field: undefined,
-      type: fieldType,
-      defaultValue: defaultValue,
-      options: options,
-      validation: validation,
-      ...smartSelectProps
-    };
+         // Extract position properties from @position directive
+     const positionStep = getDirectiveArgument(directives, 'position', 'step') ?? 1;
+     const positionRow = getDirectiveArgument(directives, 'position', 'row') ?? 1;
+     
+     const generatedField = {
+       label: field.name,
+       field: actualFieldName !== field.name ? actualFieldName : undefined,
+       type: fieldType,
+       defaultValue,
+       options,
+       validation,
+       step: positionStep - 1,
+       row: positionRow
+     };
     
     console.log(`Generated field for ${field.name}:`, generatedField);
     generatedFields.push(generatedField);

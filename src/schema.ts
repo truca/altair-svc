@@ -705,7 +705,7 @@ const typeDefinitions = /* GraphQL */ `
     crmTypeId: String! @selectFrom(values: ["Propenso", "Segmentado"]) @meta(label: "Tipo de CRM")
     templateId: String! @selectFrom(values: ["1P", "3P"]) @meta(label: "Template")
     numberTouches: Float @meta(label: "Número de toques")
-    subProducts: [CRMSubProductUnion] @polymorphicArray(types: ["CRMEmail", "CRMTrigger", "CRMBanner", "CRMGeneric"])
+    subProducts: [CRMSubProductUnion] @polymorphicArray(types: ["CRMEmail", "CRMTrigger", "CRMBanner", "CRMGeneric"]) @meta(label: "Subproductos")
     
     # Base campaign fields
     campaignSellerId: String! @from(parentAttribute: "sellerId")

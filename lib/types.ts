@@ -16,6 +16,8 @@ export enum FieldType {
   CHECKBOX = "CHECKBOX",
   RADIO = "RADIO",
   SELECT = "SELECT",
+  MULTISELECT = "MULTISELECT",
+  SMART_SELECT = "SMART_SELECT",
   DATE = "DATE",
   TIME = "TIME",
   DATETIME = "DATETIME",
@@ -57,6 +59,12 @@ export interface Field {
   optionsMap?: { label: string; value: string } & Record<string, string>;
   validation?: FieldValidation[];
   placeholder?: string; // From @meta directive
+  // Table-related attributes for SmartForm
+  entity?: string; // Table name from @selectFrom/@selectManyFrom
+  labelAttribute?: string; // Label attribute from directive
+  valueAttribute?: string; // Value attribute from directive  
+  dependentField?: string; // Dependent field from directive
+  isMulti?: boolean; // For SMART_SELECT with multiple selection
   maxValue?: string;
   valuePerOption?: string;
   component?: string;

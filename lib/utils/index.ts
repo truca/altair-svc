@@ -160,6 +160,8 @@ enum FieldType {
   CHECKBOX = "CHECKBOX",
   RADIO = "RADIO",
   SELECT = "SELECT",
+  MULTISELECT = "MULTISELECT",
+  SMART_SELECT = "SMART_SELECT",
   DATE = "DATE",
   TIME = "TIME",
   DATETIME = "DATETIME",
@@ -204,6 +206,12 @@ interface Field {
   options?: FieldOption[];
   validation?: FieldValidation[];
   placeholder?: string; // From @meta directive
+  // Table-related attributes for SmartForm
+  entity?: string; // Table name from @selectFrom/@selectManyFrom
+  labelAttribute?: string; // Label attribute from directive
+  valueAttribute?: string; // Value attribute from directive  
+  dependentField?: string; // Dependent field from directive
+  isMulti?: boolean; // For SMART_SELECT with multiple selection
   // Position properties for multistep forms
   step?: number;
   row?: number | null; // null for unpositioned fields, gets assigned during processing
@@ -256,16 +264,30 @@ function getDirectiveArgument(directives: readonly DirectiveNode[], directiveNam
 // Function to derive field type from GraphQL type and directives
 function deriveFieldType(field: any, directives: readonly DirectiveNode[]): FieldType {
   // Check for directive-specific types first
+  
+  // @selectFrom with table parameter = SMART_SELECT
+  const selectFromTable = getDirectiveArgument(directives, 'selectFrom', 'table');
+  if (selectFromTable) {
+    return FieldType.SMART_SELECT;
+  }
+  
+     // @selectManyFrom with table parameter = SMART_SELECT (with isMulti: true)
+   const selectManyFromTable = getDirectiveArgument(directives, 'selectManyFrom', 'table');
+   if (selectManyFromTable) {
+     return FieldType.SMART_SELECT;
+   }
+  
+  // @selectFrom with static values/options = regular SELECT
   if (getDirectiveArgument(directives, 'selectFrom', 'values') || 
-      getDirectiveArgument(directives, 'selectFrom', 'optionValues') ||
-      getDirectiveArgument(directives, 'selectFrom', 'table')) {
+      getDirectiveArgument(directives, 'selectFrom', 'optionValues')) {
     return FieldType.SELECT;
   }
   
-  if (getDirectiveArgument(directives, 'selectManyFrom', 'values') ||
-      getDirectiveArgument(directives, 'selectManyFrom', 'optionValues')) {
-    return FieldType.SELECT; // Will be handled as multi-select in options
-  }
+     // @selectManyFrom with static values/options = MULTISELECT
+   if (getDirectiveArgument(directives, 'selectManyFrom', 'values') ||
+       getDirectiveArgument(directives, 'selectManyFrom', 'optionValues')) {
+     return FieldType.MULTISELECT;
+   }
   
   if (getDirectiveArgument(directives, 'hidden', 'value') === true ||
       getDirectiveArgument(directives, 'hidden', 'cond')) {
@@ -430,6 +452,19 @@ function generateFieldsFromType(schema: GraphQLSchema, typeName: string): Field[
      const metaLabel = getDirectiveArgument(directives, 'meta', 'label');
      const metaPlaceholder = getDirectiveArgument(directives, 'meta', 'placeholder');
      
+     // Extract table-related attributes from @selectFrom and @selectManyFrom directives
+     const table = getDirectiveArgument(directives, 'selectFrom', 'table') || 
+                   getDirectiveArgument(directives, 'selectManyFrom', 'table');
+     const labelAttribute = getDirectiveArgument(directives, 'selectFrom', 'labelAttribute') || 
+                           getDirectiveArgument(directives, 'selectManyFrom', 'labelAttribute');
+     const valueAttribute = getDirectiveArgument(directives, 'selectFrom', 'valueAttribute') || 
+                           getDirectiveArgument(directives, 'selectManyFrom', 'valueAttribute');
+     const dependentField = getDirectiveArgument(directives, 'selectFrom', 'dependentField') || 
+                           getDirectiveArgument(directives, 'selectManyFrom', 'dependentField');
+     
+     // Check if this is a multi-select field (selectManyFrom directive)
+     const isMultiSelect = directives.some(d => d.name.value === 'selectManyFrom');
+     
      const generatedField = {
        label: metaLabel || field.name, // Use meta label if available, otherwise field name
        field: actualFieldName !== field.name ? actualFieldName : undefined,
@@ -439,7 +474,12 @@ function generateFieldsFromType(schema: GraphQLSchema, typeName: string): Field[
        validation,
        step: fieldStep,
        row: fieldRow,
-       ...(metaPlaceholder && { placeholder: metaPlaceholder }) // Add placeholder if specified
+       ...(metaPlaceholder && { placeholder: metaPlaceholder }), // Add placeholder if specified
+       ...(table && { entity: table }), // Add entity (table name) if specified
+       ...(labelAttribute && { labelAttribute }), // Add labelAttribute if specified
+       ...(valueAttribute && { valueAttribute }), // Add valueAttribute if specified
+       ...(dependentField && { dependentField }), // Add dependentField if specified
+       ...(isMultiSelect && { isMulti: true }) // Add isMulti for selectManyFrom directives
      };
     
     console.log(`Generated field for ${field.name}:`, generatedField);

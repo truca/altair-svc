@@ -257,9 +257,12 @@ function getDirectiveArgument(directives: readonly DirectiveNode[], directiveNam
       case 'ListValue':
         return value.values.map((v: any) => parseValue(v));
       case 'ObjectValue':
-        return value.fields.reduce((acc: any, field: any) => {
-          acc[field.name.value] = parseValue(field.value);
-        }, {});
+        // eslint-disable-next-line no-case-declarations
+        const obj: any = {};
+        value.fields.forEach((field: any) => {
+          obj[field.name.value] = parseValue(field.value);
+        });
+        return obj;
       case 'NullValue':
         return null;
       default:

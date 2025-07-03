@@ -121,6 +121,11 @@ const typeDefinitions = /* GraphQL */ `
     value: String
   }
 
+  type PolymorphicSubformFieldBundle {
+    type: String
+    fields: [Field]
+  }
+
   type Field {
     label: String
     field: String
@@ -148,6 +153,7 @@ const typeDefinitions = /* GraphQL */ `
     subformLayout: String # Layout style: "cards" or "tabs"
     addButtonText: String # Text for add button in POLYMORPHIC_ARRAY
     typeOptions: [FieldOption] # User-friendly type options for polymorphic fields
+    polymorphicSubformFields: [PolymorphicSubformFieldBundle] # Bundles for polymorphic types
   }
 
   type FormStep {

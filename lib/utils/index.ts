@@ -227,6 +227,8 @@ interface Field {
   subformLayout?: "cards" | "tabs"; // Layout style
   addButtonText?: string; // Text for add button in POLYMORPHIC_ARRAY
   typeOptions?: FieldOption[]; // User-friendly type options for polymorphic fields
+  // Polymorphic bundles: list of subtype-specific field groups
+  polymorphicSubformFields?: { type: string; fields: Field[] }[];
 }
 
 interface FormStep {
@@ -604,6 +606,19 @@ function generateSubformProperties(schema: GraphQLSchema, field: any, fieldType:
       properties.subformLayout = layout.toLowerCase() as "cards" | "tabs";
     }
     
+    // Build subtype-specific field bundles
+    if (properties.subformTypes && properties.subformTypes.length) {
+      const bundles: { type: string; fields: Field[] }[] = [];
+      for (const subtype of properties.subformTypes) {
+        if (visitedTypes.has(subtype)) continue;
+        const newVisited = new Set(visitedTypes);
+        newVisited.add(subtype);
+        const fieldsForSubtype = generateFieldsFromType(schema, subtype, newVisited);
+        bundles.push({ type: subtype, fields: fieldsForSubtype });
+      }
+      properties.polymorphicSubformFields = bundles;
+    }
+    
   } else if (fieldType === FieldType.POLYMORPHIC_ARRAY) {
     // Extract types from @polymorphicArray directive
     const types = getDirectiveArgument(directives, 'polymorphicArray', 'types');
@@ -647,6 +662,19 @@ function generateSubformProperties(schema: GraphQLSchema, field: any, fieldType:
     
     if (layout) {
       properties.subformLayout = layout.toLowerCase() as "cards" | "tabs";
+    }
+
+    // Build subtype-specific field bundles
+    if (properties.subformTypes && properties.subformTypes.length) {
+      const bundles: { type: string; fields: Field[] }[] = [];
+      for (const subtype of properties.subformTypes) {
+        if (visitedTypes.has(subtype)) continue;
+        const newVisited = new Set(visitedTypes);
+        newVisited.add(subtype);
+        const fieldsForSubtype = generateFieldsFromType(schema, subtype, newVisited);
+        bundles.push({ type: subtype, fields: fieldsForSubtype });
+      }
+      properties.polymorphicSubformFields = bundles;
     }
   }
   

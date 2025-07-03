@@ -547,6 +547,16 @@ function generateValidation(field: any): FieldValidation[] {
   }
 
   const valueString = (valueType as string).toLowerCase();
+  const typeEsp: Record<string,string> = {
+    string: "texto",
+    number: "número",
+    boolean: "booleano",
+    array: "lista",
+    date: "fecha",
+  };
+
+  const tipoParaMsg = typeEsp[valueString] || valueString;
+
   validations.push({
     label: "type",
     value: valueString,
@@ -554,7 +564,7 @@ function generateValidation(field: any): FieldValidation[] {
     errorMessage:
       valueString === "array"
         ? `${fieldLabel} debe ser una lista`
-        : `${fieldLabel} debe ser de tipo ${valueString}`,
+        : `${fieldLabel} debe ser una ${tipoParaMsg}`,
   });
 
   return validations;

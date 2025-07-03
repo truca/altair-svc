@@ -203,6 +203,7 @@ interface FieldValidation {
 }
 
 interface Field {
+  id?: string;
   label: string;
   field?: string;
   type: FieldType;
@@ -710,6 +711,7 @@ function generateFieldsFromType(schema: GraphQLSchema, typeName: string, visited
     const fromParent = getDirectiveArgument(directives, 'from', 'parentAttribute');
     const actualFieldName = fromParent || field.name;
     
+    const fieldId = actualFieldName;
          // Extract position properties from @position directive
      const hasPositionDirective = directives.some(d => d.name.value === 'position');
      const positionStep = getDirectiveArgument(directives, 'position', 'step');
@@ -755,6 +757,7 @@ function generateFieldsFromType(schema: GraphQLSchema, typeName: string, visited
      const subformProperties = generateSubformProperties(schema, field, fieldType, directives, visitedTypes);
      
      const generatedField = {
+       id: fieldId,
        label: metaLabel || field.name, // Use meta label if available, otherwise field name
        field: actualFieldName !== field.name ? actualFieldName : undefined,
        type: fieldType,
@@ -1088,7 +1091,10 @@ function generateGridTemplateAreas(stepFields: Map<number, Field[]>): string {
   
   const rowStrings = sortedRows.map(rowNumber => {
     const rowFields = stepFields.get(rowNumber)!;
-    const fieldNames = rowFields.map(field => field.label.replace(/\s+/g, '_')); // Replace spaces with underscores for CSS grid
+    const fieldNames = rowFields.map(field => {
+      const name = (field.id || field.label || '').toString();
+      return name.replace(/[\s\.]+/g, '_'); // replace spaces/dots with underscores
+    });
     
     // For rows with single fields, make them span all columns
     if (fieldNames.length === 1 && maxFieldsInAnyRow > 1) {

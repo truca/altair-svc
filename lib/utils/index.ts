@@ -236,7 +236,7 @@ interface FormStep {
 }
 
 // Function to extract directive arguments
-function getDirectiveArgument(directives: readonly DirectiveNode[], directiveName: string, argName: string): any {
+export function getDirectiveArgument(directives: readonly DirectiveNode[], directiveName: string, argName: string): any {
   const directive = directives.find(d => d.name.value === directiveName);
   if (!directive) return null;
   
@@ -512,36 +512,51 @@ function processHiddenConditions(directives: readonly DirectiveNode[]): string |
 // Function to generate validation rules
 function generateValidation(field: any): FieldValidation[] {
   const validations: FieldValidation[] = [];
-  
-  // Add required validation for NonNull types
+
+  // Helper to build Spanish error message using field label
+  const directives = field.astNode?.directives || [];
+  const fieldLabel = getDirectiveArgument(directives, 'meta', 'label') || field?.label || field?.astNode?.description?.value || field.name;
+
+  // Detect NonNull (required)
   let baseType = field.type;
   let isRequired = false;
   if (isNonNullType(baseType)) {
     isRequired = true;
     baseType = baseType.ofType;
   }
-  
+
   if (isRequired) {
     validations.push({
       label: "required",
-      value: "true", 
+      value: "true",
       valueType: ValueType.BOOLEAN,
-      errorMessage: "This field is required"
+      errorMessage: `${fieldLabel} es obligatorio`,
     });
   }
-  
-  // Add type validation
-  let valueType = ValueType.STRING;
-  if (baseType.name === 'Boolean') valueType = ValueType.BOOLEAN;
-  if (baseType.name === 'Int' || baseType.name === 'Float') valueType = ValueType.NUMBER;
-  
+
+  // Determine the correct type for validation (array vs scalar)
+  let valueType: ValueType | "array" | "date" = ValueType.STRING;
+  const isArrayValue = field.isMulti || field.type === FieldType.MULTISELECT || field.type === FieldType.SMART_SELECT && field.isMulti;
+
+  if (isArrayValue) {
+    valueType = "array";
+  } else {
+    if (baseType.name === "Boolean") valueType = ValueType.BOOLEAN;
+    if (baseType.name === "Int" || baseType.name === "Float") valueType = ValueType.NUMBER;
+    if (baseType.name === "Date" || baseType.name === "DateTime") valueType = "date";
+  }
+
+  const valueString = (valueType as string).toLowerCase();
   validations.push({
     label: "type",
-    value: valueType.toLowerCase(),
+    value: valueString,
     valueType: ValueType.STRING,
-    errorMessage: `${field.name} should be a ${valueType.toLowerCase()}`
+    errorMessage:
+      valueString === "array"
+        ? `${fieldLabel} debe ser una lista`
+        : `${fieldLabel} debe ser de tipo ${valueString}`,
   });
-  
+
   return validations;
 }
 

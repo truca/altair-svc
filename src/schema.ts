@@ -356,10 +356,10 @@ const typeDefinitions = /* GraphQL */ `
     nomenclature: String @hidden(value: true)
 
     # filters
-    sellerId: String @selectFrom(table: "sellers", labelAttribute: "name", valueAttribute: "externalId", dependentField: "businessUnitId") @meta(label: "Seller", placeholder: "Selecciona una Opción") @position(step: 1, row: 4)
-    brandId: [String!]! @selectManyFrom(table: "brands", labelAttribute: "name", valueAttribute: "externalId", dependentField: "sellerId") @meta(label: "Marca", placeholder: "Selecciona una Opción") @position(step: 1, row: 5)
-    categoryId: [String!]! @selectManyFrom(table: "categories", labelAttribute: "name", valueAttribute: "externalId", dependentField: "brandId") @meta(label: "Categoría", placeholder: "Selecciona una Opción") @position(step: 1, row: 6)
-    subCategoryId: [String!]! @selectManyFrom(table: "subcategories", labelAttribute: "name", valueAttribute: "externalId", dependentField: "categoryId") @meta(label: "Subcategoría", placeholder: "Selecciona una Opción") @position(step: 1, row: 7)
+    campaignSellerId: String @selectFrom(table: "sellers", labelAttribute: "name", valueAttribute: "externalId", dependentField: "businessUnitId") @meta(label: "Seller", placeholder: "Selecciona una Opción") @position(step: 1, row: 4)
+    campaignBrandId: [String!]! @selectManyFrom(table: "brands", labelAttribute: "name", valueAttribute: "externalId", dependentField: "campaignSellerId") @meta(label: "Marca", placeholder: "Selecciona una Opción") @position(step: 1, row: 5)
+    campaignCategoryId: [String!]! @selectManyFrom(table: "categories", labelAttribute: "name", valueAttribute: "externalId", dependentField: "campaignBrandId") @meta(label: "Categoría", placeholder: "Selecciona una Opción") @position(step: 1, row: 6)
+    campaignSubCategoryId: [String!]! @selectManyFrom(table: "subcategories", labelAttribute: "name", valueAttribute: "externalId", dependentField: "campaignCategoryId") @meta(label: "Subcategoría", placeholder: "Selecciona una Opción") @position(step: 1, row: 7)
     
     #dates
     startDate: DateTime! @type(value: DATE) @position(step: 1, row: 8) @meta(label: "Fecha de Inicio", placeholder: "Selecciona una fecha")
@@ -428,9 +428,9 @@ const typeDefinitions = /* GraphQL */ `
     comment: String
     
     # Base campaign fields
-    campaignSellerId: String! @from(parentAttribute: "sellerId") 
-    campaignBrandId: [String!]! @from(parentAttribute: "brandId")
-    categoryId: [String!]! @from(parentAttribute: "categoryId")
+    campaignSellerId: String! @from(parentAttribute: "campaignSellerId")
+    campaignBrandId: [String!]! @from(parentAttribute: "campaignBrandId")
+    categoryId: [String!]! @from(parentAttribute: "campaignCategoryId")
   }
 
   type SponsoredBrand
@@ -454,9 +454,9 @@ const typeDefinitions = /* GraphQL */ `
     campaignTypeId: String! @selectFrom(optionValues: [{label: "Táctico", value: "tactico"}, {label: "Always On", value: "always_on"}])
     
     # Base campaign fields
-    campaignSellerId: String! @from(parentAttribute: "sellerId")
-    campaignBrandId: [String!]! @from(parentAttribute: "brandId")
-    categoryId: [String!]! @from(parentAttribute: "categoryId")
+    campaignSellerId: String! @from(parentAttribute: "campaignSellerId")
+    campaignBrandId: [String!]! @from(parentAttribute: "campaignBrandId")
+    categoryId: [String!]! @from(parentAttribute: "campaignCategoryId")
   }
 
   ### CRM SUBPRODUCTS ###
@@ -473,7 +473,7 @@ const typeDefinitions = /* GraphQL */ `
     
     campaignSellerId: String! @from(parentAttribute: "campaignSellerId")
     campaignBrandId: [String!]! @from(parentAttribute: "campaignBrandId")
-    categoryId: [String!]! @from(parentAttribute: "categoryId")
+    categoryId: [String!]! @from(parentAttribute: "campaignCategoryId")
     createdAt: DateTime @hidden(value: true)
     updatedAt: DateTime @hidden(value: true)
   }
@@ -494,7 +494,7 @@ const typeDefinitions = /* GraphQL */ `
     
     campaignSellerId: String! @from(parentAttribute: "campaignSellerId")
     campaignBrandId: [String!]! @from(parentAttribute: "campaignBrandId")
-    categoryId: [String!]! @from(parentAttribute: "categoryId")
+    categoryId: [String!]! @from(parentAttribute: "campaignCategoryId")
     createdAt: DateTime @hidden(value: true)
     updatedAt: DateTime @hidden(value: true)
   }
@@ -516,7 +516,7 @@ const typeDefinitions = /* GraphQL */ `
     
     campaignSellerId: String! @from(parentAttribute: "campaignSellerId")
     campaignBrandId: [String!]! @from(parentAttribute: "campaignBrandId")
-    categoryId: [String!]! @from(parentAttribute: "categoryId")
+    categoryId: [String!]! @from(parentAttribute: "campaignCategoryId")
     createdAt: DateTime @hidden(value: true)
     updatedAt: DateTime @hidden(value: true)
   }
@@ -542,7 +542,7 @@ const typeDefinitions = /* GraphQL */ `
     
     campaignSellerId: String! @from(parentAttribute: "campaignSellerId")
     campaignBrandId: [String!]! @from(parentAttribute: "campaignBrandId")
-    categoryId: [String!]! @from(parentAttribute: "categoryId")
+    categoryId: [String!]! @from(parentAttribute: "campaignCategoryId")
     createdAt: DateTime @hidden(value: true)
     updatedAt: DateTime @hidden(value: true)
   }
@@ -564,7 +564,7 @@ const typeDefinitions = /* GraphQL */ `
 
     campaignSellerId: String! @from(parentAttribute: "campaignSellerId")
     campaignBrandId: [String!]! @from(parentAttribute: "campaignBrandId")
-    categoryId: [String!]! @from(parentAttribute: "categoryId")
+    categoryId: [String!]! @from(parentAttribute: "campaignCategoryId")
     createdAt: DateTime @hidden(value: true)
     updatedAt: DateTime @hidden(value: true)
   }
@@ -585,9 +585,9 @@ const typeDefinitions = /* GraphQL */ `
     subProducts: [CRMSubProductUnion] @polymorphicArray(types: ["CRMEmail", "CRMTrigger", "CRMBanner", "CRMGeneric"]) @meta(label: "Subproductos")
     
     # Base campaign fields
-    campaignSellerId: String! @from(parentAttribute: "sellerId")
-    campaignBrandId: [String!]! @from(parentAttribute: "brandId")
-    categoryId: [String!]! @from(parentAttribute: "categoryId")
+    campaignSellerId: String! @from(parentAttribute: "campaignSellerId")
+    campaignBrandId: [String!]! @from(parentAttribute: "campaignBrandId")
+    categoryId: [String!]! @from(parentAttribute: "campaignCategoryId")
     createdAt: DateTime @hidden(value: true)
     updatedAt: DateTime @hidden(value: true)
   }
@@ -614,7 +614,7 @@ const typeDefinitions = /* GraphQL */ `
     # Base campaign fields
     campaignSellerId: String! @from(parentAttribute: "campaignSellerId")
     campaignBrandId: [String!]! @from(parentAttribute: "campaignBrandId")
-    categoryId: [String!]! @from(parentAttribute: "categoryId")
+    categoryId: [String!]! @from(parentAttribute: "campaignCategoryId")
     createdAt: DateTime @hidden(value: true)
     updatedAt: DateTime @hidden(value: true)
   }
@@ -634,9 +634,9 @@ const typeDefinitions = /* GraphQL */ `
     strategies: [MediaOnService]
     
     # Base campaign fields
-    campaignSellerId: String! @from(parentAttribute: "sellerId")
-    campaignBrandId: [String!]! @from(parentAttribute: "brandId")
-    categoryId: [String!]! @from(parentAttribute: "categoryId")
+    campaignSellerId: String! @from(parentAttribute: "campaignSellerId")
+    campaignBrandId: [String!]! @from(parentAttribute: "campaignBrandId")
+    categoryId: [String!]! @from(parentAttribute: "campaignCategoryId")
     createdAt: DateTime @hidden(value: true)
     updatedAt: DateTime @hidden(value: true)
   }
@@ -662,9 +662,9 @@ const typeDefinitions = /* GraphQL */ `
     comment: String
     
     # Base campaign fields
-    campaignSellerId: String! @from(parentAttribute: "sellerId")
-    campaignBrandId: [String!]! @from(parentAttribute: "brandId")
-    categoryId: [String!]! @from(parentAttribute: "categoryId")
+    campaignSellerId: String! @from(parentAttribute: "campaignSellerId")
+    campaignBrandId: [String!]! @from(parentAttribute: "campaignBrandId")
+    categoryId: [String!]! @from(parentAttribute: "campaignCategoryId")
     createdAt: DateTime @hidden(value: true)
     updatedAt: DateTime @hidden(value: true)
   }
@@ -690,9 +690,9 @@ const typeDefinitions = /* GraphQL */ `
     comment: String
     
     # Base campaign fields
-    campaignSellerId: String! @from(parentAttribute: "sellerId")
-    campaignBrandId: [String!]! @from(parentAttribute: "brandId")
-    categoryId: [String!]! @from(parentAttribute: "categoryId")
+    campaignSellerId: String! @from(parentAttribute: "campaignSellerId")
+    campaignBrandId: [String!]! @from(parentAttribute: "campaignBrandId")
+    categoryId: [String!]! @from(parentAttribute: "campaignCategoryId")
     createdAt: DateTime @hidden(value: true)
     updatedAt: DateTime @hidden(value: true)
   }
@@ -702,9 +702,9 @@ const typeDefinitions = /* GraphQL */ `
     @auth(read: ["public"], update: ["public"], delete: ["public"]) {
     # metadata
     country: String @from(queryParam: "country") @hidden
-    campaignSellerId: String! @from(parentAttribute: "sellerId") @hidden
-    campaignBrandId: [String!]! @from(parentAttribute: "brandId") @hidden
-    categoryId: [String!]! @from(parentAttribute: "categoryId") @hidden
+    campaignSellerId: String! @from(parentAttribute: "campaignSellerId") @hidden
+    campaignBrandId: [String!]! @from(parentAttribute: "campaignBrandId") @hidden
+    categoryId: [String!]! @from(parentAttribute: "campaignCategoryId") @hidden
     campaignId: ID @from(parentAttribute: "id") @hidden
     
     # parent
@@ -724,7 +724,7 @@ const typeDefinitions = /* GraphQL */ `
     homeLandingId: ID @from(parentAttribute: "id") @hidden
     campaignSellerId: String! @from(parentAttribute: "campaignSellerId") @hidden
     campaignBrandId: [String!]! @from(parentAttribute: "campaignBrandId") @hidden
-    categoryId: [String!]! @from(parentAttribute: "categoryId") @hidden
+    categoryId: [String!]! @from(parentAttribute: "campaignCategoryId") @hidden
     campaignId: ID @from(parentAttribute: "campaignId") @hidden
 
     campaign: Campaign @hidden(value: true)
@@ -746,7 +746,7 @@ const typeDefinitions = /* GraphQL */ `
     homeLandingId: ID @from(parentAttribute: "id")
     campaignSellerId: String! @from(parentAttribute: "campaignSellerId")
     campaignBrandId: [String!]! @from(parentAttribute: "campaignBrandId")
-    categoryId: [String!]! @from(parentAttribute: "categoryId")
+    categoryId: [String!]! @from(parentAttribute: "campaignCategoryId")
     campaignId: ID @from(parentAttribute: "campaignId")
 
     campaign: Campaign @hidden(value: true)

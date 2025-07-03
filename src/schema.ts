@@ -690,7 +690,7 @@ const typeDefinitions = /* GraphQL */ `
     comments: String @meta(label: "Comentarios")
     implementationDate: DateTime! @defaultFrom(parentAttribute: "implementationDate") @meta(label: "Fecha de implementación")
     
-    type: String! @selectFrom(values: ["SMS", "WHATSAPP", "PUSH", "PUSH SMS NRT", "PREHEADER", "CUPÓN", "SAMPLING", "WHATSAPP CARRUSEL"]) @meta(label: "Tipo")
+    productType: String! @selectFrom(values: ["SMS", "WHATSAPP", "PUSH", "PUSH SMS NRT", "PREHEADER", "CUPÓN", "SAMPLING", "WHATSAPP CARRUSEL"]) @meta(label: "Tipo")
 
     campaignSellerId: String! @from(parentAttribute: "campaignSellerId")
     campaignBrandId: [String!]! @from(parentAttribute: "campaignBrandId")

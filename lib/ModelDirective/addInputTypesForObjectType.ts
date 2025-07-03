@@ -7,6 +7,7 @@ import {
   GraphQLObjectType,
   GraphQLSchema,
   getNullableType,
+  GraphQLString,
 } from "graphql";
 import {
   getInputType,
@@ -119,7 +120,6 @@ export const addInputTypesForObjectType = ({
           });
         });
         // Add discriminator
-        const { GraphQLString } = require("graphql");
         memberFields["type"] = { type: new GraphQLNonNull(GraphQLString) };
         unionInput = new GraphQLInputObjectType({ name: inputName, fields: memberFields });
         schema.getTypeMap()[inputName] = unionInput;

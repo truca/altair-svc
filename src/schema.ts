@@ -1,6 +1,5 @@
 import { makeSchema } from "../lib/utils";
 import { FormTypes } from "../lib/types";
-import { FORMS } from "./forms";
 
 const typeDefinitions = /* GraphQL */ `
   scalar ID
@@ -429,7 +428,7 @@ const typeDefinitions = /* GraphQL */ `
     comment: String
     
     # Base campaign fields
-    campaignSellerId: String! @from(parentAttribute: "sellerId")
+    campaignSellerId: String! @from(parentAttribute: "sellerId") 
     campaignBrandId: [String!]! @from(parentAttribute: "brandId")
     categoryId: [String!]! @from(parentAttribute: "categoryId")
   }
@@ -616,8 +615,8 @@ const typeDefinitions = /* GraphQL */ `
     campaignSellerId: String! @from(parentAttribute: "campaignSellerId")
     campaignBrandId: [String!]! @from(parentAttribute: "campaignBrandId")
     categoryId: [String!]! @from(parentAttribute: "categoryId")
-    createdAt: DateTime
-    updatedAt: DateTime
+    createdAt: DateTime @hidden(value: true)
+    updatedAt: DateTime @hidden(value: true)
   }
 
   type MediaOn
@@ -638,8 +637,8 @@ const typeDefinitions = /* GraphQL */ `
     campaignSellerId: String! @from(parentAttribute: "sellerId")
     campaignBrandId: [String!]! @from(parentAttribute: "brandId")
     categoryId: [String!]! @from(parentAttribute: "categoryId")
-    createdAt: DateTime
-    updatedAt: DateTime
+    createdAt: DateTime @hidden(value: true)
+    updatedAt: DateTime @hidden(value: true)
   }
 
   type Banner
@@ -666,8 +665,8 @@ const typeDefinitions = /* GraphQL */ `
     campaignSellerId: String! @from(parentAttribute: "sellerId")
     campaignBrandId: [String!]! @from(parentAttribute: "brandId")
     categoryId: [String!]! @from(parentAttribute: "categoryId")
-    createdAt: DateTime
-    updatedAt: DateTime
+    createdAt: DateTime @hidden(value: true)
+    updatedAt: DateTime @hidden(value: true)
   }
 
   type RatingAndReview
@@ -694,8 +693,8 @@ const typeDefinitions = /* GraphQL */ `
     campaignSellerId: String! @from(parentAttribute: "sellerId")
     campaignBrandId: [String!]! @from(parentAttribute: "brandId")
     categoryId: [String!]! @from(parentAttribute: "categoryId")
-    createdAt: DateTime
-    updatedAt: DateTime
+    createdAt: DateTime @hidden(value: true)
+    updatedAt: DateTime @hidden(value: true)
   }
 
   type HomeLanding

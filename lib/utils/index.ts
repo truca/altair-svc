@@ -2,7 +2,7 @@ import { makeExecutableSchema } from "@graphql-tools/schema";
 import { ModelDirective } from "../ModelDirective";
 import { StaticModelDirective } from "../StaticModelDirective";
 import { createStore, DbTypes } from "../stores/utils";
-import { CookieStore, FormsHash, Profile } from "../types";
+import { CookieStore, Profile } from "../types";
 import { v4 as uuidv4 } from 'uuid';
 import { GraphQLID } from "graphql";
 import _ from "lodash";
@@ -14,14 +14,11 @@ import { Store } from "../stores/types";
 // Add these imports for schema introspection and directive parsing
 import { 
   GraphQLObjectType, 
-  GraphQLType, 
   isObjectType, 
-  isScalarType, 
   isListType, 
   isNonNullType,
   GraphQLSchema,
   DirectiveNode,
-  FieldDefinitionNode
 } from "graphql";
 
 // Interface for the function result
@@ -260,11 +257,9 @@ function getDirectiveArgument(directives: readonly DirectiveNode[], directiveNam
       case 'ListValue':
         return value.values.map((v: any) => parseValue(v));
       case 'ObjectValue':
-        const obj: any = {};
-        value.fields.forEach((field: any) => {
-          obj[field.name.value] = parseValue(field.value);
-        });
-        return obj;
+        return value.fields.reduce((acc: any, field: any) => {
+          acc[field.name.value] = parseValue(field.value);
+        }, {});
       case 'NullValue':
         return null;
       default:
@@ -488,16 +483,16 @@ function processHiddenConditions(directives: readonly DirectiveNode[]): string |
     
     // Extract value based on type
     let value: any;
-    if (condition.hasOwnProperty('valueBoolean')) {
+    if (condition?.valueBoolean !== undefined) {
       value = condition.valueBoolean;
-    } else if (condition.hasOwnProperty('valueString')) {
-      value = condition.valueString;
-    } else if (condition.hasOwnProperty('valueNumber')) {
-      value = condition.valueNumber;
-    } else if (condition.hasOwnProperty('valueFloat')) {
-      value = condition.valueFloat;
-    } else if (condition.hasOwnProperty('valueInt')) {
-      value = condition.valueInt;
+    } else if (condition?.valueString !== undefined) {
+      value = condition?.valueString;
+    } else if (condition?.valueNumber !== undefined) {
+      value = condition?.valueNumber;
+    } else if (condition?.valueFloat !== undefined) {
+      value = condition?.valueFloat;
+    } else if (condition?.valueInt !== undefined) {
+      value = condition?.valueInt;
     } else {
       // If no typed value found, skip this condition
       return;
@@ -512,7 +507,7 @@ function processHiddenConditions(directives: readonly DirectiveNode[]): string |
 }
 
 // Function to generate validation rules
-function generateValidation(field: any, directives: readonly DirectiveNode[]): FieldValidation[] {
+function generateValidation(field: any): FieldValidation[] {
   const validations: FieldValidation[] = [];
   
   // Add required validation for NonNull types
@@ -748,7 +743,7 @@ function generateFieldsFromType(schema: GraphQLSchema, typeName: string, visited
      const isMultiSelect = directives.some(d => d.name.value === 'selectManyFrom');
      
      // Skip inherit-only attributes coming from @from directive
-     const hasFromDirectiveOnly = hasFromDirective && directives.length === 1; // only @from present
+     const hasFromDirectiveOnly = hasFromDirective
      if (hasFromDirectiveOnly) {
        return; // do not generate this field at all
      }
@@ -1093,7 +1088,7 @@ function generateGridTemplateAreas(stepFields: Map<number, Field[]>): string {
     const rowFields = stepFields.get(rowNumber)!;
     const fieldNames = rowFields.map(field => {
       const name = (field.id || field.label || '').toString();
-      return name.replace(/[\s\.]+/g, '_'); // replace spaces/dots with underscores
+      return name.replace(/[\s.]+/g, '_'); // replace spaces/dots with underscores
     });
     
     // For rows with single fields, make them span all columns

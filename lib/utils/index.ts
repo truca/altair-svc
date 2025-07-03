@@ -700,7 +700,7 @@ function generateFieldsFromType(schema: GraphQLSchema, typeName: string, visited
     const fieldType = deriveFieldType(field, directives);
     const options = generateFieldOptions(directives);
     const defaultValue = generateDefaultValue(directives);
-    const validation = generateValidation(field, directives);
+    const validation = generateValidation(field);
     
     // Get field name override from @from directive
     const fromParent = getDirectiveArgument(directives, 'from', 'parentAttribute');

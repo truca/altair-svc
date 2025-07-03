@@ -382,20 +382,19 @@ const typeDefinitions = /* GraphQL */ `
     sponsoredProductEnabled: Boolean! @default(value: false) @position(step: 1, row: 17) @meta(label: "Sponsored Product", placeholder: "Selecciona una Opción")
 
     mediaOffEnabled: Boolean! @position(step: 1, row: 18) @meta(label: "Media Off", placeholder: "Selecciona una Opción")
-    mediaOffBudget: Float @position(step: 1, row: 18) @meta(label: "", placeholder: "Presupuesto Media Off") @hidden(cond: [{ field: "Media Off", valueBoolean: false}])
+    mediaOffBudget: Float @position(step: 1, row: 18) @meta(label: "", placeholder: "Presupuesto Media Off") @hidden(cond: [{ field: "mediaOffEnabled", valueBoolean: false}])
     storeEnabled: Boolean! @position(step: 1, row: 19) @meta(label: "Tienda", placeholder: "Selecciona una Opción")
-    storeBudget: Float @position(step: 1, row: 19) @meta(label: "", placeholder: "Presupuesto Tienda") @hidden(cond: [{ field: "Tienda", valueBoolean: false}])
+    storeBudget: Float @position(step: 1, row: 19) @meta(label: "", placeholder: "Presupuesto Tienda") @hidden(cond: [{ field: "storeEnabled", valueBoolean: false}])
     graphicsEnabled: Boolean! @position(step: 1, row: 20) @meta(label: "Gráficos", placeholder: "Selecciona una Opción")
-    graphicsBudget: Float @position(step: 1, row: 20) @meta(label: "", placeholder: "Presupuesto Gráficos") @hidden(cond: [{ field: "Gráficos", valueBoolean: false}])
+    graphicsBudget: Float @position(step: 1, row: 20) @meta(label: "", placeholder: "Presupuesto Gráficos") @hidden(cond: [{ field: "graphicsEnabled", valueBoolean: false}])
     othersEnabled: Boolean! @position(step: 1, row: 21) @meta(label: "Otros", placeholder: "Selecciona una Opción")
-    othersBudget: Float @position(step: 1, row: 21) @meta(label: "", placeholder: "Presupuesto Otros") @hidden(cond: [{ field: "Otros", valueBoolean: false}])
-    # change to step 1
-    mediaPlan: File @position(step: 2, row: 22) @meta(label: "Plan de Medios", placeholder: "Ingresa el Plan de Medios")
+    othersBudget: Float @position(step: 1, row: 21) @meta(label: "", placeholder: "Presupuesto Otros") @hidden(cond: [{ field: "othersEnabled", valueBoolean: false}])
+    mediaPlan: File @position(step: 1, row: 22) @meta(label: "Plan de Medios", placeholder: "Ingresa el Plan de Medios")
 
     # service
-    sponsoredProduct: SponsoredProduct @hidden(cond: [{ field: "sponsoredProductEnabled", valueBoolean: false}]) @position(step: 2, row: 1)
-    sponsoredBrand: SponsoredBrand @hidden(cond: [{ field: "sponsoredBrandsEnabled", valueBoolean: false}]) @position(step: 2, row: 2)
-    ratingAndReview: RatingAndReview @hidden(cond: [{ field: "ratingsAndReviewsEnabled", valueBoolean: false}]) @position(step: 2, row: 3)
+    sponsoredProduct: SponsoredProduct @hidden(cond: [{ field: "sponsoredProductEnabled", valueBoolean: false}]) @position(step: 2, row: 1) @meta(label: "Productos patrocinados")
+    sponsoredBrand: SponsoredBrand @hidden(cond: [{ field: "sponsoredBrandsEnabled", valueBoolean: false}]) @position(step: 2, row: 2) @meta(label: "Marcas patrocinadas")
+    ratingAndReview: RatingAndReview @hidden(cond: [{ field: "ratingsAndReviewsEnabled", valueBoolean: false}]) @position(step: 2, row: 3) @meta(label: "Ratings and Reviews")
 
     # template
     banner: Banner @hidden(cond: [{ field: "bannersEnabled", valueBoolean: false}]) @position(step: 2, row: 4) #@position(step: 1, row: 23)

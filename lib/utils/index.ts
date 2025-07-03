@@ -847,38 +847,38 @@ export function makeSchema({
           info
         );
       },
-      getServicesBetweenDates: async (
-        _: any,
-        params: any,
-        context: any,
-        info: any
-      ) => {
-        const profileType = context?.typeMap?.Service;
-        const implementationDateValue =
-          params.startDate && params.endDate
-            ? `>=${params.startDate},<=${params.endDate}`
-            : params.startDate
-              ? `>=${params.startDate}`
-              : params.endDate
-                ? `<=${params.endDate}`
-                : null;
-        const args = {
-          ...params,
-          pageSize: params.pageSize || 10,
-          page: params.page || 1,
-          where: {
-            ...params.where,
-            ...(params.serviceType ? { serviceType: params.serviceType } : {}),
-            ...(implementationDateValue ? { implementationDate: implementationDateValue } : {}),
-          },
-        };
-        return StaticModelDirective.findQueryResolver(profileType)(
-          _,
-          args,
-          context,
-          info
-        );
-      },
+      // getServicesBetweenDates: async (
+      //   _: any,
+      //   params: any,
+      //   context: any,
+      //   info: any
+      // ) => {
+      //   const profileType = context?.typeMap?.Service;
+      //   const implementationDateValue =
+      //     params.startDate && params.endDate
+      //       ? `>=${params.startDate},<=${params.endDate}`
+      //       : params.startDate
+      //         ? `>=${params.startDate}`
+      //         : params.endDate
+      //           ? `<=${params.endDate}`
+      //           : null;
+      //   const args = {
+      //     ...params,
+      //     pageSize: params.pageSize || 10,
+      //     page: params.page || 1,
+      //     where: {
+      //       ...params.where,
+      //       ...(params.serviceType ? { serviceType: params.serviceType } : {}),
+      //       ...(implementationDateValue ? { implementationDate: implementationDateValue } : {}),
+      //     },
+      //   };
+      //   return StaticModelDirective.findQueryResolver(profileType)(
+      //     _,
+      //     args,
+      //     context,
+      //     info
+      //   );
+      // },
       ...queries,
     },
     Mutation: {

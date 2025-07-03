@@ -13,6 +13,7 @@ import {
   isNonNullable,
   isValidInputFieldType,
   toInputObjectTypeName,
+  hasDirective
 } from "./util";
 import { omitResolvers } from "./omitResolvers";
 import { mapFileFieldsToFileInputType } from "./mapFileFieldsToFileInputType";
@@ -95,6 +96,11 @@ export const addInputTypesForObjectType = ({
   const inputObjectFields = Object.keys(fields).reduce((res, key) => {
     let field = fields[key];
 
+    // Skip fields annotated with @hidden to avoid them in input types
+    if (hasDirective("hidden", field)) {
+      return res; // do not include this field
+    }
+
     // Special handling for union types (not allowed in input). Merge member fields
     const named = getNamedType(field.type) as any;
     if (named instanceof GraphQLUnionType) {
@@ -106,6 +112,7 @@ export const addInputTypesForObjectType = ({
         const memberFields: Record<string, any> = {};
         named.getTypes().forEach((t: GraphQLObjectType) => {
           Object.values(t.getFields()).forEach((f: any) => {
+            if (hasDirective("hidden", f)) return;
             if (!memberFields[f.name]) {
               memberFields[f.name] = { type: getNullableType(f.type) };
             }

@@ -365,7 +365,7 @@ const typeDefinitions = /* GraphQL */ `
     startDate: DateTime! @type(value: DATE) @position(step: 1, row: 8) @meta(label: "Fecha de Inicio", placeholder: "Selecciona una fecha")
     endDate: DateTime! @type(value: DATE) @position(step: 1, row: 8) @meta(label: "Fecha de Término", placeholder: "Selecciona una fecha")
     implementationDate: DateTime! @type(value: DATE) @position(step: 1, row: 9) @meta(label: "Fecha de Implementación", placeholder: "Selecciona una fecha")
-    campaignTypeId: String @selectFrom(optionValues: [
+    campaignType: String @selectFrom(optionValues: [
       {label: "Táctico", value: "tactico"}
       {label: "Always On", value: "always_on"}
     ]) @position(step: 1, row: 10) @meta(label: "Tipo de campaña", placeholder: "Selecciona una Opción")

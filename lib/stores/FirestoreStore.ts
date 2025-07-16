@@ -17,7 +17,7 @@ import {
   getHasNecessaryRolePermissionsToContinue,
 } from "../AuthDirective";
 import { extractDirectiveParams } from "../GraphQL/utils";
-import { MODEL_TYPES } from "../../src/constants";
+import { MODEL_TYPES } from "../constants";
 
 import { Firestore } from "@google-cloud/firestore";
 import admin from "firebase-admin";
@@ -252,7 +252,10 @@ export class FirestoreStore implements Store {
     if (props.data && (props.data as any).id) {
       await collectionRef.doc((props.data as any).id).set(data);
       const snapshot = await collectionRef.doc((props.data as any).id).get();
-      return this.formatOutput({ id: (props.data as any).id, ...snapshot.data() });
+      return this.formatOutput({
+        id: (props.data as any).id,
+        ...snapshot.data(),
+      });
     } else {
       const docRef = await collectionRef.add(data);
       const snapshot = await docRef.get();

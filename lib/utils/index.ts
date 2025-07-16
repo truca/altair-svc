@@ -3,19 +3,21 @@ import { ModelDirective } from "../ModelDirective";
 import { StaticModelDirective } from "../StaticModelDirective";
 import { createStore, DbTypes } from "../stores/utils";
 import { CookieStore, Profile } from "../types";
-import { v4 as uuidv4 } from 'uuid';
+import { v4 as uuidv4 } from "uuid";
 import { GraphQLID } from "graphql";
 import _ from "lodash";
 import * as jwt from "jsonwebtoken";
-import * as fs from "fs";
 import * as path from "path";
 import { Store } from "../stores/types";
+import { promises as fs } from "fs";
+import { join, extname } from "path";
+import * as cookie from "cookie";
 
 // Add these imports for schema introspection and directive parsing
-import { 
-  GraphQLObjectType, 
-  isObjectType, 
-  isListType, 
+import {
+  GraphQLObjectType,
+  isObjectType,
+  isListType,
   isNonNullType,
   GraphQLSchema,
   DirectiveNode,
@@ -150,7 +152,7 @@ export function makeContext({
 // Field types mapping
 enum FieldType {
   TEXT = "TEXT",
-  TEXTAREA = "TEXTAREA", 
+  TEXTAREA = "TEXTAREA",
   NUMBER = "NUMBER",
   EMAIL = "EMAIL",
   PASSWORD = "PASSWORD",
@@ -175,16 +177,16 @@ enum FieldType {
   BUTTON = "BUTTON",
   // Subform types for complex nested objects
   SUBFORM = "SUBFORM",
-  POLYMORPHIC_SUBFORM = "POLYMORPHIC_SUBFORM", 
-  POLYMORPHIC_ARRAY = "POLYMORPHIC_ARRAY"
+  POLYMORPHIC_SUBFORM = "POLYMORPHIC_SUBFORM",
+  POLYMORPHIC_ARRAY = "POLYMORPHIC_ARRAY",
 }
 
 enum ValueType {
   STRING = "STRING",
-  BOOLEAN = "BOOLEAN", 
+  BOOLEAN = "BOOLEAN",
   NUMBER = "NUMBER",
   FILE = "FILE",
-  MIXED = "MIXED"
+  MIXED = "MIXED",
 }
 
 interface FieldOption {
@@ -212,7 +214,7 @@ interface Field {
   // Table-related attributes for SmartForm
   entity?: string; // Table name from @selectFrom/@selectManyFrom
   labelAttribute?: string; // Label attribute from directive
-  valueAttribute?: string; // Value attribute from directive  
+  valueAttribute?: string; // Value attribute from directive
   dependentField?: string; // Dependent field from directive
   isMulti?: boolean; // For SMART_SELECT with multiple selection
   // Position properties for multistep forms
@@ -236,138 +238,157 @@ interface FormStep {
 }
 
 // Function to extract directive arguments
-export function getDirectiveArgument(directives: readonly DirectiveNode[], directiveName: string, argName: string): any {
-  const directive = directives.find(d => d.name.value === directiveName);
+export function getDirectiveArgument(
+  directives: readonly DirectiveNode[],
+  directiveName: string,
+  argName: string
+): any {
+  const directive = directives.find((d) => d.name.value === directiveName);
   if (!directive) return null;
-  
-  const arg = directive.arguments?.find(a => a.name.value === argName);
+
+  const arg = directive.arguments?.find((a) => a.name.value === argName);
   if (!arg) return null;
-  
+
   // Helper function to parse any value type
   function parseValue(value: any): any {
     switch (value.kind) {
-      case 'StringValue':
+      case "StringValue":
         return value.value;
-      case 'BooleanValue':
+      case "BooleanValue":
         return value.value;
-      case 'IntValue':
+      case "IntValue":
         return parseInt(value.value);
-      case 'FloatValue':
+      case "FloatValue":
         return parseFloat(value.value);
-      case 'ListValue':
+      case "ListValue":
         return value.values.map((v: any) => parseValue(v));
-      case 'ObjectValue':
+      case "ObjectValue":
         // eslint-disable-next-line no-case-declarations
         const obj: any = {};
         value.fields.forEach((field: any) => {
           obj[field.name.value] = parseValue(field.value);
         });
         return obj;
-      case 'NullValue':
+      case "NullValue":
         return null;
       default:
         console.warn(`Unhandled directive argument type: ${value.kind}`);
         return null;
     }
   }
-  
+
   return parseValue(arg.value);
 }
 
 // Function to derive field type from GraphQL type and directives
-function deriveFieldType(field: any, directives: readonly DirectiveNode[]): FieldType {
+function deriveFieldType(
+  field: any,
+  directives: readonly DirectiveNode[]
+): FieldType {
   // Check for subform directive-specific types first
-  
+
   // @subform directive = SUBFORM
-  if (directives.some(d => d.name.value === 'subform')) {
+  if (directives.some((d) => d.name.value === "subform")) {
     return FieldType.SUBFORM;
   }
-  
+
   // @polymorphicSubform directive = POLYMORPHIC_SUBFORM
-  if (directives.some(d => d.name.value === 'polymorphicSubform')) {
+  if (directives.some((d) => d.name.value === "polymorphicSubform")) {
     return FieldType.POLYMORPHIC_SUBFORM;
   }
-  
+
   // @polymorphicArray directive = POLYMORPHIC_ARRAY
-  if (directives.some(d => d.name.value === 'polymorphicArray')) {
+  if (directives.some((d) => d.name.value === "polymorphicArray")) {
     return FieldType.POLYMORPHIC_ARRAY;
   }
-  
+
   // Check for directive-specific types
-  
+
   // @selectFrom with table parameter = SMART_SELECT
-  const selectFromTable = getDirectiveArgument(directives, 'selectFrom', 'table');
+  const selectFromTable = getDirectiveArgument(
+    directives,
+    "selectFrom",
+    "table"
+  );
   if (selectFromTable) {
     return FieldType.SMART_SELECT;
   }
-  
-     // @selectManyFrom with table parameter = SMART_SELECT (with isMulti: true)
-   const selectManyFromTable = getDirectiveArgument(directives, 'selectManyFrom', 'table');
-   if (selectManyFromTable) {
-     return FieldType.SMART_SELECT;
-   }
-  
+
+  // @selectManyFrom with table parameter = SMART_SELECT (with isMulti: true)
+  const selectManyFromTable = getDirectiveArgument(
+    directives,
+    "selectManyFrom",
+    "table"
+  );
+  if (selectManyFromTable) {
+    return FieldType.SMART_SELECT;
+  }
+
   // @selectFrom with static values/options = regular SELECT
-  if (getDirectiveArgument(directives, 'selectFrom', 'values') || 
-      getDirectiveArgument(directives, 'selectFrom', 'optionValues')) {
+  if (
+    getDirectiveArgument(directives, "selectFrom", "values") ||
+    getDirectiveArgument(directives, "selectFrom", "optionValues")
+  ) {
     return FieldType.SELECT;
   }
-  
-     // @selectManyFrom with static values/options = MULTISELECT
-   if (getDirectiveArgument(directives, 'selectManyFrom', 'values') ||
-       getDirectiveArgument(directives, 'selectManyFrom', 'optionValues')) {
-     return FieldType.MULTISELECT;
-   }
-  
+
+  // @selectManyFrom with static values/options = MULTISELECT
+  if (
+    getDirectiveArgument(directives, "selectManyFrom", "values") ||
+    getDirectiveArgument(directives, "selectManyFrom", "optionValues")
+  ) {
+    return FieldType.MULTISELECT;
+  }
+
   // Only treat as HIDDEN field if @hidden(value: true), not for conditional hiding
-  if (getDirectiveArgument(directives, 'hidden', 'value') === true) {
+  if (getDirectiveArgument(directives, "hidden", "value") === true) {
     return FieldType.HIDDEN;
   }
-  
+
   // Check @type directive first (overrides GraphQL type)
   // Now finding the directive
-  const typeDirectiveValue = getDirectiveArgument(directives, 'type', 'value');
+  const typeDirectiveValue = getDirectiveArgument(directives, "type", "value");
   // console.log('typeDirectiveValue', field.name, typeDirectiveValue);
   if (typeDirectiveValue) {
     switch (typeDirectiveValue) {
-      case 'DATE':
+      case "DATE":
         return FieldType.DATE;
-      case 'TIME':
+      case "TIME":
         return FieldType.TIME;
-      case 'DATETIME':
+      case "DATETIME":
         return FieldType.DATETIME;
-      case 'EMAIL':
+      case "EMAIL":
         return FieldType.EMAIL;
-      case 'PASSWORD':
+      case "PASSWORD":
         return FieldType.PASSWORD;
-      case 'URL':
+      case "URL":
         return FieldType.URL;
-      case 'TEL':
+      case "TEL":
         return FieldType.TEL;
-      case 'NUMBER':
+      case "NUMBER":
         return FieldType.NUMBER;
-      case 'TEXTAREA':
+      case "TEXTAREA":
         return FieldType.TEXTAREA;
-      case 'FILE':
+      case "FILE":
         return FieldType.FILE;
-      case 'IMAGE':
+      case "IMAGE":
         return FieldType.IMAGE;
-      case 'COLOR':
+      case "COLOR":
         return FieldType.COLOR;
-      case 'RANGE':
+      case "RANGE":
         return FieldType.RANGE;
-      case 'SEARCH':
+      case "SEARCH":
         return FieldType.SEARCH;
       default:
         // If unknown @type value, fall through to GraphQL type derivation
         break;
     }
   }
-  
+
   // Auto-detect subforms from GraphQL type structure
   let currentType = field.type;
   let isArray = false;
-  
+
   // Unwrap NonNull and List types, but remember if it was an array
   while (isNonNullType(currentType) || isListType(currentType)) {
     if (isListType(currentType)) {
@@ -375,13 +396,21 @@ function deriveFieldType(field: any, directives: readonly DirectiveNode[]): Fiel
     }
     currentType = currentType.ofType;
   }
-  
+
   const baseTypeName = currentType.name;
-  
+
   // Check if it's a scalar/built-in type vs custom object type
-  const scalarTypes = ['Boolean', 'DateTime', 'Int', 'Float', 'String', 'ID', 'File'];
+  const scalarTypes = [
+    "Boolean",
+    "DateTime",
+    "Int",
+    "Float",
+    "String",
+    "ID",
+    "File",
+  ];
   const isScalarType = scalarTypes.includes(baseTypeName);
-  
+
   if (!isScalarType) {
     // It's a custom object type - should be a subform
     if (isArray) {
@@ -392,98 +421,119 @@ function deriveFieldType(field: any, directives: readonly DirectiveNode[]): Fiel
       return FieldType.SUBFORM;
     }
   }
-  
+
   // Handle scalar types
-  if (baseTypeName === 'Boolean') return FieldType.CHECKBOX;
-  if (baseTypeName === 'DateTime') return FieldType.DATE;
-  if (baseTypeName === 'Int' || baseTypeName === 'Float') return FieldType.NUMBER;
-  if (baseTypeName === 'File') return FieldType.FILE;
-  
+  if (baseTypeName === "Boolean") return FieldType.CHECKBOX;
+  if (baseTypeName === "DateTime") return FieldType.DATE;
+  if (baseTypeName === "Int" || baseTypeName === "Float")
+    return FieldType.NUMBER;
+  if (baseTypeName === "File") return FieldType.FILE;
+
   return FieldType.TEXT;
 }
 
 // Function to generate field options from directives
-function generateFieldOptions(directives: readonly DirectiveNode[]): FieldOption[] | undefined {
+function generateFieldOptions(
+  directives: readonly DirectiveNode[]
+): FieldOption[] | undefined {
   // Check @selectFrom directive
-  const stringValues = getDirectiveArgument(directives, 'selectFrom', 'values');
-  const optionValues = getDirectiveArgument(directives, 'selectFrom', 'optionValues'); 
-  const table = getDirectiveArgument(directives, 'selectFrom', 'table');
-  
+  const stringValues = getDirectiveArgument(directives, "selectFrom", "values");
+  const optionValues = getDirectiveArgument(
+    directives,
+    "selectFrom",
+    "optionValues"
+  );
+  const table = getDirectiveArgument(directives, "selectFrom", "table");
+
   // Check @selectManyFrom directive
-  const manyStringValues = getDirectiveArgument(directives, 'selectManyFrom', 'values');
-  const manyOptionValues = getDirectiveArgument(directives, 'selectManyFrom', 'optionValues');
-  
+  const manyStringValues = getDirectiveArgument(
+    directives,
+    "selectManyFrom",
+    "values"
+  );
+  const manyOptionValues = getDirectiveArgument(
+    directives,
+    "selectManyFrom",
+    "optionValues"
+  );
+
   const values = stringValues || manyStringValues;
   const options = optionValues || manyOptionValues;
-  
-  console.log('generateFieldOptions debug:', {
+
+  console.log("generateFieldOptions debug:", {
     stringValues,
     optionValues,
     table,
     manyStringValues,
     manyOptionValues,
     values,
-    options
+    options,
   });
-  
+
   if (options && Array.isArray(options)) {
-    const mappedOptions = options.map(opt => ({
+    const mappedOptions = options.map((opt) => ({
       label: opt.label || opt.value,
-      value: opt.value
+      value: opt.value,
     }));
-    console.log('Generated options from optionValues:', mappedOptions);
+    console.log("Generated options from optionValues:", mappedOptions);
     return mappedOptions;
   }
-  
+
   if (values && Array.isArray(values)) {
-    const mappedValues = values.map(val => ({
+    const mappedValues = values.map((val) => ({
       label: val,
-      value: val
+      value: val,
     }));
-    console.log('Generated options from values:', mappedValues);
+    console.log("Generated options from values:", mappedValues);
     return mappedValues;
   }
-  
+
   // For table-based options, we'll return empty array and let the frontend handle it
   if (table) {
-    console.log('Table-based options detected:', table);
+    console.log("Table-based options detected:", table);
     return [];
   }
-  
+
   return undefined;
 }
 
 // Function to generate default value from directives
 function generateDefaultValue(directives: readonly DirectiveNode[]): any {
-  const defaultValue = getDirectiveArgument(directives, 'default', 'value');
+  const defaultValue = getDirectiveArgument(directives, "default", "value");
   if (defaultValue !== null) return defaultValue;
-  
-  const parentAttribute = getDirectiveArgument(directives, 'defaultFrom', 'parentAttribute');
+
+  const parentAttribute = getDirectiveArgument(
+    directives,
+    "defaultFrom",
+    "parentAttribute"
+  );
   if (parentAttribute) {
     // This would be resolved at runtime with parent context
     return undefined;
   }
-  
+
   return undefined;
 }
 
 // Function to process @hidden(cond: ...) conditions into stringified object
-function processHiddenConditions(directives: readonly DirectiveNode[]): string | undefined {
-  const hiddenConditions = getDirectiveArgument(directives, 'hidden', 'cond');
-  
+function processHiddenConditions(
+  directives: readonly DirectiveNode[]
+): string | undefined {
+  const hiddenConditions = getDirectiveArgument(directives, "hidden", "cond");
+
   if (!hiddenConditions || !Array.isArray(hiddenConditions)) {
     return undefined;
   }
-  
+
   // Process conditions array into a simple object
   const conditionObject: Record<string, any> = {};
-  
+
   hiddenConditions.forEach((condition: any) => {
-    if (!condition || typeof condition !== 'object') return;
-    
+    if (!condition || typeof condition !== "object") return;
+
     const field = condition.field;
     if (!field) return;
-    
+
     // Extract value based on type
     let value: any;
     if (condition?.valueBoolean !== undefined) {
@@ -500,13 +550,15 @@ function processHiddenConditions(directives: readonly DirectiveNode[]): string |
       // If no typed value found, skip this condition
       return;
     }
-    
+
     // Add to condition object (multiple conditions = AND logic)
     conditionObject[field] = value;
   });
-  
+
   // Return stringified object if we have conditions, otherwise undefined
-  return Object.keys(conditionObject).length > 0 ? JSON.stringify(conditionObject) : undefined;
+  return Object.keys(conditionObject).length > 0
+    ? JSON.stringify(conditionObject)
+    : undefined;
 }
 
 // Function to generate validation rules
@@ -515,7 +567,11 @@ function generateValidation(field: any): FieldValidation[] {
 
   // Helper to build Spanish error message using field label
   const directives = field.astNode?.directives || [];
-  const fieldLabel = getDirectiveArgument(directives, 'meta', 'label') || field?.label || field?.astNode?.description?.value || field.name;
+  const fieldLabel =
+    getDirectiveArgument(directives, "meta", "label") ||
+    field?.label ||
+    field?.astNode?.description?.value ||
+    field.name;
 
   // Detect NonNull (required)
   let baseType = field.type;
@@ -536,18 +592,23 @@ function generateValidation(field: any): FieldValidation[] {
 
   // Determine the correct type for validation (array vs scalar)
   let valueType: ValueType | "array" | "date" = ValueType.STRING;
-  const isArrayValue = field.isMulti || field.type === FieldType.MULTISELECT || field.type === FieldType.SMART_SELECT && field.isMulti;
+  const isArrayValue =
+    field.isMulti ||
+    field.type === FieldType.MULTISELECT ||
+    (field.type === FieldType.SMART_SELECT && field.isMulti);
 
   if (isArrayValue) {
     valueType = "array";
   } else {
     if (baseType.name === "Boolean") valueType = ValueType.BOOLEAN;
-    if (baseType.name === "Int" || baseType.name === "Float") valueType = ValueType.NUMBER;
-    if (baseType.name === "Date" || baseType.name === "DateTime") valueType = "date";
+    if (baseType.name === "Int" || baseType.name === "Float")
+      valueType = ValueType.NUMBER;
+    if (baseType.name === "Date" || baseType.name === "DateTime")
+      valueType = "date";
   }
 
   const valueString = (valueType as string).toLowerCase();
-  const typeEsp: Record<string,string> = {
+  const typeEsp: Record<string, string> = {
     string: "texto",
     number: "número",
     boolean: "booleano",
@@ -571,65 +632,88 @@ function generateValidation(field: any): FieldValidation[] {
 }
 
 // Function to generate subform-specific properties
-function generateSubformProperties(schema: GraphQLSchema, field: any, fieldType: FieldType, directives: readonly DirectiveNode[], visitedTypes: Set<string> = new Set()): Partial<Field> {
+function generateSubformProperties(
+  schema: GraphQLSchema,
+  field: any,
+  fieldType: FieldType,
+  directives: readonly DirectiveNode[],
+  visitedTypes: Set<string> = new Set()
+): Partial<Field> {
   const properties: Partial<Field> = {};
-  
+
   if (fieldType === FieldType.SUBFORM) {
     // Extract the target type name for SUBFORM
     let currentType = field.type;
-    
+
     // Unwrap NonNull and List types to get to the base type
     while (isNonNullType(currentType) || isListType(currentType)) {
       currentType = currentType.ofType;
     }
-    
+
     const targetTypeName = currentType.name;
     properties.subformType = targetTypeName;
-    
+
     // Prevent infinite recursion by checking if we've already visited this type
     if (!visitedTypes.has(targetTypeName)) {
       const newVisitedTypes = new Set(visitedTypes);
       newVisitedTypes.add(targetTypeName);
-      
+
       // Generate subform fields with cycle detection
-      const subformFields = generateFieldsFromType(schema, targetTypeName, newVisitedTypes);
+      const subformFields = generateFieldsFromType(
+        schema,
+        targetTypeName,
+        newVisitedTypes
+      );
       properties.subformFields = subformFields;
     } else {
       // If we've seen this type before, don't generate its fields to prevent recursion
       properties.subformFields = [];
     }
-    
+
     // Extract layout from @subform directive
-    const subformLayout = getDirectiveArgument(directives, 'subform', 'layout');
+    const subformLayout = getDirectiveArgument(directives, "subform", "layout");
     if (subformLayout) {
-      properties.subformLayout = subformLayout.toLowerCase() as "cards" | "tabs";
+      properties.subformLayout = subformLayout.toLowerCase() as
+        | "cards"
+        | "tabs";
     }
-    
   } else if (fieldType === FieldType.POLYMORPHIC_SUBFORM) {
     // Extract types from @polymorphicSubform directive
-    const types = getDirectiveArgument(directives, 'polymorphicSubform', 'types');
-    const optionTypes = getDirectiveArgument(directives, 'polymorphicSubform', 'optionTypes');
-    const layout = getDirectiveArgument(directives, 'polymorphicSubform', 'layout');
-    
+    const types = getDirectiveArgument(
+      directives,
+      "polymorphicSubform",
+      "types"
+    );
+    const optionTypes = getDirectiveArgument(
+      directives,
+      "polymorphicSubform",
+      "optionTypes"
+    );
+    const layout = getDirectiveArgument(
+      directives,
+      "polymorphicSubform",
+      "layout"
+    );
+
     if (types && Array.isArray(types)) {
       properties.subformTypes = types;
       // Generate simple options from type names
-      properties.typeOptions = types.map(type => ({
+      properties.typeOptions = types.map((type) => ({
         label: type,
-        value: type
+        value: type,
       }));
     } else if (optionTypes && Array.isArray(optionTypes)) {
-      properties.subformTypes = optionTypes.map(opt => opt.value);
-      properties.typeOptions = optionTypes.map(opt => ({
+      properties.subformTypes = optionTypes.map((opt) => opt.value);
+      properties.typeOptions = optionTypes.map((opt) => ({
         label: opt.label || opt.value,
-        value: opt.value
+        value: opt.value,
       }));
     }
-    
+
     if (layout) {
       properties.subformLayout = layout.toLowerCase() as "cards" | "tabs";
     }
-    
+
     // Build subtype-specific field bundles
     if (properties.subformTypes && properties.subformTypes.length) {
       const bundles: { type: string; fields: Field[] }[] = [];
@@ -637,53 +721,70 @@ function generateSubformProperties(schema: GraphQLSchema, field: any, fieldType:
         if (visitedTypes.has(subtype)) continue;
         const newVisited = new Set(visitedTypes);
         newVisited.add(subtype);
-        const fieldsForSubtype = generateFieldsFromType(schema, subtype, newVisited);
+        const fieldsForSubtype = generateFieldsFromType(
+          schema,
+          subtype,
+          newVisited
+        );
         bundles.push({ type: subtype, fields: fieldsForSubtype });
       }
       properties.polymorphicSubformFields = bundles;
     }
-    
   } else if (fieldType === FieldType.POLYMORPHIC_ARRAY) {
     // Extract types from @polymorphicArray directive
-    const types = getDirectiveArgument(directives, 'polymorphicArray', 'types');
-    const optionTypes = getDirectiveArgument(directives, 'polymorphicArray', 'optionTypes');
-    const addButtonText = getDirectiveArgument(directives, 'polymorphicArray', 'addButtonText');
-    const layout = getDirectiveArgument(directives, 'polymorphicArray', 'layout');
-    
+    const types = getDirectiveArgument(directives, "polymorphicArray", "types");
+    const optionTypes = getDirectiveArgument(
+      directives,
+      "polymorphicArray",
+      "optionTypes"
+    );
+    const addButtonText = getDirectiveArgument(
+      directives,
+      "polymorphicArray",
+      "addButtonText"
+    );
+    const layout = getDirectiveArgument(
+      directives,
+      "polymorphicArray",
+      "layout"
+    );
+
     if (types && Array.isArray(types)) {
       properties.subformTypes = types;
       // Generate simple options from type names
-      properties.typeOptions = types.map(type => ({
+      properties.typeOptions = types.map((type) => ({
         label: type,
-        value: type
+        value: type,
       }));
     } else if (optionTypes && Array.isArray(optionTypes)) {
-      properties.subformTypes = optionTypes.map(opt => opt.value);
-      properties.typeOptions = optionTypes.map(opt => ({
+      properties.subformTypes = optionTypes.map((opt) => opt.value);
+      properties.typeOptions = optionTypes.map((opt) => ({
         label: opt.label || opt.value,
-        value: opt.value
+        value: opt.value,
       }));
     } else {
       // Auto-detect available types from schema for arrays of custom objects
       let currentType = field.type;
-      
+
       // Unwrap NonNull and List types to get to the base type
       while (isNonNullType(currentType) || isListType(currentType)) {
         currentType = currentType.ofType;
       }
-      
+
       const baseTypeName = currentType.name;
       properties.subformTypes = [baseTypeName];
-      properties.typeOptions = [{
-        label: baseTypeName,
-        value: baseTypeName
-      }];
+      properties.typeOptions = [
+        {
+          label: baseTypeName,
+          value: baseTypeName,
+        },
+      ];
     }
-    
+
     if (addButtonText) {
       properties.addButtonText = addButtonText;
     }
-    
+
     if (layout) {
       properties.subformLayout = layout.toLowerCase() as "cards" | "tabs";
     }
@@ -695,114 +796,144 @@ function generateSubformProperties(schema: GraphQLSchema, field: any, fieldType:
         if (visitedTypes.has(subtype)) continue;
         const newVisited = new Set(visitedTypes);
         newVisited.add(subtype);
-        const fieldsForSubtype = generateFieldsFromType(schema, subtype, newVisited);
+        const fieldsForSubtype = generateFieldsFromType(
+          schema,
+          subtype,
+          newVisited
+        );
         bundles.push({ type: subtype, fields: fieldsForSubtype });
       }
       properties.polymorphicSubformFields = bundles;
     }
   }
-  
+
   return properties;
 }
 
 // Main function to generate fields from GraphQL type
-function generateFieldsFromType(schema: GraphQLSchema, typeName: string, visitedTypes: Set<string> = new Set()): Field[] {
+function generateFieldsFromType(
+  schema: GraphQLSchema,
+  typeName: string,
+  visitedTypes: Set<string> = new Set()
+): Field[] {
   const type = schema.getType(typeName) as GraphQLObjectType;
   if (!type || !isObjectType(type)) {
     return [];
   }
-  
+
   const fields = type.getFields();
   const generatedFields: Field[] = [];
-  
-  Object.values(fields).forEach(field => {
+
+  Object.values(fields).forEach((field) => {
     const directives = field.astNode?.directives || [];
-    
+
     // Skip if field has @hidden directive with value: true
-    const hiddenValue = getDirectiveArgument(directives, 'hidden', 'value');
+    const hiddenValue = getDirectiveArgument(directives, "hidden", "value");
     if (hiddenValue === true) return;
-    
+
     // Skip system fields
-    if (['createdAt', 'updatedAt', 'id'].includes(field.name)) return;
-    
+    if (["createdAt", "updatedAt", "id"].includes(field.name)) return;
+
     const fieldType = deriveFieldType(field, directives);
     const options = generateFieldOptions(directives);
     const defaultValue = generateDefaultValue(directives);
     const validation = generateValidation(field);
-    
+
     // Get field name override from @from directive
-    const fromParent = getDirectiveArgument(directives, 'from', 'parentAttribute');
+    const fromParent = getDirectiveArgument(
+      directives,
+      "from",
+      "parentAttribute"
+    );
     const actualFieldName = fromParent || field.name;
-    
+
     const fieldId = actualFieldName;
-         // Extract position properties from @position directive
-     const hasPositionDirective = directives.some(d => d.name.value === 'position');
-     const positionStep = getDirectiveArgument(directives, 'position', 'step');
-     const positionRow = getDirectiveArgument(directives, 'position', 'row');
-     
-     // For fields with position directive, use specified values
-     // For fields without position directive, assign to step 0 with row TBD (will be calculated later)
-     const fieldStep = hasPositionDirective ? (positionStep ?? 1) - 1 : 0;
-     const fieldRow = hasPositionDirective ? (positionRow ?? 1) : null; // null indicates it needs to be calculated
-     
-     // Extract meta directive values for label and placeholder
-     const metaLabel = getDirectiveArgument(directives, 'meta', 'label');
-     const metaPlaceholder = getDirectiveArgument(directives, 'meta', 'placeholder');
-     
-     // Extract hidden conditions from @hidden(cond: ...)
-     let hiddenCondition = processHiddenConditions(directives);
-     // Automatically hide fields that use @from directive (inherit-only attributes)
-     const hasFromDirective = directives.some(d => d.name.value === 'from');
-     if (!hiddenCondition && hasFromDirective) {
-       hiddenCondition = '{}'; // Empty condition hides field unconditionally
-     }
-     
-     // Extract table-related attributes from @selectFrom and @selectManyFrom directives
-     const table = getDirectiveArgument(directives, 'selectFrom', 'table') || 
-                   getDirectiveArgument(directives, 'selectManyFrom', 'table');
-     const labelAttribute = getDirectiveArgument(directives, 'selectFrom', 'labelAttribute') || 
-                           getDirectiveArgument(directives, 'selectManyFrom', 'labelAttribute');
-     const valueAttribute = getDirectiveArgument(directives, 'selectFrom', 'valueAttribute') || 
-                           getDirectiveArgument(directives, 'selectManyFrom', 'valueAttribute');
-     const dependentField = getDirectiveArgument(directives, 'selectFrom', 'dependentField') || 
-                           getDirectiveArgument(directives, 'selectManyFrom', 'dependentField');
-     
-     // Check if this is a multi-select field (selectManyFrom directive)
-     const isMultiSelect = directives.some(d => d.name.value === 'selectManyFrom');
-     
-     // Skip inherit-only attributes coming from @from directive
-     const hasFromDirectiveOnly = hasFromDirective
-     if (hasFromDirectiveOnly) {
-       return; // do not generate this field at all
-     }
-     
-     // Generate subform-specific properties based on field type
-     const subformProperties = generateSubformProperties(schema, field, fieldType, directives, visitedTypes);
-     
-     const generatedField = {
-       id: fieldId,
-       label: metaLabel || field.name, // Use meta label if available, otherwise field name
-       field: actualFieldName !== field.name ? actualFieldName : undefined,
-       type: fieldType,
-       defaultValue,
-       options,
-       validation,
-       step: fieldStep,
-       row: fieldRow,
-       ...(metaPlaceholder && { placeholder: metaPlaceholder }), // Add placeholder if specified
-       ...(hiddenCondition && { hidden: hiddenCondition }), // Add stringified hidden conditions if specified
-       ...(table && { entity: table }), // Add entity (table name) if specified
-       ...(labelAttribute && { labelAttribute }), // Add labelAttribute if specified
-       ...(valueAttribute && { valueAttribute }), // Add valueAttribute if specified
-       ...(dependentField && { dependentField }), // Add dependentField if specified
-       ...(isMultiSelect && { isMulti: true }), // Add isMulti for selectManyFrom directives
-       ...subformProperties // Add all subform-specific properties
-     };
-    
+    // Extract position properties from @position directive
+    const hasPositionDirective = directives.some(
+      (d) => d.name.value === "position"
+    );
+    const positionStep = getDirectiveArgument(directives, "position", "step");
+    const positionRow = getDirectiveArgument(directives, "position", "row");
+
+    // For fields with position directive, use specified values
+    // For fields without position directive, assign to step 0 with row TBD (will be calculated later)
+    const fieldStep = hasPositionDirective ? (positionStep ?? 1) - 1 : 0;
+    const fieldRow = hasPositionDirective ? (positionRow ?? 1) : null; // null indicates it needs to be calculated
+
+    // Extract meta directive values for label and placeholder
+    const metaLabel = getDirectiveArgument(directives, "meta", "label");
+    const metaPlaceholder = getDirectiveArgument(
+      directives,
+      "meta",
+      "placeholder"
+    );
+
+    // Extract hidden conditions from @hidden(cond: ...)
+    let hiddenCondition = processHiddenConditions(directives);
+    // Automatically hide fields that use @from directive (inherit-only attributes)
+    const hasFromDirective = directives.some((d) => d.name.value === "from");
+    if (!hiddenCondition && hasFromDirective) {
+      hiddenCondition = "{}"; // Empty condition hides field unconditionally
+    }
+
+    // Extract table-related attributes from @selectFrom and @selectManyFrom directives
+    const table =
+      getDirectiveArgument(directives, "selectFrom", "table") ||
+      getDirectiveArgument(directives, "selectManyFrom", "table");
+    const labelAttribute =
+      getDirectiveArgument(directives, "selectFrom", "labelAttribute") ||
+      getDirectiveArgument(directives, "selectManyFrom", "labelAttribute");
+    const valueAttribute =
+      getDirectiveArgument(directives, "selectFrom", "valueAttribute") ||
+      getDirectiveArgument(directives, "selectManyFrom", "valueAttribute");
+    const dependentField =
+      getDirectiveArgument(directives, "selectFrom", "dependentField") ||
+      getDirectiveArgument(directives, "selectManyFrom", "dependentField");
+
+    // Check if this is a multi-select field (selectManyFrom directive)
+    const isMultiSelect = directives.some(
+      (d) => d.name.value === "selectManyFrom"
+    );
+
+    // Skip inherit-only attributes coming from @from directive
+    const hasFromDirectiveOnly = hasFromDirective;
+    if (hasFromDirectiveOnly) {
+      return; // do not generate this field at all
+    }
+
+    // Generate subform-specific properties based on field type
+    const subformProperties = generateSubformProperties(
+      schema,
+      field,
+      fieldType,
+      directives,
+      visitedTypes
+    );
+
+    const generatedField = {
+      id: fieldId,
+      label: metaLabel || field.name, // Use meta label if available, otherwise field name
+      field: actualFieldName !== field.name ? actualFieldName : undefined,
+      type: fieldType,
+      defaultValue,
+      options,
+      validation,
+      step: fieldStep,
+      row: fieldRow,
+      ...(metaPlaceholder && { placeholder: metaPlaceholder }), // Add placeholder if specified
+      ...(hiddenCondition && { hidden: hiddenCondition }), // Add stringified hidden conditions if specified
+      ...(table && { entity: table }), // Add entity (table name) if specified
+      ...(labelAttribute && { labelAttribute }), // Add labelAttribute if specified
+      ...(valueAttribute && { valueAttribute }), // Add valueAttribute if specified
+      ...(dependentField && { dependentField }), // Add dependentField if specified
+      ...(isMultiSelect && { isMulti: true }), // Add isMulti for selectManyFrom directives
+      ...subformProperties, // Add all subform-specific properties
+    };
+
     console.log(`Generated field for ${field.name}:`, generatedField);
     generatedFields.push(generatedField);
   });
-  
+
   return generatedFields;
 }
 
@@ -825,33 +956,42 @@ export function makeSchema({
         // Generate fields from schema directives
         try {
           const schema = context.schema;
-          console.log('Form query - input type:', type);
-          console.log('Available formTypes:', formTypes);
+          console.log("Form query - input type:", type);
+          console.log("Available formTypes:", formTypes);
           if (schema) {
             // Convert form type to GraphQL type name using formTypes mapping
             const mappedType = formTypes[type] || type.toLowerCase();
-            const graphqlTypeName = mappedType.charAt(0).toUpperCase() + mappedType.slice(1);
-            console.log('Mapped type:', mappedType, '-> GraphQL type:', graphqlTypeName);
-            const generatedFields = generateFieldsFromType(schema, graphqlTypeName);
-            
-                         if (generatedFields.length > 0) {
-               // Generate FormStep objects with CSS Grid layout information
-               const formSteps = organizeFieldsIntoSteps(generatedFields);
-               
-               return { 
-                 fields: generatedFields,
-                 steps: formSteps
-               };
-             }
+            const graphqlTypeName =
+              mappedType.charAt(0).toUpperCase() + mappedType.slice(1);
+            console.log(
+              "Mapped type:",
+              mappedType,
+              "-> GraphQL type:",
+              graphqlTypeName
+            );
+            const generatedFields = generateFieldsFromType(
+              schema,
+              graphqlTypeName
+            );
+
+            if (generatedFields.length > 0) {
+              // Generate FormStep objects with CSS Grid layout information
+              const formSteps = organizeFieldsIntoSteps(generatedFields);
+
+              return {
+                fields: generatedFields,
+                steps: formSteps,
+              };
+            }
           }
         } catch (error) {
-          console.error('Error generating fields from schema:', error);
+          console.error("Error generating fields from schema:", error);
         }
-        
-                 return {
-           fields: [],
-           steps: []
-         };
+
+        return {
+          fields: [],
+          steps: [],
+        };
       },
       me: async (
         _: any,
@@ -870,38 +1010,6 @@ export function makeSchema({
           info
         );
       },
-      // getServicesBetweenDates: async (
-      //   _: any,
-      //   params: any,
-      //   context: any,
-      //   info: any
-      // ) => {
-      //   const profileType = context?.typeMap?.Service;
-      //   const implementationDateValue =
-      //     params.startDate && params.endDate
-      //       ? `>=${params.startDate},<=${params.endDate}`
-      //       : params.startDate
-      //         ? `>=${params.startDate}`
-      //         : params.endDate
-      //           ? `<=${params.endDate}`
-      //           : null;
-      //   const args = {
-      //     ...params,
-      //     pageSize: params.pageSize || 10,
-      //     page: params.page || 1,
-      //     where: {
-      //       ...params.where,
-      //       ...(params.serviceType ? { serviceType: params.serviceType } : {}),
-      //       ...(implementationDateValue ? { implementationDate: implementationDateValue } : {}),
-      //     },
-      //   };
-      //   return StaticModelDirective.findQueryResolver(profileType)(
-      //     _,
-      //     args,
-      //     context,
-      //     info
-      //   );
-      // },
       ...queries,
     },
     Mutation: {
@@ -912,7 +1020,7 @@ export function makeSchema({
       saveFile: async (_: any, { file }: { file: any }) => {
         try {
           const fileArrayBuffer = await file.arrayBuffer();
-          await fs.promises.writeFile(
+          await fs.writeFile(
             path.join(__dirname, file.name),
             new Uint8Array(fileArrayBuffer)
           );
@@ -1047,78 +1155,83 @@ export function makeSchema({
       // Add schema to context
       const contextWithSchema = { ...context, schema };
       return originalQuery.form(_, { type }, contextWithSchema);
-    }
+    },
   };
 
   return schema;
 }
 
 // Function to group fields by step and row
-function groupFieldsByStepAndRow(fields: Field[]): Map<number, Map<number, Field[]>> {
+function groupFieldsByStepAndRow(
+  fields: Field[]
+): Map<number, Map<number, Field[]>> {
   const stepMap = new Map<number, Map<number, Field[]>>();
-  
+
   // First pass: group positioned fields (those with explicit row numbers)
-  const positionedFields = fields.filter(field => field.row !== null);
-  const unpositionedFields = fields.filter(field => field.row === null);
-  
+  const positionedFields = fields.filter((field) => field.row !== null);
+  const unpositionedFields = fields.filter((field) => field.row === null);
+
   // Process positioned fields first
-  positionedFields.forEach(field => {
+  positionedFields.forEach((field) => {
     const step = field.step!;
     const row = field.row!;
-    
+
     if (!stepMap.has(step)) {
       stepMap.set(step, new Map<number, Field[]>());
     }
-    
+
     const rowMap = stepMap.get(step)!;
     if (!rowMap.has(row)) {
       rowMap.set(row, []);
     }
-    
+
     rowMap.get(row)!.push(field);
   });
-  
+
   // Process unpositioned fields - assign rows within their designated steps
   unpositionedFields.forEach((field) => {
     const step = field.step!; // Step is already assigned (0 for unpositioned fields)
-    
+
     // Find the highest row number in this step to stack unpositioned fields at the bottom
     const stepRowMap = stepMap.get(step) || new Map<number, Field[]>();
-    const maxRowInStep = stepRowMap.size > 0 ? Math.max(...stepRowMap.keys()) : 0;
-    
+    const maxRowInStep =
+      stepRowMap.size > 0 ? Math.max(...stepRowMap.keys()) : 0;
+
     // Assign the next available row
     const row = maxRowInStep + 1;
-    
+
     // Update the field object with the calculated row
     field.row = row;
-    
+
     if (!stepMap.has(step)) {
       stepMap.set(step, new Map<number, Field[]>());
     }
-    
+
     const rowMap = stepMap.get(step)!;
     if (!rowMap.has(row)) {
       rowMap.set(row, []);
     }
-    
+
     rowMap.get(row)!.push(field);
   });
-  
+
   return stepMap;
 }
 
 // Function to generate grid-template-areas for a step
 function generateGridTemplateAreas(stepFields: Map<number, Field[]>): string {
   const sortedRows = Array.from(stepFields.keys()).sort((a, b) => a - b);
-  const maxFieldsInAnyRow = Math.max(...Array.from(stepFields.values()).map(fields => fields.length));
-  
-  const rowStrings = sortedRows.map(rowNumber => {
+  const maxFieldsInAnyRow = Math.max(
+    ...Array.from(stepFields.values()).map((fields) => fields.length)
+  );
+
+  const rowStrings = sortedRows.map((rowNumber) => {
     const rowFields = stepFields.get(rowNumber)!;
-    const fieldNames = rowFields.map(field => {
-      const name = (field.id || field.label || '').toString();
-      return name.replace(/[\s.]+/g, '_'); // replace spaces/dots with underscores
+    const fieldNames = rowFields.map((field) => {
+      const name = (field.id || field.label || "").toString();
+      return name.replace(/[\s.]+/g, "_"); // replace spaces/dots with underscores
     });
-    
+
     // For rows with single fields, make them span all columns
     if (fieldNames.length === 1 && maxFieldsInAnyRow > 1) {
       const singleField = fieldNames[0];
@@ -1127,49 +1240,183 @@ function generateGridTemplateAreas(stepFields: Map<number, Field[]>): string {
       while (result.length < maxFieldsInAnyRow) {
         result.push(singleField);
       }
-      return `"${result.join(' ')}"`;
+      return `"${result.join(" ")}"`;
     }
-    
+
     // For rows with multiple fields, pad to match maximum if needed
     while (fieldNames.length < maxFieldsInAnyRow) {
-      fieldNames.push('.'); // Use '.' for empty grid cells
+      fieldNames.push("."); // Use '.' for empty grid cells
     }
-    
-    return `"${fieldNames.join(' ')}"`;
+
+    return `"${fieldNames.join(" ")}"`;
   });
-  
-  return rowStrings.join(' ');
+
+  return rowStrings.join(" ");
 }
 
 // Function to generate grid-template-columns for a step
 function generateGridTemplateColumns(stepFields: Map<number, Field[]>): string {
-  const maxFieldsInAnyRow = Math.max(...Array.from(stepFields.values()).map(fields => fields.length));
-  return Array(maxFieldsInAnyRow).fill('1fr').join(' ');
+  const maxFieldsInAnyRow = Math.max(
+    ...Array.from(stepFields.values()).map((fields) => fields.length)
+  );
+  return Array(maxFieldsInAnyRow).fill("1fr").join(" ");
 }
 
 // Function to organize fields into FormStep objects (without including fields)
 function organizeFieldsIntoSteps(fields: Field[]): FormStep[] {
   const stepMap = groupFieldsByStepAndRow(fields);
   const formSteps: FormStep[] = [];
-  
+
   // Sort steps by step number
   const sortedStepNumbers = Array.from(stepMap.keys()).sort((a, b) => a - b);
-  
-  sortedStepNumbers.forEach(stepNumber => {
+
+  sortedStepNumbers.forEach((stepNumber) => {
     const stepRowMap = stepMap.get(stepNumber)!;
-    
+
     const formStep: FormStep = {
       stepNumber,
       gridTemplateAreas: generateGridTemplateAreas(stepRowMap),
-      gridTemplateColumns: generateGridTemplateColumns(stepRowMap)
+      gridTemplateColumns: generateGridTemplateColumns(stepRowMap),
     };
-    
+
     formSteps.push(formStep);
   });
-  
+
   return formSteps;
 }
 
 export function generateUUID(): string {
   return uuidv4();
-} 
+}
+
+function getCookieStore(context: any, cookies: any): CookieStore {
+  const ctx: any = context;
+  const getCookie = (paramCookies: any) => (key: string) => paramCookies[key];
+  const setCookie =
+    (res: any) => (key: string, value: string, options: any) => {
+      const existingCookies = res.getHeader("Set-Cookie") || [];
+      const cookiesArray = Array.isArray(existingCookies)
+        ? existingCookies
+        : [existingCookies];
+      cookiesArray.push(cookie.serialize(key, value, options));
+
+      res?.setHeader?.("Set-Cookie", cookiesArray);
+    };
+  const removeCookie = (res: any) => (key: string) => {
+    res?.setHeader?.("Set-Cookie", cookie.serialize(key, "", { maxAge: -1 }));
+  };
+
+  return {
+    get: getCookie(cookies),
+    set: setCookie(ctx.res),
+    remove: removeCookie(ctx.res),
+  };
+}
+
+async function getSession(
+  context: any,
+  accessToken: string,
+  refreshToken: string,
+  cookieStore: CookieStore
+) {
+  const decodedAccessToken = verifyToken(
+    accessToken,
+    process.env.JWT_SECRET as any
+  );
+  const decodedRefreshToken = verifyToken(
+    refreshToken,
+    process.env.JWT_SECRET as any
+  );
+  if (decodedAccessToken.error && decodedRefreshToken.error) return null;
+  // use the refresh token to get a new access token
+  if (decodedAccessToken.error) {
+    // get the user email from the refresh token
+    const { email } = decodedRefreshToken.decoded as any;
+    // get the user from the database
+    const profile = await context.directives.model.store.findOne({
+      where: { email, deletedAt: null },
+      type: { name: "Profile" },
+    });
+    if (!profile) return null;
+    // generate a new access token
+    const tokens = generateTokens(profile);
+    setTokensAsCookies(cookieStore, tokens, false);
+    // return the session
+    return profile;
+  }
+  // validate the access token
+  // return the session
+  return decodedAccessToken.decoded;
+}
+
+// Function to determine Content-Type based on file extension
+const getContentType = (filePath: string) => {
+  const ext = extname(filePath).toLowerCase();
+  switch (ext) {
+    case ".html":
+      return "text/html";
+    case ".js":
+      return "text/javascript";
+    case ".css":
+      return "text/css";
+    case ".json":
+      return "application/json";
+    case ".png":
+      return "image/png";
+    case ".jpg":
+      return "image/jpg";
+    case ".gif":
+      return "image/gif";
+    case ".svg":
+      return "image/svg+xml";
+    case ".ico":
+      return "image/x-icon";
+    default:
+      return "application/octet-stream";
+  }
+};
+
+export async function serveFile(req: any, res: any) {
+  const filePath = "/../" + (req.url === "/" ? "index.html" : req.url);
+
+  try {
+    const absolutePath = join(__dirname, filePath);
+    const fileStat = await fs.stat(absolutePath);
+
+    if (!fileStat.isFile()) {
+      res.writeHead(404, { "Content-Type": "text/plain" });
+      res.end("404 Not Found");
+      return;
+    }
+
+    res.writeHead(200, { "Content-Type": getContentType(absolutePath) });
+    const fileContent = await fs.readFile(absolutePath);
+    res.end(fileContent);
+  } catch (err) {
+    res.writeHead(404, { "Content-Type": "text/plain" });
+    res.end("404 Not Found");
+  }
+}
+
+export function createContext(schema: any) {
+  return async (args: any) => {
+    const baseContext = makeContext({ context: {}, schema });
+    const cookies = cookie.parse((args as any)?.req?.headers?.cookie || "");
+    const cookieStore = getCookieStore(args, cookies);
+    const session = await getSession(
+      baseContext,
+      cookies.accessToken,
+      cookies.refreshToken,
+      cookieStore
+    );
+    return {
+      ...baseContext,
+      ...args,
+      schema,
+      typeMap: schema.getTypeMap(),
+      cookies,
+      session,
+      cookieStore,
+    };
+  };
+}

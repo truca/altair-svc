@@ -1,7 +1,11 @@
 import { Timestamp } from "@google-cloud/firestore";
 import admin from "firebase-admin";
-import { constants, SERVICE_TYPE_TO_FIELD, SINGLE_SERVICE_TYPES } from '../../../src/constants';
-import { generateUUID } from '../../../lib/utils';
+import {
+  constants,
+  SERVICE_TYPE_TO_FIELD,
+  SINGLE_SERVICE_TYPES,
+} from "../../constants";
+import { generateUUID } from "../../../lib/utils";
 
 // Define interfaces for clarity (adjust as needed)
 interface Service {
@@ -13,7 +17,7 @@ interface Service {
   campaignGroupCustomId?: string;
   country?: string;
   nomenclature?: string;
-  
+
   // Dates - make them optional
   bannerFadStartDate?: string | Timestamp;
   bannerMenuStartDate?: string | Timestamp;
@@ -22,7 +26,7 @@ interface Service {
   bannerMenuEndDate?: string | Timestamp;
   endDate?: string | Timestamp;
   implementationDate?: string | Timestamp;
-  
+
   // Other fields
   budget?: number;
   visualKey?: string;
@@ -30,7 +34,7 @@ interface Service {
   url?: string;
   comments?: string;
   type?: string;
-  
+
   // References to nested objects
   strategies?: any[];
   bannerForms?: any[];
@@ -85,7 +89,7 @@ function mapServiceDates(service: Service): Service {
   ];
 
   startDateKeys.forEach((key) => {
-    if (service[key] && typeof service[key] === 'string') {
+    if (service[key] && typeof service[key] === "string") {
       const date = new Date(service[key] as string);
       date.setHours(0, 0, 0, 0);
       (service as any)[key] = admin.firestore.Timestamp.fromDate(date);
@@ -100,7 +104,7 @@ function mapServiceDates(service: Service): Service {
   ];
 
   endDateKeys.forEach((key) => {
-    if (service[key] && typeof service[key] === 'string') {
+    if (service[key] && typeof service[key] === "string") {
       const date = new Date(service[key] as string);
       date.setHours(23, 59, 59, 999);
       (service as any)[key] = admin.firestore.Timestamp.fromDate(date);
@@ -108,7 +112,10 @@ function mapServiceDates(service: Service): Service {
   });
 
   // implementationDate SOLO se procesa en su propio campo
-  if (service.implementationDate && typeof service.implementationDate === 'string') {
+  if (
+    service.implementationDate &&
+    typeof service.implementationDate === "string"
+  ) {
     const date = new Date(service.implementationDate);
     date.setHours(12, 0, 0, 0); // Set to noon for implementation date
     service.implementationDate = admin.firestore.Timestamp.fromDate(date);
@@ -116,25 +123,28 @@ function mapServiceDates(service: Service): Service {
 
   // Process dates in bannerForms array if it exists
   if (service.bannerForms && Array.isArray(service.bannerForms)) {
-    service.bannerForms = service.bannerForms.map(banner => {
+    service.bannerForms = service.bannerForms.map((banner) => {
       if (!banner) return banner;
-      
+
       // Process start date
-      if (banner.startDate && typeof banner.startDate === 'string') {
+      if (banner.startDate && typeof banner.startDate === "string") {
         const date = new Date(banner.startDate);
         date.setHours(0, 0, 0, 0);
         banner.startDate = admin.firestore.Timestamp.fromDate(date);
       }
 
       // Process end date
-      if (banner.endDate && typeof banner.endDate === 'string') {
+      if (banner.endDate && typeof banner.endDate === "string") {
         const date = new Date(banner.endDate);
         date.setHours(23, 59, 59, 999);
         banner.endDate = admin.firestore.Timestamp.fromDate(date);
       }
 
       // Process implementation date
-      if (banner.implementationDate && typeof banner.implementationDate === 'string') {
+      if (
+        banner.implementationDate &&
+        typeof banner.implementationDate === "string"
+      ) {
         const date = new Date(banner.implementationDate);
         date.setHours(12, 0, 0, 0);
         banner.implementationDate = admin.firestore.Timestamp.fromDate(date);
@@ -320,25 +330,32 @@ function calculateDates(strategies: Service[]): {
 
   const validStartDates = strategies
     .map((s: Service) => s.startDate)
-    .filter((date): date is string | Timestamp => date !== undefined && date !== "");
+    .filter(
+      (date): date is string | Timestamp => date !== undefined && date !== ""
+    );
 
   const validEndDates = strategies
     .map((s: Service) => s.endDate)
-    .filter((date): date is string | Timestamp => date !== undefined && date !== "");
+    .filter(
+      (date): date is string | Timestamp => date !== undefined && date !== ""
+    );
 
   if (validStartDates.length === 0) {
     return { startDate: "", endDate: "" };
   }
 
-  const startDate = validStartDates.reduce((min: string | Timestamp, curr: string | Timestamp) =>
-    curr < min ? curr : min
+  const startDate = validStartDates.reduce(
+    (min: string | Timestamp, curr: string | Timestamp) =>
+      curr < min ? curr : min
   );
 
-  const endDate = validEndDates.length > 0 
-    ? validEndDates.reduce((max: string | Timestamp, curr: string | Timestamp) =>
-        curr > max ? curr : max
-      )
-    : "";
+  const endDate =
+    validEndDates.length > 0
+      ? validEndDates.reduce(
+          (max: string | Timestamp, curr: string | Timestamp) =>
+            curr > max ? curr : max
+        )
+      : "";
 
   return { startDate, endDate };
 }
@@ -360,216 +377,287 @@ async function addServiceTypesAndDates(
     "sponsoredProductForm",
     "sponsoredBrandForm",
   ];
-  await Promise.all(serviceWithoutDatesKeys.map(async (key) => {
-    const service = campaignGroup[key];
-    if (service && typeof service === "object") {
-      const serviceId = generateUUID();
-      service.id = serviceId;
-      serviceIdsMap[`${key}`] = serviceId;
-      service.serviceType = key;
-      service.campaignGroupCustomId = customId;
-      service.country = country;
-      service.campaignId = campaignId;
-      service.deletedAt = null;
-      if (serviceWithoutDatesKeys.includes(key)) {
-        const { startDate, endDate } = calculateDates(
-          service.strategies || service.bannerForms
+  await Promise.all(
+    serviceWithoutDatesKeys.map(async (key) => {
+      const service = campaignGroup[key];
+      if (service && typeof service === "object") {
+        const serviceId = generateUUID();
+        service.id = serviceId;
+        serviceIdsMap[`${key}`] = serviceId;
+        service.serviceType = key;
+        service.campaignGroupCustomId = customId;
+        service.country = country;
+        service.campaignId = campaignId;
+        service.deletedAt = null;
+        if (serviceWithoutDatesKeys.includes(key)) {
+          const { startDate, endDate } = calculateDates(
+            service.strategies || service.bannerForms
+          );
+          service.startDate = startDate;
+          service.endDate = endDate;
+        }
+        const serviceNomemclature = await generateNomenclature(
+          campaignGroup,
+          service
         );
-        service.startDate = startDate;
-        service.endDate = endDate;
+        service.nomenclature = serviceNomemclature;
+        mapServiceDates(service);
+        servicesToCreate.push({ ...service });
       }
-      const serviceNomemclature = await generateNomenclature(
-        campaignGroup,
-        service
-      );
-      service.nomenclature = serviceNomemclature;
-      mapServiceDates(service);
-      servicesToCreate.push({ ...service });
-    }
-  }));
+    })
+  );
   // Nested services: homeLandingForm.strategies
   if (
     campaignGroup.homeLandingForm?.strategies &&
     Array.isArray(campaignGroup.homeLandingForm.strategies)
   ) {
-    campaignGroup.homeLandingForm.strategies = await Promise.all(campaignGroup.homeLandingForm.strategies.map(async (strategy, idx) => {
-      if (strategy && typeof strategy === "object") {
-        const serviceId = generateUUID();
-        (strategy as any).id = serviceId;
-        serviceIdsMap[`homeLandingForm.strategies.${idx}`] = serviceId;
-        strategy.serviceType = "homeLandingForm.strategies";
-        strategy.campaignGroupCustomId = customId;
-        strategy.country = country;
-        strategy.campaignId = campaignId;
-        if (!strategy.campaignSellerId || strategy.campaignSellerId === "") {
-          strategy.campaignSellerId = campaignGroup.sellerId;
+    campaignGroup.homeLandingForm.strategies = await Promise.all(
+      campaignGroup.homeLandingForm.strategies.map(async (strategy, idx) => {
+        if (strategy && typeof strategy === "object") {
+          const serviceId = generateUUID();
+          (strategy as any).id = serviceId;
+          serviceIdsMap[`homeLandingForm.strategies.${idx}`] = serviceId;
+          strategy.serviceType = "homeLandingForm.strategies";
+          strategy.campaignGroupCustomId = customId;
+          strategy.country = country;
+          strategy.campaignId = campaignId;
+          if (!strategy.campaignSellerId || strategy.campaignSellerId === "") {
+            strategy.campaignSellerId = campaignGroup.sellerId;
+          }
+          if (
+            (!strategy.campaignBrandId ||
+              strategy.campaignBrandId.length === 0) &&
+            campaignGroup.brandId
+          ) {
+            strategy.campaignBrandId = campaignGroup.brandId;
+          }
+          if (
+            (!strategy.categoryId || strategy.categoryId.length === 0) &&
+            campaignGroup.categoryId
+          ) {
+            strategy.categoryId = campaignGroup.categoryId;
+          }
+          const serviceNomemclature = await generateNomenclature(
+            campaignGroup,
+            strategy
+          );
+          strategy.nomenclature = serviceNomemclature;
+          mapServiceDates(strategy);
+          (strategy as any).deletedAt = null;
+          servicesToCreate.push({
+            ...strategy,
+            _originalRef: `homeLandingForm.strategies.${idx}`,
+            _originalIndex: idx,
+          });
         }
-        if ((!strategy.campaignBrandId || strategy.campaignBrandId.length === 0) && campaignGroup.brandId) {
-          strategy.campaignBrandId = campaignGroup.brandId;
-        }
-        if ((!strategy.categoryId || strategy.categoryId.length === 0) && campaignGroup.categoryId) {
-          strategy.categoryId = campaignGroup.categoryId;
-        }
-        const serviceNomemclature = await generateNomenclature(
-          campaignGroup,
-          strategy
-        );
-        strategy.nomenclature = serviceNomemclature;
-        mapServiceDates(strategy);
-        (strategy as any).deletedAt = null;
-        servicesToCreate.push({ ...strategy, _originalRef: `homeLandingForm.strategies.${idx}`, _originalIndex: idx });
-      }
-      return strategy;
-    }));
+        return strategy;
+      })
+    );
   }
   // Nested services: mediaOnForm.strategies
   if (
     campaignGroup.mediaOnForm?.strategies &&
     Array.isArray(campaignGroup.mediaOnForm.strategies)
   ) {
-    campaignGroup.mediaOnForm.strategies = await Promise.all(campaignGroup.mediaOnForm.strategies.map(async (strategy, idx) => {
-      if (strategy && typeof strategy === "object") {
-        const serviceId = generateUUID();
-        (strategy as any).id = serviceId;
-        serviceIdsMap[`mediaOnForm.strategies.${idx}`] = serviceId;
-        strategy.serviceType = "mediaOnForm.strategies";
-        strategy.campaignGroupCustomId = customId;
-        strategy.country = country;
-        strategy.campaignId = campaignId;
-        if (!strategy.campaignSellerId || strategy.campaignSellerId === "") {
-          strategy.campaignSellerId = campaignGroup.sellerId;
+    campaignGroup.mediaOnForm.strategies = await Promise.all(
+      campaignGroup.mediaOnForm.strategies.map(async (strategy, idx) => {
+        if (strategy && typeof strategy === "object") {
+          const serviceId = generateUUID();
+          (strategy as any).id = serviceId;
+          serviceIdsMap[`mediaOnForm.strategies.${idx}`] = serviceId;
+          strategy.serviceType = "mediaOnForm.strategies";
+          strategy.campaignGroupCustomId = customId;
+          strategy.country = country;
+          strategy.campaignId = campaignId;
+          if (!strategy.campaignSellerId || strategy.campaignSellerId === "") {
+            strategy.campaignSellerId = campaignGroup.sellerId;
+          }
+          if (
+            (!strategy.campaignBrandId ||
+              strategy.campaignBrandId.length === 0) &&
+            campaignGroup.brandId
+          ) {
+            strategy.campaignBrandId = campaignGroup.brandId;
+          }
+          if (
+            (!strategy.categoryId || strategy.categoryId.length === 0) &&
+            campaignGroup.categoryId
+          ) {
+            strategy.categoryId = campaignGroup.categoryId;
+          }
+          const serviceNomemclature = await generateNomenclature(
+            campaignGroup,
+            strategy
+          );
+          strategy.nomenclature = serviceNomemclature;
+          mapServiceDates(strategy);
+          (strategy as any).deletedAt = null;
+          servicesToCreate.push({
+            ...strategy,
+            _originalRef: `mediaOnForm.strategies.${idx}`,
+            _originalIndex: idx,
+          });
         }
-        if ((!strategy.campaignBrandId || strategy.campaignBrandId.length === 0) && campaignGroup.brandId) {
-          strategy.campaignBrandId = campaignGroup.brandId;
-        }
-        if ((!strategy.categoryId || strategy.categoryId.length === 0) && campaignGroup.categoryId) {
-          strategy.categoryId = campaignGroup.categoryId;
-        }
-        const serviceNomemclature = await generateNomenclature(
-          campaignGroup,
-          strategy
-        );
-        strategy.nomenclature = serviceNomemclature;
-        mapServiceDates(strategy);
-        (strategy as any).deletedAt = null;
-        servicesToCreate.push({ ...strategy, _originalRef: `mediaOnForm.strategies.${idx}`, _originalIndex: idx });
-      }
-      return strategy;
-    }));
+        return strategy;
+      })
+    );
   }
   // Nested services: CRMForm.subProducts
   if (
     campaignGroup.CRMForm?.subProducts &&
     Array.isArray(campaignGroup.CRMForm.subProducts)
   ) {
-    campaignGroup.CRMForm.subProducts = await Promise.all(campaignGroup.CRMForm.subProducts.map(async (subProduct, idx) => {
-      if (subProduct && typeof subProduct === "object") {
-        const serviceId = generateUUID();
-        (subProduct as any).id = serviceId;
-        serviceIdsMap[`CRMForm.subProducts.${idx}`] = serviceId;
-        subProduct.serviceType = "CRMForm.subProducts";
-        subProduct.campaignGroupCustomId = customId;
-        subProduct.country = country;
-        subProduct.campaignId = campaignId;
-        if (!subProduct.campaignSellerId || subProduct.campaignSellerId === "") {
-          subProduct.campaignSellerId = campaignGroup.sellerId;
+    campaignGroup.CRMForm.subProducts = await Promise.all(
+      campaignGroup.CRMForm.subProducts.map(async (subProduct, idx) => {
+        if (subProduct && typeof subProduct === "object") {
+          const serviceId = generateUUID();
+          (subProduct as any).id = serviceId;
+          serviceIdsMap[`CRMForm.subProducts.${idx}`] = serviceId;
+          subProduct.serviceType = "CRMForm.subProducts";
+          subProduct.campaignGroupCustomId = customId;
+          subProduct.country = country;
+          subProduct.campaignId = campaignId;
+          if (
+            !subProduct.campaignSellerId ||
+            subProduct.campaignSellerId === ""
+          ) {
+            subProduct.campaignSellerId = campaignGroup.sellerId;
+          }
+          if (
+            (!subProduct.campaignBrandId ||
+              subProduct.campaignBrandId.length === 0) &&
+            campaignGroup.brandId
+          ) {
+            subProduct.campaignBrandId = campaignGroup.brandId;
+          }
+          if (
+            (!subProduct.categoryId || subProduct.categoryId.length === 0) &&
+            campaignGroup.categoryId
+          ) {
+            subProduct.categoryId = campaignGroup.categoryId;
+          }
+          const serviceNomemclature = await generateNomenclature(
+            campaignGroup,
+            subProduct
+          );
+          subProduct.nomenclature = serviceNomemclature;
+          mapServiceDates(subProduct);
+          (subProduct as any).deletedAt = null;
+          servicesToCreate.push({
+            ...subProduct,
+            _originalRef: `CRMForm.subProducts.${idx}`,
+            _originalIndex: idx,
+          });
         }
-        if ((!subProduct.campaignBrandId || subProduct.campaignBrandId.length === 0) && campaignGroup.brandId) {
-          subProduct.campaignBrandId = campaignGroup.brandId;
-        }
-        if ((!subProduct.categoryId || subProduct.categoryId.length === 0) && campaignGroup.categoryId) {
-          subProduct.categoryId = campaignGroup.categoryId;
-        }
-        const serviceNomemclature = await generateNomenclature(
-          campaignGroup,
-          subProduct
-        );
-        subProduct.nomenclature = serviceNomemclature;
-        mapServiceDates(subProduct);
-        (subProduct as any).deletedAt = null;
-        servicesToCreate.push({ ...subProduct, _originalRef: `CRMForm.subProducts.${idx}`, _originalIndex: idx });
-      }
-      return subProduct;
-    }));
+        return subProduct;
+      })
+    );
   }
   // Nested services: bannerForm.bannerForms
   if (
     campaignGroup.bannerForm &&
     Array.isArray(campaignGroup.bannerForm.bannerForms)
   ) {
-    campaignGroup.bannerForm.bannerForms = await Promise.all(campaignGroup.bannerForm.bannerForms.map(async (banner, idx) => {
-      if (banner && typeof banner === "object") {
-        const serviceId = generateUUID();
-        (banner as any).id = serviceId;
-        serviceIdsMap[`bannerForm.bannerForms.${idx}`] = serviceId;
-        banner.serviceType = `bannerForm.${banner.bannerTypeId || "UNKNOWN"}`;
-        banner.campaignGroupCustomId = customId;
-        banner.country = country;
-        banner.campaignId = campaignId;
-        if (!banner.campaignSellerId || banner.campaignSellerId === "") {
-          banner.campaignSellerId = campaignGroup.sellerId;
+    campaignGroup.bannerForm.bannerForms = await Promise.all(
+      campaignGroup.bannerForm.bannerForms.map(async (banner, idx) => {
+        if (banner && typeof banner === "object") {
+          const serviceId = generateUUID();
+          (banner as any).id = serviceId;
+          serviceIdsMap[`bannerForm.bannerForms.${idx}`] = serviceId;
+          banner.serviceType = `bannerForm.${banner.bannerTypeId || "UNKNOWN"}`;
+          banner.campaignGroupCustomId = customId;
+          banner.country = country;
+          banner.campaignId = campaignId;
+          if (!banner.campaignSellerId || banner.campaignSellerId === "") {
+            banner.campaignSellerId = campaignGroup.sellerId;
+          }
+          if (
+            (!banner.campaignBrandId || banner.campaignBrandId.length === 0) &&
+            campaignGroup.brandId
+          ) {
+            banner.campaignBrandId = campaignGroup.brandId;
+          }
+          if (
+            (!banner.categoryId || banner.categoryId.length === 0) &&
+            campaignGroup.categoryId
+          ) {
+            banner.categoryId = campaignGroup.categoryId;
+          }
+          const serviceNomemclature = await generateNomenclature(
+            campaignGroup,
+            banner
+          );
+          banner.nomenclature = serviceNomemclature;
+          mapServiceDates(banner);
+          (banner as any).deletedAt = null;
+          servicesToCreate.push({
+            ...banner,
+            _originalRef: `bannerForm.bannerForms.${idx}`,
+            _originalIndex: idx,
+          });
         }
-        if ((!banner.campaignBrandId || banner.campaignBrandId.length === 0) && campaignGroup.brandId) {
-          banner.campaignBrandId = campaignGroup.brandId;
-        }
-        if ((!banner.categoryId || banner.categoryId.length === 0) && campaignGroup.categoryId) {
-          banner.categoryId = campaignGroup.categoryId;
-        }
-        const serviceNomemclature = await generateNomenclature(
-          campaignGroup,
-          banner
-        );
-        banner.nomenclature = serviceNomemclature;
-        mapServiceDates(banner);
-        (banner as any).deletedAt = null;
-        servicesToCreate.push({ ...banner, _originalRef: `bannerForm.bannerForms.${idx}`, _originalIndex: idx });
-      }
-      return banner;
-    }));
+        return banner;
+      })
+    );
   }
   // create service with ids generated
-  const serviceCollection = admin.firestore().collection(constants.COLLECTIONS_DATABASES.SERVICE);
-  await Promise.all(servicesToCreate.map(async (serviceData) => {
-    const { id, ...rest } = serviceData;
-    await serviceCollection.doc(id).set({ ...rest, id });
-  }));
+  const serviceCollection = admin
+    .firestore()
+    .collection(constants.COLLECTIONS_DATABASES.SERVICE);
+  await Promise.all(
+    servicesToCreate.map(async (serviceData) => {
+      const { id, ...rest } = serviceData;
+      await serviceCollection.doc(id).set({ ...rest, id });
+    })
+  );
   // campaignIds campaignGroup
-  campaignGroup.campaignIds = servicesToCreate.map(s => s.id);
+  campaignGroup.campaignIds = servicesToCreate.map((s) => s.id);
   return campaignGroup;
 }
 
-export async function updateServicesWithCampaignId(campaignGroupId: string, customId: string): Promise<void> {
+export async function updateServicesWithCampaignId(
+  campaignGroupId: string,
+  customId: string
+): Promise<void> {
   try {
-    console.log(`Updating services with campaignId ${campaignGroupId} for customId ${customId}`);
-    
+    console.log(
+      `Updating services with campaignId ${campaignGroupId} for customId ${customId}`
+    );
+
     const serviceCollection = admin
       .firestore()
       .collection(constants.COLLECTIONS_DATABASES.SERVICE);
-      
+
     const snapshot = await serviceCollection
       .where("campaignGroupCustomId", "==", customId)
       .get();
-      
+
     if (snapshot.empty) {
       console.log(`No services found with campaignGroupCustomId ${customId}`);
       return;
     }
-    
-    console.log(`Found ${snapshot.docs.length} services to update with campaignId ${campaignGroupId}`);
-    
+
+    console.log(
+      `Found ${snapshot.docs.length} services to update with campaignId ${campaignGroupId}`
+    );
+
     const updatePromises = snapshot.docs.map(async (doc) => {
       try {
         await doc.ref.update({
-          campaignId: campaignGroupId
+          campaignId: campaignGroupId,
         });
-        console.log(`Updated service ${doc.id} with campaignId ${campaignGroupId}`);
+        console.log(
+          `Updated service ${doc.id} with campaignId ${campaignGroupId}`
+        );
       } catch (err) {
         console.error(`Error updating service ${doc.id}:`, err);
       }
     });
-    
+
     await Promise.all(updatePromises);
-    console.log(`Successfully updated all services with campaignId ${campaignGroupId}`);
+    console.log(
+      `Successfully updated all services with campaignId ${campaignGroupId}`
+    );
   } catch (error) {
     console.error("Error updating services with campaignId:", error);
   }
@@ -578,10 +666,10 @@ export async function updateServicesWithCampaignId(campaignGroupId: string, cust
 export async function mapCampaignGroup(entity: any): Promise<any> {
   const campaignGroup = entity as CampaignGroup;
   const result = await addServiceTypesAndDates(campaignGroup);
-  
+
   // Store the customId for post-processing
   result._customIdForPostProcessing = result.customId;
-  
+
   return result;
 }
 
@@ -591,9 +679,13 @@ export async function updateServiceInCampaignGroup(
   serviceType: any,
   newServiceData: any
 ) {
-  const campaignGroupCollection = admin.firestore().collection(constants.COLLECTIONS_DATABASES.CAMPAIGN_GROUP);
-  const campaignGroupDoc = await campaignGroupCollection.doc(campaignGroupId).get();
-  console.log({campaignGroupId, serviceId, serviceType, newServiceData})
+  const campaignGroupCollection = admin
+    .firestore()
+    .collection(constants.COLLECTIONS_DATABASES.CAMPAIGN_GROUP);
+  const campaignGroupDoc = await campaignGroupCollection
+    .doc(campaignGroupId)
+    .get();
+  console.log({ campaignGroupId, serviceId, serviceType, newServiceData });
 
   if (!campaignGroupDoc.exists) {
     return;
@@ -601,8 +693,6 @@ export async function updateServiceInCampaignGroup(
 
   const campaignGroupData: any = campaignGroupDoc.data() || {};
   const updateData: any = {};
-
- 
 
   if (SERVICE_TYPE_TO_FIELD[serviceType]) {
     const [formField, arrayField] = SERVICE_TYPE_TO_FIELD[serviceType];
@@ -613,7 +703,7 @@ export async function updateServiceInCampaignGroup(
         arr[idx] = { ...newServiceData };
         updateData[formField] = {
           ...campaignGroupData[formField],
-          [arrayField]: arr
+          [arrayField]: arr,
         };
       }
     }
@@ -629,7 +719,7 @@ export async function updateServiceInCampaignGroup(
         arr[idx] = { ...newServiceData };
         updateData.bannerForm = {
           ...campaignGroupData.bannerForm,
-          bannerForms: arr
+          bannerForms: arr,
         };
       }
     }
@@ -637,5 +727,5 @@ export async function updateServiceInCampaignGroup(
 
   if (Object.keys(updateData).length > 0) {
     await campaignGroupDoc.ref.update(updateData);
-  } 
+  }
 }

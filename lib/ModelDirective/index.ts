@@ -31,8 +31,11 @@ import {
 } from "../GraphQL/utils";
 import { mapEntity } from "./mapEntity";
 import admin from "firebase-admin";
-import { constants } from "../../src/constants";
-import { topLevelServiceKeys, updateServiceInCampaignGroup } from "./mapEntity/campaignGroup";
+import { constants } from "../constants";
+import {
+  topLevelServiceKeys,
+  updateServiceInCampaignGroup,
+} from "./mapEntity/campaignGroup";
 
 import { config } from "dotenv";
 config();
@@ -382,7 +385,7 @@ export class ModelDirective extends SchemaDirectiveVisitor {
     ) => {
       args.data = await mapEntity(args.data, type);
 
-      console.log({ data: args.data, type })
+      console.log({ data: args.data, type });
       validateInputData({
         data: args.data,
         type,
@@ -441,7 +444,7 @@ export class ModelDirective extends SchemaDirectiveVisitor {
             parentIds[parentFieldName] = [{ _id: parentData._id }];
           }
 
-          console.log({ localType, parentIds, value })
+          console.log({ localType, parentIds, value });
           const createdObject = await this.createMutationResolver(
             localType,
             parentIds
@@ -607,12 +610,16 @@ export class ModelDirective extends SchemaDirectiveVisitor {
         "bannerFadStartDate",
         "bannerMenuStartDate",
         "bannerFadEndDate",
-        "bannerMenuEndDate"
+        "bannerMenuEndDate",
       ];
       dateFields.forEach((key) => {
-        if (data[key] && typeof data[key] === 'string') {
+        if (data[key] && typeof data[key] === "string") {
           const date = new Date(data[key]);
-          if (key === "endDate" || key === "bannerFadEndDate" || key === "bannerMenuEndDate") {
+          if (
+            key === "endDate" ||
+            key === "bannerFadEndDate" ||
+            key === "bannerMenuEndDate"
+          ) {
             date.setUTCHours(23, 59, 59, 999);
           } else if (key === "implementationDate") {
             date.setUTCHours(12, 0, 0, 0);
@@ -624,22 +631,26 @@ export class ModelDirective extends SchemaDirectiveVisitor {
       });
 
       if (data.bannerForms && Array.isArray(data.bannerForms)) {
-        data.bannerForms = data.bannerForms.map(banner => {
+        data.bannerForms = data.bannerForms.map((banner) => {
           if (!banner) return banner;
-          if (banner.startDate && typeof banner.startDate === 'string') {
+          if (banner.startDate && typeof banner.startDate === "string") {
             const date = new Date(banner.startDate);
             date.setUTCHours(0, 0, 0, 0);
             banner.startDate = admin.firestore.Timestamp.fromDate(date);
           }
-          if (banner.endDate && typeof banner.endDate === 'string') {
+          if (banner.endDate && typeof banner.endDate === "string") {
             const date = new Date(banner.endDate);
             date.setUTCHours(23, 59, 59, 999);
             banner.endDate = admin.firestore.Timestamp.fromDate(date);
           }
-          if (banner.implementationDate && typeof banner.implementationDate === 'string') {
+          if (
+            banner.implementationDate &&
+            typeof banner.implementationDate === "string"
+          ) {
             const date = new Date(banner.implementationDate);
             date.setUTCHours(12, 0, 0, 0);
-            banner.implementationDate = admin.firestore.Timestamp.fromDate(date);
+            banner.implementationDate =
+              admin.firestore.Timestamp.fromDate(date);
           }
           return banner;
         });
@@ -663,11 +674,18 @@ export class ModelDirective extends SchemaDirectiveVisitor {
       if (type.name === "Service" && this.isFirestore) {
         try {
           const serviceId = updated?.id || args?.where.id || args?.where._id;
-          const campaignId = updated?.campaignId || data?.campaignId || args?.data.campaignId;
-          const serviceType = updated?.serviceType || data?.serviceType || args?.data.serviceType;
+          const campaignId =
+            updated?.campaignId || data?.campaignId || args?.data.campaignId;
+          const serviceType =
+            updated?.serviceType || data?.serviceType || args?.data.serviceType;
 
           if (serviceId && campaignId && serviceType) {
-            await updateServiceInCampaignGroup(campaignId, serviceId, serviceType, data);
+            await updateServiceInCampaignGroup(
+              campaignId,
+              serviceId,
+              serviceType,
+              data
+            );
           }
         } catch (error) {
           console.error("Error updating CampaignGroup from service:", error);

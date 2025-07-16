@@ -1,0 +1,46 @@
+# Source files (only compiled output should be published)
+*.ts
+*.tsx
+!*.d.ts
+
+# Development files
+.git/
+.gitignore
+.npmignore
+README.md
+tsconfig.json
+.eslintrc*
+.prettierrc*
+
+# Test files
+**/*.test.ts
+**/*.spec.ts
+**/*.test.js
+**/*.spec.js
+test/
+tests/
+__tests__/
+
+# Development dependencies
+node_modules/
+
+# Build tools
+webpack.config.js
+rollup.config.js
+babel.config.js
+
+# IDE files
+.vscode/
+.idea/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+logs/
+
+# Temporary files
+tmp/
+temp/ 

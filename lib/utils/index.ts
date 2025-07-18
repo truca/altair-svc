@@ -22,6 +22,7 @@ import {
   GraphQLSchema,
   DirectiveNode,
 } from "graphql";
+import { EntityMapper } from "../ModelDirective/mapEntity";
 
 // Interface for the function result
 export interface VerifyTokenResult {
@@ -1398,7 +1399,7 @@ export async function serveFile(req: any, res: any) {
   }
 }
 
-export function createContext(schema: any) {
+export function createContext(schema: any, entityMapperHash: EntityMapper) {
   return async (args: any) => {
     const baseContext = makeContext({ context: {}, schema });
     const cookies = cookie.parse((args as any)?.req?.headers?.cookie || "");
@@ -1413,6 +1414,7 @@ export function createContext(schema: any) {
       ...baseContext,
       ...args,
       schema,
+      entityMapperHash,
       typeMap: schema.getTypeMap(),
       cookies,
       session,

@@ -2,13 +2,14 @@ import { createServer } from "http";
 import { createYoga } from "graphql-yoga";
 
 import { schema } from "./schema";
+import { entityMapperHash } from "./mapper";
 import { createContext, serveFile } from "../lib/utils";
 
 import { config } from "dotenv";
 config();
 
-async function main() {
-  const context = createContext(schema);
+async function main(): Promise<void> {
+  const context = createContext(schema, entityMapperHash);
   const yoga = createYoga({
     schema,
     context,

@@ -4,8 +4,8 @@ import {
   constants,
   SERVICE_TYPE_TO_FIELD,
   SINGLE_SERVICE_TYPES,
-} from "../../constants";
-import { generateUUID } from "../../../lib/utils";
+} from "../../lib/constants";
+import { generateUUID } from "../../lib/utils";
 
 // Define interfaces for clarity (adjust as needed)
 interface Service {

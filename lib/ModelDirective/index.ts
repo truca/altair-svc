@@ -32,10 +32,6 @@ import {
 import { mapEntity } from "./mapEntity";
 import admin from "firebase-admin";
 import { constants } from "../constants";
-import {
-  topLevelServiceKeys,
-  updateServiceInCampaignGroup,
-} from "./mapEntity/campaignGroup";
 
 import { config } from "dotenv";
 config();
@@ -111,7 +107,6 @@ export async function visitNestedModels({
   for (const key of Object.keys(data)) {
     if (key === "_id") continue;
     if (!selectedFieldsHash[key]) continue;
-    if (topLevelServiceKeys.includes(key)) continue;
 
     const value = data[key];
     const field = getNamedType(type.getFields()[key]) as any;
@@ -382,8 +377,8 @@ export class ModelDirective extends SchemaDirectiveVisitor {
       args: CreateResolverArgs,
       context: any,
       info: any
-    ) => {
-      args.data = await mapEntity(args.data, type);
+    ): Promise<any> => {
+      args.data = await mapEntity(args.data, type, context.entityMapperHash);
 
       console.log({ data: args.data, type });
       validateInputData({
@@ -669,27 +664,6 @@ export class ModelDirective extends SchemaDirectiveVisitor {
 
       if (!updated) {
         throw new Error(`Failed to update ${type}`);
-      }
-
-      if (type.name === "Service" && this.isFirestore) {
-        try {
-          const serviceId = updated?.id || args?.where.id || args?.where._id;
-          const campaignId =
-            updated?.campaignId || data?.campaignId || args?.data.campaignId;
-          const serviceType =
-            updated?.serviceType || data?.serviceType || args?.data.serviceType;
-
-          if (serviceId && campaignId && serviceType) {
-            await updateServiceInCampaignGroup(
-              campaignId,
-              serviceId,
-              serviceType,
-              data
-            );
-          }
-        } catch (error) {
-          console.error("Error updating CampaignGroup from service:", error);
-        }
       }
 
       const rootObject = await context.directives.model[db].findOne(

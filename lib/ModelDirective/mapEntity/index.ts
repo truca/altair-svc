@@ -1,10 +1,10 @@
-import { mapCampaignGroup } from "./campaignGroup";
+export type EntityMapper = { [key: string]: (entity: any) => any };
 
-export const ENTITY_MAPPER: { [key: string]: (entity: any) => any } = {
-  CampaignGroup: mapCampaignGroup,
-};
-
-export async function mapEntity(entity: any, type: string) {
-  if (!ENTITY_MAPPER[type]) return entity;
-  return await ENTITY_MAPPER[type](entity);
+export async function mapEntity(
+  entity: any,
+  type: string,
+  entityMapper: EntityMapper
+): Promise<any> {
+  if (!entityMapper[type]) return entity;
+  return await entityMapper[type](entity);
 }

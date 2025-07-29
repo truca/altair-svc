@@ -44,13 +44,34 @@ const typeDefinitions = /* GraphQL */ `
   }
   directive @hidden(value: Boolean, cond: [HiddenCondition]) on FIELD_DEFINITION
   directive @type(value: FieldType) on FIELD_DEFINITION
-  directive @selectFrom(values:[String],optionValues:[OptionInput],table:String,labelAttribute:String,valueAttribute:String,dependentField:String,where:String,queryVariables:String) on FIELD_DEFINITION
-  directive @selectManyFrom(values:[String],optionValues:[OptionInput],table:String,labelAttribute:String,valueAttribute:String,dependentField:String,where:String,queryVariables:String) on FIELD_DEFINITION
+  directive @selectFrom(
+    values: [String]
+    optionValues: [OptionInput]
+    table: String
+    labelAttribute: String
+    valueAttribute: String
+    dependentField: String
+    where: String
+    queryVariables: String
+  ) on FIELD_DEFINITION
+  directive @selectManyFrom(
+    values: [String]
+    optionValues: [OptionInput]
+    table: String
+    labelAttribute: String
+    valueAttribute: String
+    dependentField: String
+    where: String
+    queryVariables: String
+  ) on FIELD_DEFINITION
   directive @defaultFrom(parentAttribute: String) on FIELD_DEFINITION
-  directive @from(parentAttribute: String, queryParam: String) on FIELD_DEFINITION
+  directive @from(
+    parentAttribute: String
+    queryParam: String
+  ) on FIELD_DEFINITION
   directive @position(step: Float, row: Float) on FIELD_DEFINITION
   directive @meta(label: String, placeholder: String) on FIELD_DEFINITION
-  
+
   # Subform directives for complex nested objects
   enum SubformLayout {
     CARDS
@@ -63,7 +84,7 @@ const typeDefinitions = /* GraphQL */ `
     layout: SubformLayout = CARDS
   ) on FIELD_DEFINITION
   directive @polymorphicArray(
-    types: [String!] 
+    types: [String!]
     optionTypes: [OptionInput!]
     addButtonText: String = "Agregar"
     layout: SubformLayout = CARDS
@@ -168,7 +189,6 @@ const typeDefinitions = /* GraphQL */ `
     steps: [FormStep]
   }
 
-
   # Represents a user.  Supports: User Registration and Login, Profile Customization, In-App Messaging, Integration with Other Platforms, Notifications and Updates.
   type Profile @model @auth(read: ["public"]) {
     country: String!
@@ -193,134 +213,6 @@ const typeDefinitions = /* GraphQL */ `
     updatedAt: DateTime
   }
 
-  type ProductManager
-    @model
-    @auth(read: ["public"], update: ["public"], delete: ["public"]) {
-    country: String
-
-    externalId: ID!
-    name: String!
-    email: String!
-    createdAt: DateTime
-    updatedAt: DateTime
-  }
-
-  type Seller
-    @model
-    @auth(read: ["public"], update: ["public"], delete: ["public"]) {
-    country: String
-
-    externalId: ID!
-    name: String!
-    businessUnitId: String!
-    createdAt: DateTime
-    updatedAt: DateTime
-  }
-
-  type Brand
-    @model
-    @auth(read: ["public"], update: ["public"], delete: ["public"]) {
-    country: String
-
-    externalId: ID!
-    name: String!
-    sellerIds: [String!]!
-    createdAt: DateTime
-    updatedAt: DateTime
-  }
-
-  type Category
-    @model
-    @auth(read: ["public"], update: ["public"], delete: ["public"]) {
-    country: String
-
-    externalId: ID!
-    name: String!
-    brandIds: [String!]!
-    createdAt: DateTime
-    updatedAt: DateTime
-  }
-
-  type Subcategory
-    @model
-    @auth(read: ["public"], update: ["public"], delete: ["public"]) {
-    country: String
-    parentId: ID
-
-    externalId: ID!
-    name: String!
-    categoryIds: [String!]!
-    createdAt: DateTime
-    updatedAt: DateTime
-  }
-
-  # Media On Cascade Types
-  type MediaOnMedium
-    @model
-    @auth(read: ["public"], update: ["public"], delete: ["public"]) {
-    country: String
-    name: String!
-    availableObjectives: [String!]
-    externalId: ID!
-    createdAt: DateTime
-    updatedAt: DateTime
-  }
-
-  type MediaOnObjective
-    @model
-    @auth(read: ["public"], update: ["public"], delete: ["public"]) {
-    country: String
-    name: String!
-    externalId: ID!
-    availableObjectives: [String!]
-    createdAt: DateTime
-    updatedAt: DateTime
-  }
-
-  type MediaOnStrategy
-    @model
-    @auth(read: ["public"], update: ["public"], delete: ["public"]) {
-    country: String
-    name: String!
-    externalId: ID!
-    availableObjectives: [String!]
-    createdAt: DateTime
-    updatedAt: DateTime
-  }
-
-  type MediaOnSegmentation
-    @model
-    @auth(read: ["public"], update: ["public"], delete: ["public"]) {
-    country: String
-    name: String!
-    externalId: ID!
-    availableObjectives: [String!]
-    createdAt: DateTime
-    updatedAt: DateTime
-  }
-
-  type MediaOnPurchaseType
-    @model
-    @auth(read: ["public"], update: ["public"], delete: ["public"]) {
-    country: String
-    name: String!
-    externalId: ID!
-    availableObjectives: [String!]
-    createdAt: DateTime
-    updatedAt: DateTime
-  }
-
-  type MediaOnFormat
-    @model
-    @auth(read: ["public"], update: ["public"], delete: ["public"]) {
-    country: String
-    name: String!
-    externalId: ID!
-    availableObjectives: [String!]
-    createdAt: DateTime
-    updatedAt: DateTime
-  }
-
   type Image
     @model(db: "cep")
     @auth(read: ["public"], update: ["public"], delete: ["public"]) {
@@ -330,445 +222,142 @@ const typeDefinitions = /* GraphQL */ `
     updatedAt: DateTime
   }
 
-  type CampaignGroup
-    @model
-    @auth(read: ["public"], update: ["public"], delete: ["public"]) {
-    externalId: ID!
-    country: String!
-    campaigns: [Campaign]
-  }
-
   # CampaignGroup
   # CampaignGroup remains unchanged (even though it has @model)
   # but any field that referenced a service type is updated:
-  type Campaign
-    @model
-    @auth(read: ["public"], update: ["public"], delete: ["public"]) {
-    # metadata
-    campaignGroupId: ID @hidden(value: true)
-    campaignGroup: CampaignGroup @hidden(value: true)
-    country: String @from(queryParam: "country") @hidden(value: true)
-    productManagerId: String! @selectFrom(table: "productManagers", labelAttribute: "name", valueAttribute: "externalId") @position(step: 1, row: 1) @meta(label: "Product Manager", placeholder: "Selecciona una Opción")
-    businessUnitId: String! @selectFrom(values: ["1P", "3P"]) @position(step: 1, row: 2) @meta(label: "Unidad de Negocio", placeholder: "Selecciona una Opción")
-    campaignName: String! @position(step: 1, row: 3) @meta(label: "Nombre de campaña", placeholder: "Ingresa el Nombre de la Campaña")
-    eventTypeId: String! @selectFrom(values: ["Cyber Day", "Black Friday", "14_F", "Escolares", "Black_Week", "DDM", "DDP", "DDN", "Sneaker_Corner", "CD", "CM", "CW", "Días_F", "Navidad", "Otra"]) @position(step: 1, row: 3) @meta(label: "Evento", placeholder: "Selecciona una Opción")
-    customId: String @hidden(value: true)
-    nomenclature: String @hidden(value: true)
+  # type Campaign
+  #   @model
+  #   @auth(read: ["public"], update: ["public"], delete: ["public"]) {
+  #   # metadata
+  #   campaignGroupId: ID @hidden(value: true)
+  #   campaignGroup: CampaignGroup @hidden(value: true)
+  #   country: String @from(queryParam: "country") @hidden(value: true)
+  #   productManagerId: String! @selectFrom(table: "productManagers", labelAttribute: "name", valueAttribute: "externalId") @position(step: 1, row: 1) @meta(label: "Product Manager", placeholder: "Selecciona una Opción")
+  #   businessUnitId: String! @selectFrom(values: ["1P", "3P"]) @position(step: 1, row: 2) @meta(label: "Unidad de Negocio", placeholder: "Selecciona una Opción")
+  #   campaignName: String! @position(step: 1, row: 3) @meta(label: "Nombre de campaña", placeholder: "Ingresa el Nombre de la Campaña")
+  #   eventTypeId: String! @selectFrom(values: ["Cyber Day", "Black Friday", "14_F", "Escolares", "Black_Week", "DDM", "DDP", "DDN", "Sneaker_Corner", "CD", "CM", "CW", "Días_F", "Navidad", "Otra"]) @position(step: 1, row: 3) @meta(label: "Evento", placeholder: "Selecciona una Opción")
+  #   customId: String @hidden(value: true)
+  #   nomenclature: String @hidden(value: true)
 
-    # filters
-    campaignSellerId: String @selectFrom(table: "sellers", labelAttribute: "name", valueAttribute: "externalId", dependentField: "businessUnitId") @meta(label: "Seller", placeholder: "Selecciona una Opción") @position(step: 1, row: 4)
-    campaignBrandId: [String!]! @selectManyFrom(table: "brands", labelAttribute: "name", valueAttribute: "externalId", dependentField: "campaignSellerId") @meta(label: "Marca", placeholder: "Selecciona una Opción") @position(step: 1, row: 5)
-    campaignCategoryId: [String!]! @selectManyFrom(table: "categories", labelAttribute: "name", valueAttribute: "externalId", dependentField: "campaignBrandId") @meta(label: "Categoría", placeholder: "Selecciona una Opción") @position(step: 1, row: 6)
-    campaignSubCategoryId: [String!]! @selectManyFrom(table: "subcategories", labelAttribute: "name", valueAttribute: "externalId", dependentField: "campaignCategoryId") @meta(label: "Subcategoría", placeholder: "Selecciona una Opción") @position(step: 1, row: 7)
-    
-    #dates
-    startDate: DateTime! @type(value: DATE) @position(step: 1, row: 8) @meta(label: "Fecha de Inicio", placeholder: "Selecciona una fecha")
-    endDate: DateTime! @type(value: DATE) @position(step: 1, row: 8) @meta(label: "Fecha de Término", placeholder: "Selecciona una fecha")
-    implementationDate: DateTime! @type(value: DATE) @position(step: 1, row: 9) @meta(label: "Fecha de Implementación", placeholder: "Selecciona una fecha")
-    campaignType: String @selectFrom(optionValues: [
-      {label: "Táctico", value: "tactico"}
-      {label: "Always On", value: "always_on"}
-    ]) @position(step: 1, row: 10) @meta(label: "Tipo de campaña", placeholder: "Selecciona una Opción")
-    createdAt: String @type(value: DATETIME) @hidden(value: true)
-    updatedAt: String @type(value: DATETIME) @hidden(value: true)
+  #   # filters
+  #   campaignSellerId: String @selectFrom(table: "sellers", labelAttribute: "name", valueAttribute: "externalId", dependentField: "businessUnitId") @meta(label: "Seller", placeholder: "Selecciona una Opción") @position(step: 1, row: 4)
+  #   campaignBrandId: [String!]! @selectManyFrom(table: "brands", labelAttribute: "name", valueAttribute: "externalId", dependentField: "campaignSellerId") @meta(label: "Marca", placeholder: "Selecciona una Opción") @position(step: 1, row: 5)
+  #   campaignCategoryId: [String!]! @selectManyFrom(table: "categories", labelAttribute: "name", valueAttribute: "externalId", dependentField: "campaignBrandId") @meta(label: "Categoría", placeholder: "Selecciona una Opción") @position(step: 1, row: 6)
+  #   campaignSubCategoryId: [String!]! @selectManyFrom(table: "subcategories", labelAttribute: "name", valueAttribute: "externalId", dependentField: "campaignCategoryId") @meta(label: "Subcategoría", placeholder: "Selecciona una Opción") @position(step: 1, row: 7)
 
-    bannersEnabled: Boolean! @default(value: false) @position(step: 1, row: 11) @meta(label: "Banners", placeholder: "Selecciona una Opción")
-    CRMEnabled: Boolean! @default(value: false) @position(step: 1, row: 12) @meta(label: "CRM", placeholder: "Selecciona una Opción")
-    homeLandingEnabled: Boolean! @default(value: false) @position(step: 1, row: 13) @meta(label: "Home Landing", placeholder: "Selecciona una Opción")
-    mediaOnEnabled: Boolean! @default(value: false) @position(step: 1, row: 14) @meta(label: "Media On", placeholder: "Selecciona una Opción")
-    ratingsAndReviewsEnabled: Boolean! @default(value: false) @position(step: 1, row: 15) @meta(label: "Ratings and Reviews", placeholder: "Selecciona una Opción")
-    sponsoredBrandsEnabled: Boolean! @default(value: false) @position(step: 1, row: 16) @meta(label: "Sponsored Brands", placeholder: "Selecciona una Opción")
-    sponsoredProductEnabled: Boolean! @default(value: false) @position(step: 1, row: 17) @meta(label: "Sponsored Product", placeholder: "Selecciona una Opción")
+  #   #dates
+  #   startDate: DateTime! @type(value: DATE) @position(step: 1, row: 8) @meta(label: "Fecha de Inicio", placeholder: "Selecciona una fecha")
+  #   endDate: DateTime! @type(value: DATE) @position(step: 1, row: 8) @meta(label: "Fecha de Término", placeholder: "Selecciona una fecha")
+  #   implementationDate: DateTime! @type(value: DATE) @position(step: 1, row: 9) @meta(label: "Fecha de Implementación", placeholder: "Selecciona una fecha")
+  #   campaignType: String @selectFrom(optionValues: [
+  #     {label: "Táctico", value: "tactico"}
+  #     {label: "Always On", value: "always_on"}
+  #   ]) @position(step: 1, row: 10) @meta(label: "Tipo de campaña", placeholder: "Selecciona una Opción")
+  #   createdAt: String @type(value: DATETIME) @hidden(value: true)
+  #   updatedAt: String @type(value: DATETIME) @hidden(value: true)
 
-    mediaOffEnabled: Boolean! @position(step: 1, row: 18) @meta(label: "Media Off", placeholder: "Selecciona una Opción")
-    mediaOffBudget: Float @position(step: 1, row: 18) @meta(label: "", placeholder: "Presupuesto Media Off") @hidden(cond: [{ field: "mediaOffEnabled", valueBoolean: false}])
-    storeEnabled: Boolean! @position(step: 1, row: 19) @meta(label: "Tienda", placeholder: "Selecciona una Opción")
-    storeBudget: Float @position(step: 1, row: 19) @meta(label: "", placeholder: "Presupuesto Tienda") @hidden(cond: [{ field: "storeEnabled", valueBoolean: false}])
-    graphicsEnabled: Boolean! @position(step: 1, row: 20) @meta(label: "Gráficos", placeholder: "Selecciona una Opción")
-    graphicsBudget: Float @position(step: 1, row: 20) @meta(label: "", placeholder: "Presupuesto Gráficos") @hidden(cond: [{ field: "graphicsEnabled", valueBoolean: false}])
-    othersEnabled: Boolean! @position(step: 1, row: 21) @meta(label: "Otros", placeholder: "Selecciona una Opción")
-    othersBudget: Float @position(step: 1, row: 21) @meta(label: "", placeholder: "Presupuesto Otros") @hidden(cond: [{ field: "othersEnabled", valueBoolean: false}])
-    mediaPlan: File @position(step: 1, row: 22) @meta(label: "Plan de Medios", placeholder: "Ingresa el Plan de Medios")
+  #   bannersEnabled: Boolean! @default(value: false) @position(step: 1, row: 11) @meta(label: "Banners", placeholder: "Selecciona una Opción")
+  #   CRMEnabled: Boolean! @default(value: false) @position(step: 1, row: 12) @meta(label: "CRM", placeholder: "Selecciona una Opción")
+  #   homeLandingEnabled: Boolean! @default(value: false) @position(step: 1, row: 13) @meta(label: "Home Landing", placeholder: "Selecciona una Opción")
+  #   mediaOnEnabled: Boolean! @default(value: false) @position(step: 1, row: 14) @meta(label: "Media On", placeholder: "Selecciona una Opción")
+  #   ratingsAndReviewsEnabled: Boolean! @default(value: false) @position(step: 1, row: 15) @meta(label: "Ratings and Reviews", placeholder: "Selecciona una Opción")
+  #   sponsoredBrandsEnabled: Boolean! @default(value: false) @position(step: 1, row: 16) @meta(label: "Sponsored Brands", placeholder: "Selecciona una Opción")
+  #   sponsoredProductEnabled: Boolean! @default(value: false) @position(step: 1, row: 17) @meta(label: "Sponsored Product", placeholder: "Selecciona una Opción")
 
-    # service
-    sponsoredProduct: SponsoredProduct @hidden(cond: [{ field: "sponsoredProductEnabled", valueBoolean: false}]) @position(step: 2, row: 1) @meta(label: "Productos patrocinados")
-    sponsoredBrand: SponsoredBrand @hidden(cond: [{ field: "sponsoredBrandsEnabled", valueBoolean: false}]) @position(step: 2, row: 2) @meta(label: "Marcas patrocinadas")
-    ratingAndReview: RatingAndReview @hidden(cond: [{ field: "ratingsAndReviewsEnabled", valueBoolean: false}]) @position(step: 2, row: 3) @meta(label: "Ratings and Reviews")
+  #   mediaOffEnabled: Boolean! @position(step: 1, row: 18) @meta(label: "Media Off", placeholder: "Selecciona una Opción")
+  #   mediaOffBudget: Float @position(step: 1, row: 18) @meta(label: "", placeholder: "Presupuesto Media Off") @hidden(cond: [{ field: "mediaOffEnabled", valueBoolean: false}])
+  #   storeEnabled: Boolean! @position(step: 1, row: 19) @meta(label: "Tienda", placeholder: "Selecciona una Opción")
+  #   storeBudget: Float @position(step: 1, row: 19) @meta(label: "", placeholder: "Presupuesto Tienda") @hidden(cond: [{ field: "storeEnabled", valueBoolean: false}])
+  #   graphicsEnabled: Boolean! @position(step: 1, row: 20) @meta(label: "Gráficos", placeholder: "Selecciona una Opción")
+  #   graphicsBudget: Float @position(step: 1, row: 20) @meta(label: "", placeholder: "Presupuesto Gráficos") @hidden(cond: [{ field: "graphicsEnabled", valueBoolean: false}])
+  #   othersEnabled: Boolean! @position(step: 1, row: 21) @meta(label: "Otros", placeholder: "Selecciona una Opción")
+  #   othersBudget: Float @position(step: 1, row: 21) @meta(label: "", placeholder: "Presupuesto Otros") @hidden(cond: [{ field: "othersEnabled", valueBoolean: false}])
+  #   mediaPlan: File @position(step: 1, row: 22) @meta(label: "Plan de Medios", placeholder: "Ingresa el Plan de Medios")
 
-    # template
-    banner: Banner @hidden(cond: [{ field: "bannersEnabled", valueBoolean: false}]) @position(step: 2, row: 4) #@position(step: 1, row: 23)
-    CRM: CRM @hidden(cond: [{ field: "CRMEnabled", valueBoolean: false}]) @position(step: 2, row: 5)
-    homeLanding: HomeLanding @hidden(cond: [{ field: "homeLandingEnabled", valueBoolean: false}]) @position(step: 2, row: 6)
-    mediaOn: MediaOn @hidden(cond: [{ field: "mediaOnEnabled", valueBoolean: false}]) @position(step: 2, row: 7)
-  }
+  #   # service
+  #   sponsoredProduct: SponsoredProduct @hidden(cond: [{ field: "sponsoredProductEnabled", valueBoolean: false}]) @position(step: 2, row: 1) @meta(label: "Productos patrocinados")
+  #   sponsoredBrand: SponsoredBrand @hidden(cond: [{ field: "sponsoredBrandsEnabled", valueBoolean: false}]) @position(step: 2, row: 2) @meta(label: "Marcas patrocinadas")
+  #   ratingAndReview: RatingAndReview @hidden(cond: [{ field: "ratingsAndReviewsEnabled", valueBoolean: false}]) @position(step: 2, row: 3) @meta(label: "Ratings and Reviews")
 
-  type PlannerComments {
-    text: String!
-    user: String!
-    date: String!
-  }
+  #   # template
+  #   banner: Banner @hidden(cond: [{ field: "bannersEnabled", valueBoolean: false}]) @position(step: 2, row: 4) #@position(step: 1, row: 23)
+  #   CRM: CRM @hidden(cond: [{ field: "CRMEnabled", valueBoolean: false}]) @position(step: 2, row: 5)
+  #   homeLanding: HomeLanding @hidden(cond: [{ field: "homeLandingEnabled", valueBoolean: false}]) @position(step: 2, row: 6)
+  #   mediaOn: MediaOn @hidden(cond: [{ field: "mediaOnEnabled", valueBoolean: false}]) @position(step: 2, row: 7)
+  # }
 
   # Specific service form types
-  type SponsoredProduct
-    @model(table: "Service")
-    @auth(read: ["public"], update: ["public"], delete: ["public"]) {
-    country: String @from(queryParam: "country")
-    campaignId: ID @from(parentAttribute: "id")
-    campaign: Campaign @hidden(value: true)
-    
-    # Sponsored Products specific fields
-    startDate: DateTime! @defaultFrom(parentAttribute: "startDate")
-    endDate: DateTime! @defaultFrom(parentAttribute: "endDate")
-    implementationDate: DateTime! @defaultFrom(parentAttribute: "implementationDate")
-    budgetType: String! @selectFrom(optionValues: [{label: "Total", value: "Total"}, {label: "Diario", value: "Diario"}])
-    budget: Float!
-    dailyLimitEnabled: Boolean
-    dailyBudgetLimit: Float
-    skus: [String!]
-    comment: String
-    
-    # Base campaign fields
-    campaignSellerId: String! @from(parentAttribute: "campaignSellerId")
-    campaignBrandId: [String!]! @from(parentAttribute: "campaignBrandId")
-    categoryId: [String!]! @from(parentAttribute: "campaignCategoryId")
-  }
+  # type SponsoredProduct
+  #   @model(table: "Service")
+  #   @auth(read: ["public"], update: ["public"], delete: ["public"]) {
+  #   country: String @from(queryParam: "country")
+  #   campaignId: ID @from(parentAttribute: "id")
+  #   campaign: Campaign @hidden(value: true)
 
-  type SponsoredBrand
-    @model(table: "Service")
-    @auth(read: ["public"], update: ["public"], delete: ["public"]) {
-    country: String @from(queryParam: "country")
-    campaignId: ID @from(parentAttribute: "id")
-    campaign: Campaign @hidden(value: true)
-    
-    # Sponsored Brands specific fields
-    startDate: DateTime! @defaultFrom(parentAttribute: "startDate")
-    endDate: DateTime! @defaultFrom(parentAttribute: "endDate")
-    implementationDate: DateTime! @defaultFrom(parentAttribute: "implementationDate")
-    budgetType: String! @selectFrom(optionValues: [{label: "Total", value: "Total"}, {label: "Diario", value: "Diario"}])
-    budget: Float!
-    dailyLimitEnabled: Boolean
-    dailyBudgetLimit: Float
-    title: String! # max 42 characters
-    skus: String!
-    url: String!
-    campaignTypeId: String! @selectFrom(optionValues: [{label: "Táctico", value: "tactico"}, {label: "Always On", value: "always_on"}])
-    
-    # Base campaign fields
-    campaignSellerId: String! @from(parentAttribute: "campaignSellerId")
-    campaignBrandId: [String!]! @from(parentAttribute: "campaignBrandId")
-    categoryId: [String!]! @from(parentAttribute: "campaignCategoryId")
-  }
+  #   # Sponsored Products specific fields
+  #   startDate: DateTime! @defaultFrom(parentAttribute: "startDate")
+  #   endDate: DateTime! @defaultFrom(parentAttribute: "endDate")
+  #   implementationDate: DateTime! @defaultFrom(parentAttribute: "implementationDate")
+  #   budgetType: String! @selectFrom(optionValues: [{label: "Total", value: "Total"}, {label: "Diario", value: "Diario"}])
+  #   budget: Float!
+  #   dailyLimitEnabled: Boolean
+  #   dailyBudgetLimit: Float
+  #   skus: [String!]
+  #   comment: String
 
-  ### CRM SUBPRODUCTS ###
+  #   # Base campaign fields
+  #   campaignSellerId: String! @from(parentAttribute: "campaignSellerId")
+  #   campaignBrandId: [String!]! @from(parentAttribute: "campaignBrandId")
+  #   categoryId: [String!]! @from(parentAttribute: "campaignCategoryId")
+  # }
 
-  interface CRMSubProductInterface {
-    country: String @from(queryParam: "country")
-    crmFormId: ID @from(parentAttribute: "id")
-    
-    budget: Float!
-    base: Float!
-    internalCampaignName: String!
-    comments: String
-    implementationDate: DateTime! @defaultFrom(parentAttribute: "implementationDate")
-    
-    campaignSellerId: String! @from(parentAttribute: "campaignSellerId")
-    campaignBrandId: [String!]! @from(parentAttribute: "campaignBrandId")
-    categoryId: [String!]! @from(parentAttribute: "campaignCategoryId")
-    createdAt: DateTime @hidden(value: true)
-    updatedAt: DateTime @hidden(value: true)
-  }
+  # type SponsoredBrand
+  #   @model(table: "Service")
+  #   @auth(read: ["public"], update: ["public"], delete: ["public"]) {
+  #   country: String @from(queryParam: "country")
+  #   campaignId: ID @from(parentAttribute: "id")
+  #   campaign: Campaign @hidden(value: true)
 
-  # Email sub-product
-  type CRMEmail implements CRMSubProductInterface
-    @model(table: "Service")
-    @auth(read: ["public"], update: ["public"], delete: ["public"]) {
-    country: String @from(queryParam: "country")
-    crmFormId: ID @from(parentAttribute: "id")
-    
-    budget: Float! @meta(label: "Presupuesto")
-    base: Float! @meta(label: "Base")
-    internalCampaignName: String! @meta(label: "Cadena")
-    comments: String @meta(label: "Comentarios")
-    implementationDate: DateTime! @defaultFrom(parentAttribute: "implementationDate") @meta(label: "Fecha de implementación")
-    shippingDate: DateTime @meta(label: "Fecha de envío")
-    
-    campaignSellerId: String! @from(parentAttribute: "campaignSellerId")
-    campaignBrandId: [String!]! @from(parentAttribute: "campaignBrandId")
-    categoryId: [String!]! @from(parentAttribute: "campaignCategoryId")
-    createdAt: DateTime @hidden(value: true)
-    updatedAt: DateTime @hidden(value: true)
-  }
+  #   # Sponsored Brands specific fields
+  #   startDate: DateTime! @defaultFrom(parentAttribute: "startDate")
+  #   endDate: DateTime! @defaultFrom(parentAttribute: "endDate")
+  #   implementationDate: DateTime! @defaultFrom(parentAttribute: "implementationDate")
+  #   budgetType: String! @selectFrom(optionValues: [{label: "Total", value: "Total"}, {label: "Diario", value: "Diario"}])
+  #   budget: Float!
+  #   dailyLimitEnabled: Boolean
+  #   dailyBudgetLimit: Float
+  #   title: String! # max 42 characters
+  #   skus: String!
+  #   url: String!
+  #   campaignTypeId: String! @selectFrom(optionValues: [{label: "Táctico", value: "tactico"}, {label: "Always On", value: "always_on"}])
 
-  # Trigger sub-product
-  type CRMTrigger implements CRMSubProductInterface
-    @model(table: "Service")
-    @auth(read: ["public"], update: ["public"], delete: ["public"]) {
-    country: String @from(queryParam: "country")
-    crmFormId: ID @from(parentAttribute: "id")
-    
-    budget: Float! @meta(label: "Presupuesto")
-    base: Float! @meta(label: "Base")
-    internalCampaignName: String! @meta(label: "Cadena")
-    comments: String @meta(label: "Comentarios")
-    implementationDate: DateTime! @defaultFrom(parentAttribute: "implementationDate") @meta(label: "Fecha de implementación")
-    quantityMonths: Float @meta(label: "Cantidad de meses")
-    triggerTypeId: String @meta(label: "Tipo de trigger")
-    
-    campaignSellerId: String! @from(parentAttribute: "campaignSellerId")
-    campaignBrandId: [String!]! @from(parentAttribute: "campaignBrandId")
-    categoryId: [String!]! @from(parentAttribute: "campaignCategoryId")
-    createdAt: DateTime @hidden(value: true)
-    updatedAt: DateTime @hidden(value: true)
-  }
+  #   # Base campaign fields
+  #   campaignSellerId: String! @from(parentAttribute: "campaignSellerId")
+  #   campaignBrandId: [String!]! @from(parentAttribute: "campaignBrandId")
+  #   categoryId: [String!]! @from(parentAttribute: "campaignCategoryId")
+  # }
 
-  # Banner CRM sub-product
-  type CRMBanner implements CRMSubProductInterface
-    @model(table: "Service")
-    @auth(read: ["public"], update: ["public"], delete: ["public"]) {
-    country: String @from(queryParam: "country")
-    crmFormId: ID @from(parentAttribute: "id")
+  # union CRMSubProductUnion = CRMEmail | CRMTrigger | CRMBanner | CRMGeneric
 
-    budget: Float! @meta(label: "Presupuesto")
-    base: Float! @meta(label: "Base")
-    internalCampaignName: String! @meta(label: "Cadena")
-    comments: String @meta(label: "Comentarios")
-    implementationDate: DateTime! @defaultFrom(parentAttribute: "implementationDate") @meta(label: "Fecha de implementación")
-    
-    startDate: DateTime @defaultFrom(parentAttribute: "startDate") @meta(label: "Fecha de inicio")
-    endDate: DateTime @defaultFrom(parentAttribute: "endDate") @meta(label: "Fecha de fin")
-    sku: String @meta(label: "SKU")
-    callToAction: String @meta(label: "Call to Action")
-    url: String @meta(label: "URL")
-    
-    campaignSellerId: String! @from(parentAttribute: "campaignSellerId")
-    campaignBrandId: [String!]! @from(parentAttribute: "campaignBrandId")
-    categoryId: [String!]! @from(parentAttribute: "campaignCategoryId")
-    createdAt: DateTime @hidden(value: true)
-    updatedAt: DateTime @hidden(value: true)
-  }
+  # type CRM
+  #   @model(table: "Template")
+  #   @auth(read: ["public"], update: ["public"], delete: ["public"]) {
+  #   country: String @from(queryParam: "country") @hidden(value: true)
+  #   campaignId: ID @from(parentAttribute: "id") @hidden(value: true)
+  #   campaign: Campaign @hidden(value: true)
 
-  # Generic CRM sub-product – SMS, WhatsApp, Push, etc.
-  type CRMGeneric implements CRMSubProductInterface
-    @model(table: "Service")
-    @auth(read: ["public"], update: ["public"], delete: ["public"]) {
-    country: String @from(queryParam: "country")
-    crmFormId: ID @from(parentAttribute: "id")
+  #   # CRM specific fields
+  #   crmTypeId: String! @selectFrom(values: ["Propenso", "Segmentado"]) @meta(label: "Tipo de CRM")
+  #   templateId: String! @selectFrom(values: ["1P", "3P"]) @meta(label: "Template")
+  #   numberTouches: Float @meta(label: "Número de toques")
+  #   subProducts: [CRMSubProductUnion] @polymorphicArray(types: ["CRMEmail", "CRMTrigger", "CRMBanner", "CRMGeneric"]) @meta(label: "Subproductos")
 
-    budget: Float! @meta(label: "Presupuesto")
-    base: Float! @meta(label: "Base")
-    internalCampaignName: String! @meta(label: "Cadena")
-    comments: String @meta(label: "Comentarios")
-    implementationDate: DateTime! @defaultFrom(parentAttribute: "implementationDate") @meta(label: "Fecha de implementación")
-    
-    productType: String! @selectFrom(values: ["SMS", "WHATSAPP", "PUSH", "PUSH SMS NRT", "PREHEADER", "CUPÓN", "SAMPLING", "WHATSAPP CARRUSEL"]) @meta(label: "Tipo")
-
-    campaignSellerId: String! @from(parentAttribute: "campaignSellerId")
-    campaignBrandId: [String!]! @from(parentAttribute: "campaignBrandId")
-    categoryId: [String!]! @from(parentAttribute: "campaignCategoryId")
-    createdAt: DateTime @hidden(value: true)
-    updatedAt: DateTime @hidden(value: true)
-  }
-
-  union CRMSubProductUnion = CRMEmail | CRMTrigger | CRMBanner | CRMGeneric
-
-  type CRM
-    @model(table: "Template")
-    @auth(read: ["public"], update: ["public"], delete: ["public"]) {
-    country: String @from(queryParam: "country") @hidden(value: true)
-    campaignId: ID @from(parentAttribute: "id") @hidden(value: true)
-    campaign: Campaign @hidden(value: true)
-    
-    # CRM specific fields
-    crmTypeId: String! @selectFrom(values: ["Propenso", "Segmentado"]) @meta(label: "Tipo de CRM")
-    templateId: String! @selectFrom(values: ["1P", "3P"]) @meta(label: "Template")
-    numberTouches: Float @meta(label: "Número de toques")
-    subProducts: [CRMSubProductUnion] @polymorphicArray(types: ["CRMEmail", "CRMTrigger", "CRMBanner", "CRMGeneric"]) @meta(label: "Subproductos")
-    
-    # Base campaign fields
-    campaignSellerId: String! @from(parentAttribute: "campaignSellerId")
-    campaignBrandId: [String!]! @from(parentAttribute: "campaignBrandId")
-    categoryId: [String!]! @from(parentAttribute: "campaignCategoryId")
-    createdAt: DateTime @hidden(value: true)
-    updatedAt: DateTime @hidden(value: true)
-  }
-
-  type MediaOnService
-    @model(table: "Service")
-    @auth(read: ["public"], update: ["public"], delete: ["public"]) {
-    country: String @from(queryParam: "country")
-    mediaOnFormId: ID @from(parentAttribute: "id")
-    
-    # Media On Strategy fields
-    mediumId: String! @selectFrom(values:["DIGITAL", "SOCIAL", "SEARCH"])
-    objectiveId: String! @selectFrom(values:["AWARENESS", "CONVERSION", "TRAFFIC"])
-    strategyId: String! @selectFrom(values:["DISPLAY", "VIDEO", "SEM"])
-    segmentationId: String! @selectFrom(values:["DEMOGRAPHIC", "BEHAVIORAL", "KEYWORD"])
-    purchaseTypeId: String! @selectFrom(values:["PROGRAMMATIC", "DIRECT", "AUCTION"])
-    formatsId: String! @selectFrom(values:["BANNER_300x250", "VIDEO_16x9", "TEXT_AD"])
-    budget: Float!
-    commission: String! @selectFrom(optionValues: [{label: "20%", value: "20%"}, {label: "30%", value: "30%"}])
-    startDate: DateTime! @defaultFrom(parentAttribute: "startDate")
-    endDate: DateTime! @defaultFrom(parentAttribute: "endDate")
-    implementationDate: DateTime! @defaultFrom(parentAttribute: "implementationDate")
-    
-    # Base campaign fields
-    campaignSellerId: String! @from(parentAttribute: "campaignSellerId")
-    campaignBrandId: [String!]! @from(parentAttribute: "campaignBrandId")
-    categoryId: [String!]! @from(parentAttribute: "campaignCategoryId")
-    createdAt: DateTime @hidden(value: true)
-    updatedAt: DateTime @hidden(value: true)
-  }
-
-  type MediaOn
-    @model(table: "Template")
-    @auth(read: ["public"], update: ["public"], delete: ["public"]) {
-    country: String @from(queryParam: "country")
-    campaignId: ID @from(parentAttribute: "id")
-    campaign: Campaign @hidden(value: true)
-    
-    # Media On specific fields
-    strategiesId: String
-    budget: Float # Calculated automatically
-    commission: String # Default "20%"
-    totalAmount: Float # Calculated automatically
-    strategies: [MediaOnService]
-    
-    # Base campaign fields
-    campaignSellerId: String! @from(parentAttribute: "campaignSellerId")
-    campaignBrandId: [String!]! @from(parentAttribute: "campaignBrandId")
-    categoryId: [String!]! @from(parentAttribute: "campaignCategoryId")
-    createdAt: DateTime @hidden(value: true)
-    updatedAt: DateTime @hidden(value: true)
-  }
-
-  type Banner
-    @model(table: "Template")
-    @auth(read: ["public"], update: ["public"], delete: ["public"]) {
-    country: String @from(queryParam: "country")
-    campaignId: ID @from(parentAttribute: "id")
-    campaign: Campaign @hidden(value: true)
-    
-    # Banner specific fields
-    bannerTypesId: [String!]! @selectManyFrom(optionValues: [{label: "Banners Fads", value: "FADS"}, {label: "Banners Menú", value: "MENU"}])
-    
-    # Banner Fads fields
-    startDate: DateTime @defaultFrom(parentAttribute: "startDate")
-    endDate: DateTime @defaultFrom(parentAttribute: "endDate")
-    implementationDate: DateTime! @defaultFrom(parentAttribute: "implementationDate")
-    segmentationTypeId: String @selectFrom(optionValues: [{label: "ROS (abierta)", value: "ROS (abierta)"}, {label: "Por categoría (Gs)", value: "Por categoría (Gs)"}, {label: "Audiencias", value: "Audiencias"}])
-    categoryIds: [String] @selectManyFrom(optionValues: [{ label: "J01 - MODA", value: "J01" }, { label: "J04 - DAMAS", value: "J04" }, { label: "J08 - PERFUMERIA", value: "J08" }, { label: "J10 - CALZADO", value: "J10" }, { label: "J11 - ELECTRO", value: "J11" }, { label: "J12 - BLANCO", value: "J12" }, { label: "J13 - MUEBLES", value: "J13" }, { label: "J14 - DORMITORIO", value: "J14" }, { label: "J15 - MENAJE", value: "J15" }, { label: "J16 - DECORACION", value: "J16" }, { label: "J17 - REGALOS", value: "J17" }, { label: "J18 - GOURMET", value: "J18" }, { label: "J99 - EXTERNA", value: "J99" }, { label: "J32 - CRATE & BARREL", value: "J32" }, { label: "J21 - BIENESTAR SEXUAL", value: "J21" }])
-    budget: Float
-    url: String!
-    comment: String
-    
-    # Base campaign fields
-    campaignSellerId: String! @from(parentAttribute: "campaignSellerId")
-    campaignBrandId: [String!]! @from(parentAttribute: "campaignBrandId")
-    categoryId: [String!]! @from(parentAttribute: "campaignCategoryId")
-    createdAt: DateTime @hidden(value: true)
-    updatedAt: DateTime @hidden(value: true)
-  }
-
-  type RatingAndReview
-    @model(table: "Service")
-    @auth(read: ["public"], update: ["public"], delete: ["public"]) {
-    country: String @from(queryParam: "country")
-    campaignId: ID @from(parentAttribute: "id")
-    campaign: Campaign @hidden(value: true)
-    
-    # Rating and Reviews specific fields
-    budget: Float
-    shippingCost: Float
-    agreedShipments: Float
-    startDate: DateTime! @defaultFrom(parentAttribute: "startDate")
-    endDate: DateTime! @defaultFrom(parentAttribute: "endDate")
-    implementationDate: DateTime! @defaultFrom(parentAttribute: "implementationDate")
-    segmentationTypeId: String! @selectFrom(values: ["Total Seller/Proveedor", "Total Marca", "Categoría", "SKU"])
-    sellerId: String! @selectFrom(optionValues: [{label: "1P", value: "1P"}, {label: "3P", value: "3P"}])
-    brandId: String!
-    skus: String!
-    comment: String
-    
-    # Base campaign fields
-    campaignSellerId: String! @from(parentAttribute: "campaignSellerId")
-    campaignBrandId: [String!]! @from(parentAttribute: "campaignBrandId")
-    categoryId: [String!]! @from(parentAttribute: "campaignCategoryId")
-    createdAt: DateTime @hidden(value: true)
-    updatedAt: DateTime @hidden(value: true)
-  }
-
-  type HomeLanding
-    @model(table: "Template")
-    @auth(read: ["public"], update: ["public"], delete: ["public"]) {
-    # metadata
-    country: String @from(queryParam: "country") @hidden
-    campaignSellerId: String! @from(parentAttribute: "campaignSellerId") @hidden
-    campaignBrandId: [String!]! @from(parentAttribute: "campaignBrandId") @hidden
-    categoryId: [String!]! @from(parentAttribute: "campaignCategoryId") @hidden
-    campaignId: ID @from(parentAttribute: "id") @hidden
-    
-    # parent
-    campaign: Campaign @hidden(value: true)
-    
-    # Home Landing specific fields
-    budget: Float
-    services: [HomeLandingStrategy] # Using unified Service type instead of union to support input types
-  }
-
-  type HomeLandingLanding
-    @model(table: "Service")
-    @auth(read: ["public"], update: ["public"], delete: ["public"]) {
-    # metadata
-    type: String! @default(value: "landing") @hidden
-    country: String @from(queryParam: "country") @hidden
-    homeLandingId: ID @from(parentAttribute: "id") @hidden
-    campaignSellerId: String! @from(parentAttribute: "campaignSellerId") @hidden
-    campaignBrandId: [String!]! @from(parentAttribute: "campaignBrandId") @hidden
-    categoryId: [String!]! @from(parentAttribute: "campaignCategoryId") @hidden
-    campaignId: ID @from(parentAttribute: "campaignId") @hidden
-
-    campaign: Campaign @hidden(value: true)
-
-    # Home Landing Strategy fields
-    budget: Float!
-    visualKey: String! # Call to action text
-    skus: String!
-    comment: String!
-    implementationDate: DateTime! @defaultFrom(parentAttribute: "implementationDate")
-  }
-
-  type HomeLandingService
-    @model(table: "Service")
-    @auth(read: ["public"], update: ["public"], delete: ["public"]) {
-    # metadata
-    type: String! @selectFrom(optionValues: [{label: "Vitrina 6", value: "vitrina6"}, {label: "Lo Ultimo", value: "loUltimo"}, {label: "Huincha", value: "huincha"}, {label: "Otros", value: "otros"}])
-    country: String @from(queryParam: "country")
-    homeLandingId: ID @from(parentAttribute: "id")
-    campaignSellerId: String! @from(parentAttribute: "campaignSellerId")
-    campaignBrandId: [String!]! @from(parentAttribute: "campaignBrandId")
-    categoryId: [String!]! @from(parentAttribute: "campaignCategoryId")
-    campaignId: ID @from(parentAttribute: "campaignId")
-
-    campaign: Campaign @hidden(value: true)
-
-    # Home Landing Strategy fields
-    budget: Float!
-    visualKey: String! # Call to action text
-    skus: String!
-    url: String!
-    comment: String!
-    implementationDate: DateTime! @defaultFrom(parentAttribute: "implementationDate")
-  }
-
-  union HomeLandingStrategy = HomeLandingLanding | HomeLandingService
-
-  # A unified Service type that combines all fields from your service (@model) types.
-  # All fields (except serviceType) are optional.
-  # CampaignGroup
-
-  # type Services {
-  #   list: [Service]
-  #   maxPages: Float
+  #   # Base campaign fields
+  #   campaignSellerId: String! @from(parentAttribute: "campaignSellerId")
+  #   campaignBrandId: [String!]! @from(parentAttribute: "campaignBrandId")
+  #   categoryId: [String!]! @from(parentAttribute: "campaignCategoryId")
+  #   createdAt: DateTime @hidden(value: true)
+  #   updatedAt: DateTime @hidden(value: true)
   # }
 
   input ServiceInputType2 {
@@ -789,14 +378,6 @@ const typeDefinitions = /* GraphQL */ `
     _: Boolean
     me(uid: String): Profile
     form(type: String): Form
-    # getServicesBetweenDates(
-    #   startDate: DateTime
-    #   endDate: DateTime
-    #   serviceType: [String]
-    #   pageSize: Float
-    #   page: Float
-    #   where: ServiceInputType2
-    # ): Services
   }
 
   type Mutation {

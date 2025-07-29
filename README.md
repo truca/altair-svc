@@ -1,406 +1,784 @@
-# Retail Media Service
+# Altair Service
 
-A GraphQL-based retail media management service built with TypeScript, GraphQL Yoga, and Google Cloud Firestore.
+A GraphQL-based service that automatically generates forms, queries, mutations, and resolvers from GraphQL schema directives. The service provides a powerful abstraction layer for building dynamic forms and CRUD operations with built-in authentication and authorization.
 
 ## Table of Contents
 
 - [Overview](#overview)
-- [Features](#features)
-- [Tech Stack](#tech-stack)
-- [Prerequisites](#prerequisites)
-- [Installation](#installation)
-- [Configuration](#configuration)
-- [Database Setup](#database-setup)
-- [Development](#development)
-- [Deployment](#deployment)
-- [API Documentation](#api-documentation)
+- [Architecture](#architecture)
+- [Directives System](#directives-system)
+- [Automatic Generation](#automatic-generation)
 - [Authentication & Authorization](#authentication--authorization)
-- [File Upload](#file-upload)
-- [Testing](#testing)
-- [Contributing](#contributing)
+- [Stores & Database Layer](#stores--database-layer)
+- [Form Generation](#form-generation)
+- [API Reference](#api-reference)
+- [Configuration](#configuration)
 
 ## Overview
 
-This service provides a GraphQL API for managing retail media 
-campaigns, brands, products, and related entities. It features 
-robust authentication, authorization, file handling, and 
-efficient database operations using Google Cloud Firestore.
+The Altair Service is built around a directive-driven architecture that automatically generates:
 
-## Features
+- **Forms**: Dynamic form schemas based on GraphQL type definitions
+- **Queries**: CRUD operations (find, findOne) for each model
+- **Mutations**: CRUD operations (create, update, remove) for each model
+- **Resolvers**: Automatic resolver generation with nested object handling
+- **Input Types**: Generated input types for mutations and queries
+- **Authorization**: Role-based access control with fine-grained permissions
 
-- **GraphQL API** with full CRUD operations
-- **Authentication & Authorization** with JWT tokens and role-based access control
-- **File Upload** support with multipart forms
-- **Google Cloud Firestore** integration
-- **Relationship Management** between entities (parent-child, many-to-many)
-- **Pagination** with configurable page sizes
-- **Efficient Querying** with selective field fetching
-- **Multi-value Filtering** support
-- **Soft Delete** functionality
-- **Docker** containerization ready
+## Architecture
 
-## Tech Stack
+### Core Components
 
-- **Runtime**: Node.js 20.18.1
-- **Language**: TypeScript 5.1.6
-- **GraphQL**: GraphQL Yoga 5.3.0
-- **Database**: Google Cloud Firestore
-- **Authentication**: JWT (jsonwebtoken)
-- **File Processing**: Multipart form handling
-- **Container**: Docker
-- **CI/CD**: GitLab CI with Google Cloud Run
-
-## Prerequisites
-
-Before running this application, ensure you have:
-
-- Node.js 20.18.1 or higher
-- npm or yarn package manager
-- Google Cloud SDK (gcloud CLI)
-- Docker (for containerization)
-- Google Cloud Project with Firestore enabled
-- Service account credentials for Google Cloud
-
-## Installation
-
-1. **Clone the repository**:
-
-   ```bash
-   git clone <repository-url>
-   cd retail-media-service
-   ```
-
-2. **Install dependencies**:
-
-   ```bash
-   npm install
-   ```
-
-3. **Set up environment variables**:
-   ```bash
-   cp .env.example .env
-   # Edit .env with your configuration
-   ```
-
-## Configuration
-
-### Environment Variables
-
-Create a `.env` file in the root directory with the following variables:
-
-```env
-# JWT Configuration
-JWT_SECRET=your_jwt_secret_key
-ACCESS_TOKEN_DURATION_SECONDS=3600
-REFRESH_TOKEN_DURATION_SECONDS=86400
-
-# Server Configuration
-PORT=4000
-ENVIRONMENT=development
-UPLOAD_PATH=uploads
-
-# Database Configuration
-DB_ENGINE=firestore
-DB_INTERNAL_NAME=store
-FIRESTORE_DB_NAME=your-firestore-database-name
-
-# Google Cloud Configuration (handled via gcloud auth)
-# No need to set GOOGLE_APPLICATION_CREDENTIALS if using gcloud auth
+```
+altair-svc/
+├── lib/
+│   ├── ModelDirective/     # Automatic CRUD generation
+│   ├── AuthDirective/      # Permission system
+│   ├── StaticModelDirective/ # Static model handling
+│   ├── stores/            # Database abstraction layer
+│   ├── utils/             # Core utilities and form generation
+│   └── types.ts           # TypeScript definitions
+├── src/
+│   ├── schema.ts          # GraphQL schema definition
+│   └── main.ts           # Service entry point
 ```
 
-### Required Environment Variables
+### Key Features
 
-| Variable            | Description                      | Default   |
-| ------------------- | -------------------------------- | --------- |
-| `JWT_SECRET`        | Secret key for JWT token signing | -         |
-| `PORT`              | Server port                      | 4000      |
-| `DB_ENGINE`         | Database engine (firestore)      | firestore |
-| `FIRESTORE_DB_NAME` | Firestore database name          | -         |
+- **Directive-Driven**: Uses GraphQL directives to define behavior
+- **Database Agnostic**: Supports multiple database engines (Firestore, PostgreSQL)
+- **Auto-Generated Forms**: Creates dynamic forms from schema definitions
+- **Role-Based Access Control**: Fine-grained permission system
+- **Nested Object Support**: Handles complex nested relationships
+- **File Upload Support**: Built-in file handling with validation
 
-## Database Setup
+## Directives System
 
-This application uses **Google Cloud Firestore** as the primary database.
+The service uses GraphQL directives to define behavior and generate functionality automatically.
 
-### 1. Set up Google Cloud Project
+### Core Directives
 
-```bash
-# Install Google Cloud SDK
-# https://cloud.google.com/sdk/docs/install
+#### @model
 
-# Authenticate with Google Cloud
-gcloud auth login
-
-# Set your project
-gcloud config set project YOUR_PROJECT_ID
-
-# Enable Firestore API
-gcloud services enable firestore.googleapis.com
-```
-
-### 2. Create Firestore Database
-
-```bash
-# Create a Firestore database (if not already created)
-gcloud firestore databases create --region=us-central1
-```
-
-### 3. Set up Authentication
-
-The application uses Google Cloud's Application Default Credentials (ADC):
-
-```bash
-# Set up application default credentials
-gcloud auth application-default login
-```
-
-### 4. Connect to Firestore via Terminal
-
-To connect and manage your Firestore database from the terminal:
-
-```bash
-# Install Firebase CLI
-npm install -g firebase-tools
-
-# Login to Firebase
-firebase login
-
-# List your projects
-firebase projects:list
-
-# Use a specific project
-firebase use YOUR_PROJECT_ID
-
-# Access Firestore console
-firebase firestore
-```
-
-### Database Collections
-
-The service manages the following main collections:
-
-- `Service` - Service definitions
-- `Brand` - Brand information
-- `CampaignGroup` - Campaign group data
-- `Category` - Product categories
-- `ProductManager` - Product manager details
-- `Profile` - User profiles
-- `Seller` - Seller information
-- `Subcategory` - Product subcategories
-
-## Development
-
-### Running Locally
-
-1. **Development mode with auto-reload**:
-
-   ```bash
-   npm run dev
-   ```
-
-2. **Production mode**:
-
-   ```bash
-   npm run build
-   npm start
-   ```
-
-3. **Linting**:
-   ```bash
-   npm run lint
-   npm run lint:fix
-   ```
-
-### GraphQL Playground
-
-Once the server is running, access the GraphQL playground at:
-
-```url
-http://localhost:4000/graphql
-```
-
-## Deployment
-
-### Docker Deployment
-
-1. **Build Docker image**:
-
-   ```bash
-   docker build -t retail-media-service .
-   ```
-
-2. **Run container**:
-   ```bash
-   docker run -p 4000:4000 --env-file .env retail-media-service
-   ```
-
-### Google Cloud Run
-
-The project includes GitLab CI/CD configuration for automatic deployment to Google Cloud Run. The deployment process:
-
-1. Builds Docker image
-2. Pushes to Google Container Registry
-3. Deploys to Cloud Run
-
-## API Documentation
-
-### GraphQL Schema
-
-The API follows GraphQL best practices with:
-
-- **Queries** for data fetching
-- **Mutations** for data modifications
-- **Custom directives** for authentication and model definitions
-- **File upload** support via multipart forms
-
-### Authentication
-
-All requests require authentication via JWT tokens passed in cookies:
-
-- `accessToken` - Short-lived token (1 hour)
-- `refreshToken` - Long-lived token (24 hours)
-
-### Example Queries
+Defines a GraphQL type as a database model with automatic CRUD operations.
 
 ```graphql
-# Get all brands
-query GetBrands {
-  brands {
-    id
-    name
-    description
-  }
+type Campaign @model(db: "firestore", table: "campaigns") {
+  id: ID!
+  name: String!
+  startDate: DateTime!
+  endDate: DateTime!
 }
+```
 
-# Create a campaign group
-mutation CreateCampaignGroup($data: CampaignGroupInput!) {
-  createCampaignGroup(data: $data) {
-    id
-    name
-    brand {
+**Parameters:**
+
+- `db`: Database engine to use (default: "store")
+- `table`: Collection/table name (optional)
+
+**Generated Operations:**
+
+- `createCampaign(data: CampaignInput!): Campaign`
+- `updateCampaign(data: CampaignInput!, where: CampaignInput!, upsert: Boolean): Campaign`
+- `removeCampaign(where: CampaignInput!): Boolean`
+- `findOneCampaign(where: CampaignInput!): Campaign`
+- `findCampaignList(where: CampaignInput!, page: Int, pageSize: Int, includeMaxPages: Boolean): CampaignList`
+
+#### @auth
+
+Defines permission rules for CRUD operations.
+
+```graphql
+type Campaign
+  @model
+  @auth(
+    create: ["public"]
+    read: ["owner", "collaborator", "role:admin"]
+    update: ["owner", "role:admin", "role:editor"]
+    delete: ["owner", "role:admin"]
+  ) {
+  id: ID!
+  ownerIds: [String!]!
+  collaboratorIds: [String!]!
+}
+```
+
+**Permission Types:**
+
+- `"public"`: Anyone can access
+- `"owner"`: Only owners can access
+- `"collaborator"`: Owners and collaborators can access
+- `"role:admin"`: Users with admin role
+- `"role:editor"`: Users with editor role
+- `"role:viewer"`: Users with viewer role
+- `"owner|entity:entityId"`: Conditional ownership through relationships
+
+#### @file
+
+Defines file upload fields with validation.
+
+```graphql
+type Campaign {
+  mediaPlan: File @file(maxSize: 1000000, types: ["image/jpeg", "image/png"])
+}
+```
+
+**Parameters:**
+
+- `maxSize`: Maximum file size in bytes
+- `types`: Allowed MIME types
+
+#### @selectFrom / @selectManyFrom
+
+Defines select fields with options from database or static values.
+
+```graphql
+type Campaign {
+  # Static options
+  status: String @selectFrom(values: ["draft", "active", "completed"])
+
+  # Database options
+  productManagerId: String
+    @selectFrom(
+      table: "productManagers"
+      labelAttribute: "name"
+      valueAttribute: "externalId"
+    )
+
+  # Multi-select with dependencies
+  brandIds: [String!]
+    @selectManyFrom(
+      table: "brands"
+      labelAttribute: "name"
+      valueAttribute: "externalId"
+      dependentField: "sellerId"
+    )
+}
+```
+
+#### @hidden
+
+Controls field visibility in forms.
+
+```graphql
+type Campaign {
+  # Always hidden
+  internalId: String @hidden(value: true)
+
+  # Conditionally hidden
+  budget: Float @hidden(cond: [{ field: "campaignType", valueString: "free" }])
+}
+```
+
+#### @position
+
+Defines form layout positioning for multi-step forms.
+
+```graphql
+type Campaign {
+  name: String @position(step: 1, row: 1) @meta(label: "Campaign Name")
+  startDate: DateTime @position(step: 1, row: 2) @meta(label: "Start Date")
+}
+```
+
+#### @meta
+
+Provides form metadata like labels and placeholders.
+
+```graphql
+type Campaign {
+  name: String @meta(label: "Campaign Name", placeholder: "Enter campaign name")
+}
+```
+
+#### @default
+
+Sets default values for fields.
+
+```graphql
+type Campaign {
+  status: String @default(value: "draft")
+  createdAt: DateTime @default(value: "now")
+}
+```
+
+#### @from
+
+Inherits values from parent objects.
+
+```graphql
+type SponsoredProduct {
+  campaignId: ID @from(parentAttribute: "id")
+  startDate: DateTime @from(parentAttribute: "startDate")
+}
+```
+
+### Subform Directives
+
+#### @subform
+
+Defines nested form objects.
+
+```graphql
+type Campaign {
+  banner: Banner @subform(layout: CARDS)
+}
+```
+
+#### @polymorphicSubform
+
+Defines polymorphic nested forms with type selection.
+
+```graphql
+type Campaign {
+  subProducts: [CRMSubProductUnion]
+    @polymorphicSubform(
+      types: ["CRMEmail", "CRMTrigger", "CRMBanner"]
+      layout: TABS
+    )
+}
+```
+
+#### @polymorphicArray
+
+Defines arrays of polymorphic objects.
+
+```graphql
+type Campaign {
+  strategies: [StrategyUnion]
+    @polymorphicArray(
+      types: ["EmailStrategy", "SMSStrategy", "PushStrategy"]
+      addButtonText: "Add Strategy"
+      layout: CARDS
+    )
+}
+```
+
+## Automatic Generation
+
+### Input Types
+
+The service automatically generates input types for all model fields:
+
+```graphql
+# Generated from Campaign type
+input CampaignInput {
+  id: ID
+  name: String
+  startDate: DateTime
+  endDate: DateTime
+  # ... other fields
+}
+```
+
+### Queries
+
+For each `@model` type, the service generates:
+
+```graphql
+type Query {
+  # Find single record
+  findOneCampaign(where: CampaignInput!): Campaign
+
+  # Find multiple records with pagination
+  findCampaignList(
+    where: CampaignInput!
+    page: Int
+    pageSize: Int
+    includeMaxPages: Boolean
+  ): CampaignList
+}
+```
+
+### Mutations
+
+For each `@model` type, the service generates:
+
+```graphql
+type Mutation {
+  # Create new record
+  createCampaign(data: CampaignInput!): Campaign
+
+  # Update existing record
+  updateCampaign(
+    data: CampaignInput!
+    where: CampaignInput!
+    upsert: Boolean
+  ): Campaign
+
+  # Delete record
+  removeCampaign(where: CampaignInput!): Boolean
+}
+```
+
+### Resolvers
+
+Resolvers are automatically generated with:
+
+- **Nested Object Handling**: Recursively processes nested objects
+- **File Upload Processing**: Handles file uploads and storage
+- **Validation**: Input validation based on schema
+- **Authorization**: Permission checks before operations
+- **Pagination**: Built-in pagination for list queries
+
+## Authentication & Authorization
+
+### Authentication System
+
+The service uses JWT tokens for authentication:
+
+```typescript
+// Token generation
+const tokens = generateTokens(profile);
+// Returns { accessToken, refreshToken }
+
+// Token verification
+const result = verifyToken(token, secret);
+// Returns { decoded, error }
+```
+
+### Authorization System
+
+The `@auth` directive provides role-based access control:
+
+#### Permission Levels
+
+1. **Public Access**: `"public"` - No authentication required
+2. **Owner Access**: `"owner"` - User must be in `ownerIds` array
+3. **Collaborator Access**: `"collaborator"` - User must be in `collaboratorIds` array
+4. **Role-Based Access**: `"role:admin"`, `"role:editor"`, `"role:viewer"`
+5. **Conditional Access**: `"owner|entity:entityId"` - Access through relationships
+
+#### Permission Checking
+
+```typescript
+// Check if user has permission for action
+const hasPermission = getHasPermissionThroughRoles({
+  entityAuthConfig: authConfig,
+  profile: userProfile,
+  action: ActionTypes.read,
+});
+```
+
+#### Database Filters
+
+The service automatically generates database filters based on permissions:
+
+```typescript
+// MongoDB filter
+const filter = getMongoFilterForOwnerOrCollaborator({
+  config: authConfig,
+  profile: userProfile,
+  action: ActionTypes.read,
+});
+// Returns: { $or: [{ ownerIds: userEmail }, { collaboratorIds: userEmail }] }
+
+// SQL filter
+const filter = getSQLFilterForOwnerOrCollaborator(
+  authConfig,
+  userProfile,
+  ActionTypes.read
+);
+// Returns: "ownerIds = ? OR collaboratorIds = ?"
+```
+
+## Stores & Database Layer
+
+### Store Interface
+
+The service uses a database-agnostic store interface:
+
+```typescript
+interface Store {
+  find(
+    props: StoreFindProps,
+    context: Context,
+    info: any
+  ): Promise<StoreFindReturn>;
+  findOne(
+    props: StoreFindOneProps,
+    context: Context,
+    info: any
+  ): Promise<StoreFindOneReturn>;
+  create(
+    props: StoreCreateProps,
+    context: Context,
+    info: any
+  ): Promise<StoreCreateReturn>;
+  update(
+    props: StoreUpdateProps,
+    context: Context,
+    info: any
+  ): Promise<StoreUpdateReturn>;
+  remove(
+    props: StoreRemoveProps,
+    context: Context,
+    info: any
+  ): Promise<StoreRemoveReturn>;
+}
+```
+
+### Supported Databases
+
+#### Firestore Store
+
+```typescript
+// Firestore configuration
+const firestoreOptions = {
+  name: process.env.FIRESTORE_DB_NAME,
+  // Firebase admin SDK configuration
+};
+
+const store = new FirestoreStore(firestoreOptions);
+```
+
+**Features:**
+
+- Automatic ID generation
+- Soft delete support
+- Timestamp handling
+- Collection-based queries
+
+#### PostgreSQL Store
+
+```typescript
+// PostgreSQL configuration
+const postgresOptions = {
+  host: process.env.DB_HOST,
+  port: process.env.DB_PORT,
+  database: process.env.DB_NAME,
+  user: process.env.DB_USER,
+  password: process.env.DB_PASSWORD,
+};
+
+const store = new PostgresStore(postgresOptions);
+```
+
+**Features:**
+
+- SQL query generation
+- Transaction support
+- Relationship handling
+- Index optimization
+
+### Store Factory
+
+```typescript
+// Create store based on configuration
+const store = createStore(process.env.DB_ENGINE as DbTypes, dbOptions, schema);
+```
+
+## Form Generation
+
+### Dynamic Form Generation
+
+The service automatically generates form schemas from GraphQL types:
+
+```typescript
+// Generate form from type
+const form = await generateFieldsFromType(schema, "Campaign");
+```
+
+### Field Types
+
+The service supports various field types:
+
+- **Basic Types**: TEXT, NUMBER, EMAIL, PASSWORD, CHECKBOX, RADIO
+- **Select Types**: SELECT, MULTISELECT, SMART_SELECT
+- **Date Types**: DATE, TIME, DATETIME
+- **File Types**: FILE, IMAGE
+- **Subform Types**: SUBFORM, POLYMORPHIC_SUBFORM, POLYMORPHIC_ARRAY
+
+### Form Layout
+
+Forms support multi-step layouts with CSS Grid:
+
+```typescript
+interface FormStep {
+  stepNumber: number;
+  gridTemplateAreas: string;
+  gridTemplateColumns: string;
+}
+```
+
+### Field Properties
+
+Each field includes:
+
+```typescript
+interface Field {
+  id: string;
+  label: string;
+  type: FieldType;
+  defaultValue?: any;
+  options?: FieldOption[];
+  validation?: FieldValidation[];
+  placeholder?: string;
+  hidden?: string; // JSON stringified conditions
+  step?: number;
+  row?: number;
+  // Smart select properties
+  entity?: string;
+  labelAttribute?: string;
+  valueAttribute?: string;
+  dependentField?: string;
+  isMulti?: boolean;
+  // Subform properties
+  subformType?: string;
+  subformTypes?: string[];
+  subformFields?: Field[];
+  subformLayout?: "cards" | "tabs";
+}
+```
+
+### Validation
+
+Automatic validation generation:
+
+```typescript
+// Generate validation rules
+const validation = generateValidation(field);
+// Returns: [{ label: "required", value: "true", errorMessage: "Field is required" }]
+```
+
+## API Reference
+
+### Core Functions
+
+#### makeSchema
+
+Creates a GraphQL schema with automatic generation.
+
+```typescript
+const schema = makeSchema({
+  typeDefs: graphqlSchema,
+  formTypes: { CAMPAIGN: "campaign" },
+  queries: customQueries,
+  mutations: customMutations,
+});
+```
+
+#### createContext
+
+Creates GraphQL context with database connections.
+
+```typescript
+const context = createContext(schema, entityMapper);
+```
+
+#### makeContext
+
+Creates base context with database connections.
+
+```typescript
+const context = makeContext({ context: {}, schema });
+```
+
+### Form Query
+
+```graphql
+query GetForm($type: String!) {
+  form(type: $type) {
+    fields {
       id
-      name
+      label
+      type
+      defaultValue
+      options {
+        label
+        value
+      }
+      validation {
+        label
+        value
+        errorMessage
+      }
+      step
+      row
+      placeholder
+      hidden
+      entity
+      labelAttribute
+      valueAttribute
+      dependentField
+      isMulti
+      subformType
+      subformTypes
+      subformLayout
+      addButtonText
+      typeOptions {
+        label
+        value
+      }
+    }
+    steps {
+      stepNumber
+      gridTemplateAreas
+      gridTemplateColumns
     }
   }
 }
 ```
 
-## Authentication & Authorization
-
-### Token System
-
-The service uses a dual-token authentication system:
-
-- **Access Token**: Contains user information, expires in 1 hour
-- **Refresh Token**: Used to refresh access tokens, expires in 24 hours
-
-### Authorization Levels
-
-1. **Static Authorization**: Based on user roles
-2. **Entity-based Authorization**: Based on ownership and collaboration
-
-### Role-based Access Control
-
-- Users can only access entities they own or collaborate on
-- Admin users have broader access permissions
-- Guest users have read-only access to public entities
-
-## File Upload
-
-### Supported Operations
-
-The service supports file uploads through GraphQL mutations:
-
-```bash
-# Upload file example
-curl -X POST \
-  -F 'operations={"query":"mutation ($file: File!) { saveFile(file: $file) }", "variables": { "file": null }}' \
-  -F 'map={"0": ["variables.file"]}' \
-  -F '0=@image.png' \
-  http://localhost:4000/graphql
-```
-
-### File Storage
-
-- Files are stored in the configured `UPLOAD_PATH` directory
-- File metadata is stored in Firestore
-- Supports common image and document formats
-
-## Testing
-
-### Running Tests
-
-```bash
-# Run all tests
-npm test
-
-# Run tests in watch mode
-npm run test:watch
-
-# Run tests with coverage
-npm run test:coverage
-```
-
-### Database Testing
-
-For testing with Firestore:
-
-1. Use Firestore emulator for local testing
-2. Set up test-specific collections
-3. Clean up test data after each test run
-
-## API Features
-
-### Pagination
+### Authentication Mutations
 
 ```graphql
-query GetBrands($page: Int, $pageSize: Int) {
-  brands(page: $page, pageSize: $pageSize) {
-    id
-    name
+mutation Login($email: String!, $password: String!) {
+  login(email: $email, password: $password) {
+    token
+    country
+  }
+}
+
+mutation Register($email: String!, $password: String!, $username: String) {
+  register(email: $email, password: $password, username: $username) {
+    token
+    country
   }
 }
 ```
 
-- Set `pageSize: -1` to get all elements
-- Default pagination: 10 items per page
+## Configuration
 
-### Multi-value Filtering
+### Environment Variables
+
+```bash
+# Database Configuration
+DB_ENGINE=firestore
+DB_INTERNAL_NAME=store
+FIRESTORE_DB_NAME=your-firestore-db
+
+# JWT Configuration
+JWT_SECRET=your-jwt-secret
+ACCESS_TOKEN_DURATION_SECONDS=3600
+REFRESH_TOKEN_DURATION_SECONDS=604800
+
+# File Upload
+MAX_FILE_SIZE=1000000
+ALLOWED_FILE_TYPES=image/jpeg,image/png,application/pdf
+```
+
+### Schema Configuration
+
+```typescript
+// Define form types mapping
+const formTypes: FormTypes = {
+  CAMPAIGNGROUP: "campaignGroup",
+  CAMPAIGN: "campaign",
+  SELLER: "seller",
+  BRAND: "brand",
+  CATEGORY: "category",
+  SUBCATEGORY: "subcategory",
+  PRODUCTMANAGER: "productManager",
+};
+```
+
+### Custom Resolvers
+
+```typescript
+// Add custom queries
+const customQueries = {
+  customQuery: () => ({ result: "custom" }),
+};
+
+// Add custom mutations
+const customMutations = {
+  customMutation: () => ({ success: true }),
+};
+
+const schema = makeSchema({
+  typeDefs,
+  formTypes,
+  queries: customQueries,
+  mutations: customMutations,
+});
+```
+
+## Usage Examples
+
+### Basic Model Definition
 
 ```graphql
-query GetProductsByCategories {
-  products(where: { category: ["electronics,clothing"] }) {
-    id
-    name
-    category
-  }
+type Campaign
+  @model
+  @auth(
+    create: ["public"]
+    read: ["owner", "collaborator"]
+    update: ["owner"]
+    delete: ["owner"]
+  ) {
+  id: ID!
+  name: String! @position(step: 1, row: 1) @meta(label: "Campaign Name")
+  startDate: DateTime! @position(step: 1, row: 2) @meta(label: "Start Date")
+  endDate: DateTime! @position(step: 1, row: 3) @meta(label: "End Date")
+  status: String @selectFrom(values: ["draft", "active", "completed"])
+  ownerIds: [String!]! @hidden(value: true)
+  collaboratorIds: [String!]! @hidden(value: true)
 }
 ```
 
-### Relationship Management
+### Complex Form with Subforms
 
-- Create objects with their children in a single mutation
-- Efficiently fetch related objects
-- Support for bidirectional relationships
+```graphql
+type Campaign @model {
+  id: ID!
+  name: String!
 
-## Contributing
+  # Nested form
+  banner: Banner @subform(layout: CARDS)
 
-1. Fork the repository
-2. Create a feature branch: `git checkout -b feature/your-feature`
-3. Commit your changes: `git commit -am 'Add some feature'`
-4. Push to the branch: `git push origin feature/your-feature`
-5. Submit a pull request
+  # Polymorphic array
+  strategies: [StrategyUnion]
+    @polymorphicArray(
+      types: ["EmailStrategy", "SMSStrategy"]
+      addButtonText: "Add Strategy"
+      layout: TABS
+    )
+}
 
-### Development Guidelines
+type Banner {
+  title: String!
+  image: File @file(maxSize: 5000000, types: ["image/jpeg", "image/png"])
+}
 
-- Follow TypeScript best practices
-- Write tests for new features
-- Use semantic commit messages
-- Update documentation as needed
+type EmailStrategy {
+  subject: String!
+  template: String!
+}
 
-## License
+type SMSStrategy {
+  message: String!
+  phoneNumber: String!
+}
 
-This project is licensed under the ISC License.
+union StrategyUnion = EmailStrategy | SMSStrategy
+```
 
-## Support
+### Smart Select with Dependencies
 
-For support and questions, please contact the development team or create an issue in the repository.
+```graphql
+type Campaign @model {
+  id: ID!
+
+  # Seller selection
+  sellerId: String!
+    @selectFrom(
+      table: "sellers"
+      labelAttribute: "name"
+      valueAttribute: "externalId"
+    )
+    @position(step: 1, row: 1)
+
+  # Brand selection (depends on seller)
+  brandIds: [String!]!
+    @selectManyFrom(
+      table: "brands"
+      labelAttribute: "name"
+      valueAttribute: "externalId"
+      dependentField: "sellerId"
+    )
+    @position(step: 1, row: 2)
+}
+```
+
+This service provides a powerful foundation for building dynamic, form-driven applications with automatic CRUD operations, role-based access control, and flexible database support.

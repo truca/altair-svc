@@ -222,152 +222,649 @@ const typeDefinitions = /* GraphQL */ `
     updatedAt: DateTime
   }
 
-  # CampaignGroup
-  # CampaignGroup remains unchanged (even though it has @model)
-  # but any field that referenced a service type is updated:
-  # type Campaign
-  #   @model
-  #   @auth(read: ["public"], update: ["public"], delete: ["public"]) {
-  #   # metadata
-  #   campaignGroupId: ID @hidden(value: true)
-  #   campaignGroup: CampaignGroup @hidden(value: true)
-  #   country: String @from(queryParam: "country") @hidden(value: true)
-  #   productManagerId: String! @selectFrom(table: "productManagers", labelAttribute: "name", valueAttribute: "externalId") @position(step: 1, row: 1) @meta(label: "Product Manager", placeholder: "Selecciona una Opción")
-  #   businessUnitId: String! @selectFrom(values: ["1P", "3P"]) @position(step: 1, row: 2) @meta(label: "Unidad de Negocio", placeholder: "Selecciona una Opción")
-  #   campaignName: String! @position(step: 1, row: 3) @meta(label: "Nombre de campaña", placeholder: "Ingresa el Nombre de la Campaña")
-  #   eventTypeId: String! @selectFrom(values: ["Cyber Day", "Black Friday", "14_F", "Escolares", "Black_Week", "DDM", "DDP", "DDN", "Sneaker_Corner", "CD", "CM", "CW", "Días_F", "Navidad", "Otra"]) @position(step: 1, row: 3) @meta(label: "Evento", placeholder: "Selecciona una Opción")
-  #   customId: String @hidden(value: true)
-  #   nomenclature: String @hidden(value: true)
+  # ===== SISTEMA ALUMBRA =====
 
-  #   # filters
-  #   campaignSellerId: String @selectFrom(table: "sellers", labelAttribute: "name", valueAttribute: "externalId", dependentField: "businessUnitId") @meta(label: "Seller", placeholder: "Selecciona una Opción") @position(step: 1, row: 4)
-  #   campaignBrandId: [String!]! @selectManyFrom(table: "brands", labelAttribute: "name", valueAttribute: "externalId", dependentField: "campaignSellerId") @meta(label: "Marca", placeholder: "Selecciona una Opción") @position(step: 1, row: 5)
-  #   campaignCategoryId: [String!]! @selectManyFrom(table: "categories", labelAttribute: "name", valueAttribute: "externalId", dependentField: "campaignBrandId") @meta(label: "Categoría", placeholder: "Selecciona una Opción") @position(step: 1, row: 6)
-  #   campaignSubCategoryId: [String!]! @selectManyFrom(table: "subcategories", labelAttribute: "name", valueAttribute: "externalId", dependentField: "campaignCategoryId") @meta(label: "Subcategoría", placeholder: "Selecciona una Opción") @position(step: 1, row: 7)
-
-  #   #dates
-  #   startDate: DateTime! @type(value: DATE) @position(step: 1, row: 8) @meta(label: "Fecha de Inicio", placeholder: "Selecciona una fecha")
-  #   endDate: DateTime! @type(value: DATE) @position(step: 1, row: 8) @meta(label: "Fecha de Término", placeholder: "Selecciona una fecha")
-  #   implementationDate: DateTime! @type(value: DATE) @position(step: 1, row: 9) @meta(label: "Fecha de Implementación", placeholder: "Selecciona una fecha")
-  #   campaignType: String @selectFrom(optionValues: [
-  #     {label: "Táctico", value: "tactico"}
-  #     {label: "Always On", value: "always_on"}
-  #   ]) @position(step: 1, row: 10) @meta(label: "Tipo de campaña", placeholder: "Selecciona una Opción")
-  #   createdAt: String @type(value: DATETIME) @hidden(value: true)
-  #   updatedAt: String @type(value: DATETIME) @hidden(value: true)
-
-  #   bannersEnabled: Boolean! @default(value: false) @position(step: 1, row: 11) @meta(label: "Banners", placeholder: "Selecciona una Opción")
-  #   CRMEnabled: Boolean! @default(value: false) @position(step: 1, row: 12) @meta(label: "CRM", placeholder: "Selecciona una Opción")
-  #   homeLandingEnabled: Boolean! @default(value: false) @position(step: 1, row: 13) @meta(label: "Home Landing", placeholder: "Selecciona una Opción")
-  #   mediaOnEnabled: Boolean! @default(value: false) @position(step: 1, row: 14) @meta(label: "Media On", placeholder: "Selecciona una Opción")
-  #   ratingsAndReviewsEnabled: Boolean! @default(value: false) @position(step: 1, row: 15) @meta(label: "Ratings and Reviews", placeholder: "Selecciona una Opción")
-  #   sponsoredBrandsEnabled: Boolean! @default(value: false) @position(step: 1, row: 16) @meta(label: "Sponsored Brands", placeholder: "Selecciona una Opción")
-  #   sponsoredProductEnabled: Boolean! @default(value: false) @position(step: 1, row: 17) @meta(label: "Sponsored Product", placeholder: "Selecciona una Opción")
-
-  #   mediaOffEnabled: Boolean! @position(step: 1, row: 18) @meta(label: "Media Off", placeholder: "Selecciona una Opción")
-  #   mediaOffBudget: Float @position(step: 1, row: 18) @meta(label: "", placeholder: "Presupuesto Media Off") @hidden(cond: [{ field: "mediaOffEnabled", valueBoolean: false}])
-  #   storeEnabled: Boolean! @position(step: 1, row: 19) @meta(label: "Tienda", placeholder: "Selecciona una Opción")
-  #   storeBudget: Float @position(step: 1, row: 19) @meta(label: "", placeholder: "Presupuesto Tienda") @hidden(cond: [{ field: "storeEnabled", valueBoolean: false}])
-  #   graphicsEnabled: Boolean! @position(step: 1, row: 20) @meta(label: "Gráficos", placeholder: "Selecciona una Opción")
-  #   graphicsBudget: Float @position(step: 1, row: 20) @meta(label: "", placeholder: "Presupuesto Gráficos") @hidden(cond: [{ field: "graphicsEnabled", valueBoolean: false}])
-  #   othersEnabled: Boolean! @position(step: 1, row: 21) @meta(label: "Otros", placeholder: "Selecciona una Opción")
-  #   othersBudget: Float @position(step: 1, row: 21) @meta(label: "", placeholder: "Presupuesto Otros") @hidden(cond: [{ field: "othersEnabled", valueBoolean: false}])
-  #   mediaPlan: File @position(step: 1, row: 22) @meta(label: "Plan de Medios", placeholder: "Ingresa el Plan de Medios")
-
-  #   # service
-  #   sponsoredProduct: SponsoredProduct @hidden(cond: [{ field: "sponsoredProductEnabled", valueBoolean: false}]) @position(step: 2, row: 1) @meta(label: "Productos patrocinados")
-  #   sponsoredBrand: SponsoredBrand @hidden(cond: [{ field: "sponsoredBrandsEnabled", valueBoolean: false}]) @position(step: 2, row: 2) @meta(label: "Marcas patrocinadas")
-  #   ratingAndReview: RatingAndReview @hidden(cond: [{ field: "ratingsAndReviewsEnabled", valueBoolean: false}]) @position(step: 2, row: 3) @meta(label: "Ratings and Reviews")
-
-  #   # template
-  #   banner: Banner @hidden(cond: [{ field: "bannersEnabled", valueBoolean: false}]) @position(step: 2, row: 4) #@position(step: 1, row: 23)
-  #   CRM: CRM @hidden(cond: [{ field: "CRMEnabled", valueBoolean: false}]) @position(step: 2, row: 5)
-  #   homeLanding: HomeLanding @hidden(cond: [{ field: "homeLandingEnabled", valueBoolean: false}]) @position(step: 2, row: 6)
-  #   mediaOn: MediaOn @hidden(cond: [{ field: "mediaOnEnabled", valueBoolean: false}]) @position(step: 2, row: 7)
-  # }
-
-  # Specific service form types
-  # type SponsoredProduct
-  #   @model(table: "Service")
-  #   @auth(read: ["public"], update: ["public"], delete: ["public"]) {
-  #   country: String @from(queryParam: "country")
-  #   campaignId: ID @from(parentAttribute: "id")
-  #   campaign: Campaign @hidden(value: true)
-
-  #   # Sponsored Products specific fields
-  #   startDate: DateTime! @defaultFrom(parentAttribute: "startDate")
-  #   endDate: DateTime! @defaultFrom(parentAttribute: "endDate")
-  #   implementationDate: DateTime! @defaultFrom(parentAttribute: "implementationDate")
-  #   budgetType: String! @selectFrom(optionValues: [{label: "Total", value: "Total"}, {label: "Diario", value: "Diario"}])
-  #   budget: Float!
-  #   dailyLimitEnabled: Boolean
-  #   dailyBudgetLimit: Float
-  #   skus: [String!]
-  #   comment: String
-
-  #   # Base campaign fields
-  #   campaignSellerId: String! @from(parentAttribute: "campaignSellerId")
-  #   campaignBrandId: [String!]! @from(parentAttribute: "campaignBrandId")
-  #   categoryId: [String!]! @from(parentAttribute: "campaignCategoryId")
-  # }
-
-  # type SponsoredBrand
-  #   @model(table: "Service")
-  #   @auth(read: ["public"], update: ["public"], delete: ["public"]) {
-  #   country: String @from(queryParam: "country")
-  #   campaignId: ID @from(parentAttribute: "id")
-  #   campaign: Campaign @hidden(value: true)
-
-  #   # Sponsored Brands specific fields
-  #   startDate: DateTime! @defaultFrom(parentAttribute: "startDate")
-  #   endDate: DateTime! @defaultFrom(parentAttribute: "endDate")
-  #   implementationDate: DateTime! @defaultFrom(parentAttribute: "implementationDate")
-  #   budgetType: String! @selectFrom(optionValues: [{label: "Total", value: "Total"}, {label: "Diario", value: "Diario"}])
-  #   budget: Float!
-  #   dailyLimitEnabled: Boolean
-  #   dailyBudgetLimit: Float
-  #   title: String! # max 42 characters
-  #   skus: String!
-  #   url: String!
-  #   campaignTypeId: String! @selectFrom(optionValues: [{label: "Táctico", value: "tactico"}, {label: "Always On", value: "always_on"}])
-
-  #   # Base campaign fields
-  #   campaignSellerId: String! @from(parentAttribute: "campaignSellerId")
-  #   campaignBrandId: [String!]! @from(parentAttribute: "campaignBrandId")
-  #   categoryId: [String!]! @from(parentAttribute: "campaignCategoryId")
-  # }
-
-  # union CRMSubProductUnion = CRMEmail | CRMTrigger | CRMBanner | CRMGeneric
-
-  # type CRM
-  #   @model(table: "Template")
-  #   @auth(read: ["public"], update: ["public"], delete: ["public"]) {
-  #   country: String @from(queryParam: "country") @hidden(value: true)
-  #   campaignId: ID @from(parentAttribute: "id") @hidden(value: true)
-  #   campaign: Campaign @hidden(value: true)
-
-  #   # CRM specific fields
-  #   crmTypeId: String! @selectFrom(values: ["Propenso", "Segmentado"]) @meta(label: "Tipo de CRM")
-  #   templateId: String! @selectFrom(values: ["1P", "3P"]) @meta(label: "Template")
-  #   numberTouches: Float @meta(label: "Número de toques")
-  #   subProducts: [CRMSubProductUnion] @polymorphicArray(types: ["CRMEmail", "CRMTrigger", "CRMBanner", "CRMGeneric"]) @meta(label: "Subproductos")
-
-  #   # Base campaign fields
-  #   campaignSellerId: String! @from(parentAttribute: "campaignSellerId")
-  #   campaignBrandId: [String!]! @from(parentAttribute: "campaignBrandId")
-  #   categoryId: [String!]! @from(parentAttribute: "campaignCategoryId")
-  #   createdAt: DateTime @hidden(value: true)
-  #   updatedAt: DateTime @hidden(value: true)
-  # }
-
-  input ServiceInputType2 {
-    nomenclature: String
-    campaignGroupCustomId: String
-    campaignSellerId: String
-    campaignBrandId: [String]
-    categoryId: [String]
-    country: String
+  # Enums para el sistema
+  enum UserRole {
+    STUDENT
+    PARENT
+    TEACHER
+    ADMINISTRATIVE
+    ADMIN
+    SUPER_ADMIN
   }
+
+  enum OrganizationType {
+    SCHOOL
+    DISTRICT
+    UNIVERSITY
+    NETWORK
+  }
+
+  enum PlanType {
+    BASIC
+    STANDARD
+    PREMIUM
+    ENTERPRISE
+  }
+
+  enum SurveyFrequency {
+    DAILY
+    WEEKLY
+    MONTHLY
+    QUARTERLY
+    ON_DEMAND
+  }
+
+  enum RiskLevel {
+    LOW
+    MEDIUM
+    HIGH
+    CRITICAL
+  }
+
+  enum AlertStatus {
+    ACTIVE
+    ACKNOWLEDGED
+    RESOLVED
+    ESCALATED
+  }
+
+  enum InterventionType {
+    CONVERSATION
+    MEETING
+    REFERRAL
+    MONITORING
+    OTHER
+  }
+
+  enum InterventionStatus {
+    PLANNED
+    IN_PROGRESS
+    COMPLETED
+    CANCELLED
+  }
+
+  enum ConsentStatus {
+    PENDING
+    GRANTED
+    REVOKED
+    EXPIRED
+  }
+
+  enum ConsentType {
+    DATA_COLLECTION
+    INTERVENTION
+    COMMUNICATION
+    RESEARCH
+  }
+
+  # ===== ORGANIZACIONES Y UBICACIONES =====
+
+  type Organization
+    @model
+    @auth(
+      create: ["role:admin", "role:super_admin"]
+      read: ["public"]
+      update: ["role:admin", "role:super_admin"]
+      delete: ["role:super_admin"]
+    ) {
+    id: ID!
+    name: String!
+    type: OrganizationType!
+    description: String
+    settings: OrganizationSettings
+    plan: PlanType!
+    planExpiresAt: DateTime
+    isActive: Boolean! @default(value: true)
+    createdAt: DateTime!
+    updatedAt: DateTime
+  }
+
+  type OrganizationSettings {
+    riskThresholds: RiskThresholds
+    checkInWindow: CheckInWindow
+    alertProcessingTime: String # "05:00"
+    notificationSettings: NotificationSettings
+  }
+
+  type RiskThresholds {
+    low: Float! @default(value: 0.3)
+    medium: Float! @default(value: 0.6)
+    high: Float! @default(value: 0.8)
+  }
+
+  type CheckInWindow {
+    startTime: String! # "08:00"
+    endTime: String! # "18:00"
+    timezone: String! @default(value: "America/Santiago")
+  }
+
+  type NotificationSettings {
+    emailEnabled: Boolean! @default(value: true)
+    pushEnabled: Boolean! @default(value: true)
+    smsEnabled: Boolean! @default(value: false)
+  }
+
+  type Location
+    @model
+    @auth(
+      create: ["role:admin", "role:super_admin"]
+      read: ["public"]
+      update: ["role:admin", "role:super_admin"]
+      delete: ["role:super_admin"]
+    ) {
+    id: ID!
+    name: String!
+    organizationId: ID!
+    organization: Organization
+    address: String
+    city: String
+    country: String
+    isActive: Boolean! @default(value: true)
+    createdAt: DateTime!
+    updatedAt: DateTime
+  }
+
+  # ===== CURSOS Y USUARIOS =====
+
+  type Course
+    @model
+    @auth(
+      create: ["role:admin", "role:super_admin"]
+      read: ["public"]
+      update: ["role:admin", "role:super_admin"]
+      delete: ["role:super_admin"]
+    ) {
+    id: ID!
+    name: String!
+    organizationId: ID!
+    organization: Organization
+    locationId: ID!
+    location: Location
+    grade: String
+    section: String
+    academicYear: String
+    isActive: Boolean! @default(value: true)
+    createdAt: DateTime!
+    updatedAt: DateTime
+  }
+
+  type Profile
+    @model
+    @auth(
+      create: ["public"]
+      read: ["owner", "collaborator", "role:admin"]
+      update: ["owner", "role:admin"]
+      delete: ["role:admin", "role:super_admin"]
+    ) {
+    id: ID!
+    email: String!
+    password: String!
+    name: String!
+    role: UserRole!
+    organizationId: ID!
+    organization: Organization
+    locationId: ID
+    location: Location
+    courseId: ID
+    course: Course
+
+    # Datos específicos por rol
+    studentData: StudentData
+    parentData: ParentData
+    teacherData: TeacherData
+    administrativeData: AdministrativeData
+
+    # Configuración de notificaciones
+    notifications: NotificationSettings
+
+    # Metadatos
+    lastLoginAt: DateTime
+    isActive: Boolean! @default(value: true)
+    createdAt: DateTime!
+    updatedAt: DateTime
+  }
+
+  type StudentData {
+    grade: String
+    section: String
+    parentIds: [ID!]
+    parents: [Profile!]
+    teacherIds: [ID!]
+    teachers: [Profile!]
+    counselorId: ID
+    counselor: Profile
+    enrollmentDate: DateTime
+    graduationDate: DateTime
+  }
+
+  type ParentData {
+    childIds: [ID!]
+    children: [Profile!]
+    relationship: String # "father", "mother", "guardian"
+    emergencyContact: String
+  }
+
+  type TeacherData {
+    courseIds: [ID!]
+    courses: [Course!]
+    sectionIds: [String!]
+    specialization: String
+    yearsOfExperience: Int
+  }
+
+  type AdministrativeData {
+    department: String
+    permissions: [String!]
+    supervisorId: ID
+    supervisor: Profile
+  }
+
+  # ===== ENCUESTAS Y PREGUNTAS =====
+
+  type Survey
+    @model
+    @auth(
+      create: ["role:admin", "role:super_admin"]
+      read: ["public"]
+      update: ["role:admin", "role:super_admin"]
+      delete: ["role:super_admin"]
+    ) {
+    id: ID!
+    name: String!
+    description: String
+    frequency: SurveyFrequency!
+    weight: Float! @default(value: 1.0)
+    isActive: Boolean! @default(value: true)
+    conditions: [SurveyCondition!]
+    createdAt: DateTime!
+    updatedAt: DateTime
+  }
+
+  type SurveyCondition {
+    field: String!
+    operator: String! # "equals", "not_equals", "greater_than", etc.
+    value: String!
+  }
+
+  type Question
+    @model
+    @auth(
+      create: ["role:admin", "role:super_admin"]
+      read: ["public"]
+      update: ["role:admin", "role:super_admin"]
+      delete: ["role:super_admin"]
+    ) {
+    id: ID!
+    surveyId: ID!
+    survey: Survey
+    text: String!
+    type: String! # "multiple_choice", "likert", "text", "emoji"
+    order: Int!
+    isRequired: Boolean! @default(value: true)
+    alternatives: [QuestionAlternative!]
+    conditions: [QuestionCondition!]
+    createdAt: DateTime!
+    updatedAt: DateTime
+  }
+
+  type QuestionAlternative {
+    id: ID!
+    text: String!
+    value: Int!
+    dimensionValues: [DimensionValue!]
+    isCorrect: Boolean @default(value: false)
+  }
+
+  type QuestionCondition {
+    field: String!
+    operator: String!
+    value: String!
+  }
+
+  # ===== DIMENSIONES Y PONDERACIONES =====
+
+  type Dimension
+    @model
+    @auth(
+      create: ["role:admin", "role:super_admin"]
+      read: ["public"]
+      update: ["role:admin", "role:super_admin"]
+      delete: ["role:super_admin"]
+    ) {
+    id: ID!
+    name: String!
+    description: String
+    color: String # HEX color
+    isActive: Boolean! @default(value: true)
+    createdAt: DateTime!
+    updatedAt: DateTime
+  }
+
+  type DimensionValue {
+    dimensionId: ID!
+    dimension: Dimension
+    value: Float!
+    weight: Float! @default(value: 1.0)
+  }
+
+  # ===== RESPUESTAS Y EVALUACIONES =====
+
+  type SurveyResponse
+    @model
+    @auth(
+      create: ["public"]
+      read: ["owner", "collaborator", "role:admin"]
+      update: ["owner", "role:admin"]
+      delete: ["role:admin"]
+    ) {
+    id: ID!
+    studentId: ID!
+    student: Profile
+    surveyId: ID!
+    survey: Survey
+    questionResponses: [QuestionResponse!]
+    completedAt: DateTime!
+    responseTime: Int # segundos
+    deviceInfo: DeviceInfo
+    createdAt: DateTime!
+    updatedAt: DateTime
+  }
+
+  type QuestionResponse {
+    questionId: ID!
+    question: Question
+    selectedAlternativeId: ID
+    selectedAlternative: QuestionAlternative
+    textResponse: String
+    numericResponse: Int
+    dimensionScores: [DimensionScore!]
+  }
+
+  type DimensionScore {
+    dimensionId: ID!
+    dimension: Dimension
+    score: Float!
+    weightedScore: Float!
+  }
+
+  type DeviceInfo {
+    platform: String
+    browser: String
+    appVersion: String
+    ipAddress: String
+  }
+
+  # ===== EVALUACIONES DE RIESGO =====
+
+  type RiskAssessment
+    @model
+    @auth(
+      create: ["public"]
+      read: ["owner", "collaborator", "role:admin"]
+      update: ["role:admin"]
+      delete: ["role:admin"]
+    ) {
+    id: ID!
+    studentId: ID!
+    student: Profile
+    organizationId: ID!
+    organization: Organization
+    assessmentDate: DateTime!
+    dimensionAssessments: [DimensionAssessment!]
+    compositeScore: Float!
+    overallRiskLevel: RiskLevel!
+    trend: String # "improving", "stable", "declining"
+    createdAt: DateTime!
+    updatedAt: DateTime
+  }
+
+  type DimensionAssessment {
+    dimensionId: ID!
+    dimension: Dimension
+    score: Float!
+    riskLevel: RiskLevel!
+    trend: String
+    threshold: Float!
+  }
+
+  # ===== ALERTAS Y INTERVENCIONES =====
+
+  type Alert
+    @model
+    @auth(
+      create: ["public"]
+      read: ["owner", "collaborator", "role:admin"]
+      update: ["role:admin"]
+      delete: ["role:admin"]
+    ) {
+    id: ID!
+    studentId: ID!
+    student: Profile
+    organizationId: ID!
+    organization: Organization
+    type: String! # "risk_detected", "survey_missed", "help_requested"
+    severity: RiskLevel!
+    title: String!
+    description: String!
+    metadata: AlertMetadata
+    status: AlertStatus! @default(value: ACTIVE)
+    acknowledgedBy: ID
+    acknowledgedByUser: Profile
+    acknowledgedAt: DateTime
+    resolvedAt: DateTime
+    notificationsSent: NotificationStatus
+    createdAt: DateTime!
+    updatedAt: DateTime
+  }
+
+  type AlertMetadata {
+    dimensionId: ID
+    dimension: Dimension
+    surveyId: ID
+    survey: Survey
+    riskAssessmentId: ID
+    riskAssessment: RiskAssessment
+    trendData: TrendData
+  }
+
+  type TrendData {
+    days: Int!
+    averageScore: Float!
+    decline: Float!
+  }
+
+  type NotificationStatus {
+    email: Boolean! @default(value: false)
+    push: Boolean! @default(value: false)
+    sms: Boolean! @default(value: false)
+  }
+
+  type Intervention
+    @model
+    @auth(
+      create: ["role:admin"]
+      read: ["owner", "collaborator", "role:admin"]
+      update: ["role:admin"]
+      delete: ["role:admin"]
+    ) {
+    id: ID!
+    alertId: ID!
+    alert: Alert
+    studentId: ID!
+    student: Profile
+    counselorId: ID!
+    counselor: Profile
+    organizationId: ID!
+    organization: Organization
+    type: InterventionType!
+    title: String!
+    description: String!
+    status: InterventionStatus! @default(value: PLANNED)
+    plannedAt: DateTime
+    startedAt: DateTime
+    completedAt: DateTime
+    outcome: InterventionOutcome
+    attachments: [Attachment!]
+    createdAt: DateTime!
+    updatedAt: DateTime
+  }
+
+  type InterventionOutcome {
+    success: Boolean!
+    notes: String!
+    followUpRequired: Boolean! @default(value: false)
+    followUpDate: DateTime
+  }
+
+  type Attachment {
+    id: ID!
+    filename: String!
+    url: String!
+    type: String!
+    size: Int!
+  }
+
+  # ===== CONSENTIMIENTOS =====
+
+  type ConsentLog
+    @model
+    @auth(
+      create: ["public"]
+      read: ["owner", "role:admin"]
+      update: ["role:admin"]
+      delete: ["role:admin"]
+    ) {
+    id: ID!
+    studentId: ID!
+    student: Profile
+    parentId: ID!
+    parent: Profile
+    type: ConsentType!
+    status: ConsentStatus!
+    grantedAt: DateTime
+    revokedAt: DateTime
+    expiresAt: DateTime
+    metadata: ConsentMetadata
+    createdAt: DateTime!
+    updatedAt: DateTime
+  }
+
+  type ConsentMetadata {
+    reason: String
+    ipAddress: String
+    userAgent: String
+    version: String
+  }
+
+  # ===== INDICADORES Y RELACIONES =====
+
+  type Indicator
+    @model
+    @auth(
+      create: ["public"]
+      read: ["owner", "collaborator", "role:admin"]
+      update: ["owner", "role:admin"]
+      delete: ["role:admin"]
+    ) {
+    id: ID!
+    studentId: ID!
+    student: Profile
+    indicatorType: String! # "friend", "bully", "mentor", "conflict"
+    targetStudentId: ID
+    targetStudent: Profile
+    targetTeacherId: ID
+    targetTeacher: Profile
+    description: String
+    isPositive: Boolean! @default(value: true)
+    isActive: Boolean! @default(value: true)
+    createdAt: DateTime!
+    updatedAt: DateTime
+  }
+
+  # ===== ANALÍTICAS Y REPORTES =====
+
+  type Analytics
+    @model
+    @auth(
+      create: ["public"]
+      read: ["role:admin"]
+      update: ["role:admin"]
+      delete: ["role:admin"]
+    ) {
+    id: ID!
+    organizationId: ID!
+    organization: Organization
+    date: DateTime!
+
+    # Métricas de participación
+    totalStudents: Int!
+    activeStudents: Int!
+    surveyResponseRate: Float!
+    checkInRate: Float!
+
+    # Métricas de bienestar
+    averageScores: [DimensionAverage!]
+    averageCompositeScore: Float!
+
+    # Métricas de riesgo
+    studentsAtRisk: Int!
+    studentsHighRisk: Int!
+    newAlerts: Int!
+    resolvedAlerts: Int!
+
+    # Métricas de intervención
+    interventionsPlanned: Int!
+    interventionsCompleted: Int!
+    averageResponseTime: Float! # minutos
+    # Gap analysis
+    gapRatio: Float!
+    consecutiveMissedDays: Int!
+
+    createdAt: DateTime!
+  }
+
+  type DimensionAverage {
+    dimensionId: ID!
+    dimension: Dimension
+    averageScore: Float!
+    riskLevel: RiskLevel!
+  }
+
+  # ===== AUDITORÍA =====
+
+  type AuditLog
+    @model
+    @auth(
+      create: ["public"]
+      read: ["role:admin"]
+      update: ["role:admin"]
+      delete: ["role:admin"]
+    ) {
+    id: ID!
+    organizationId: ID!
+    organization: Organization
+    userId: ID
+    user: Profile
+
+    # Datos del evento
+    action: String!
+    resource: String!
+    resourceId: ID
+
+    # Datos del cambio
+    oldValues: String # JSON stringified
+    newValues: String # JSON stringified
+    # Metadatos
+    ipAddress: String
+    userAgent: String
+    sessionId: String
+
+    createdAt: DateTime!
+  }
+
+  # ===== TIPOS DE ENTRADA EXISTENTES =====
 
   type AuthPayload {
     token: String!
@@ -396,19 +893,9 @@ const typeDefinitions = /* GraphQL */ `
   }
 `;
 
-const formTypes: FormTypes = {
-  CAMPAIGNGROUP: "campaignGroup",
-  CAMPAIGN: "campaign",
-  SELLER: "seller",
-  BRAND: "brand",
-  CATEGORY: "category",
-  SUBCATEGORY: "subcategory",
-  PRODUCTMANAGER: "productManager",
-};
-
 export const schema = makeSchema({
   typeDefs: typeDefinitions,
-  formTypes,
+  formTypes: {},
   queries: {},
   mutations: {},
 });

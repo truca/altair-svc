@@ -1,5 +1,4 @@
 import { makeSchema } from "../lib/utils";
-import { FormTypes } from "../lib/types";
 
 const typeDefinitions = /* GraphQL */ `
   scalar ID
@@ -187,17 +186,6 @@ const typeDefinitions = /* GraphQL */ `
   type Form {
     fields: [Field]
     steps: [FormStep]
-  }
-
-  # Represents a user.  Supports: User Registration and Login, Profile Customization, In-App Messaging, Integration with Other Platforms, Notifications and Updates.
-  type Profile @model @auth(read: ["public"]) {
-    country: String!
-    email: String!
-    password: String!
-    username: String
-    profilePicture: String
-    createdAt: DateTime!
-    updatedAt: DateTime
   }
 
   input ObjectId {
@@ -402,7 +390,7 @@ const typeDefinitions = /* GraphQL */ `
     email: String!
     password: String!
     name: String!
-    role: UserRole!
+    roles: [UserRole!]!
     organizationId: ID!
     organization: Organization
     locationId: ID

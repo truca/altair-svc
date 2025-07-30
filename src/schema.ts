@@ -314,6 +314,46 @@ const typeDefinitions = /* GraphQL */ `
     checkInWindow: CheckInWindow
     alertProcessingTime: String # "05:00"
     notificationSettings: NotificationSettings
+
+    # ✨ NUEVO: Configuraciones adicionales
+    academicYear: AcademicYearSettings
+    workflowSettings: WorkflowSettings
+    privacySettings: PrivacySettings
+  }
+
+  type AcademicYearSettings {
+    startDate: DateTime!
+    endDate: DateTime!
+    holidays: [HolidayPeriod!]
+    termDates: [TermPeriod!]
+  }
+
+  type HolidayPeriod {
+    name: String!
+    startDate: DateTime!
+    endDate: DateTime!
+  }
+
+  type TermPeriod {
+    name: String!
+    startDate: DateTime!
+    endDate: DateTime!
+    isActive: Boolean!
+  }
+
+  type WorkflowSettings {
+    autoAssignAlerts: Boolean! @default(value: true)
+    defaultEscalationTime: Int! @default(value: 60) # minutos
+    requireApprovalForCritical: Boolean! @default(value: true)
+    maxAlertsPerUser: Int! @default(value: 20)
+  }
+
+  type PrivacySettings {
+    dataRetentionMonths: Int! @default(value: 24)
+    anonymizeAfterMonths: Int! @default(value: 36)
+    allowDataExport: Boolean! @default(value: true)
+    requireParentConsent: Boolean! @default(value: true)
+    shareDataWithTeachers: Boolean! @default(value: true)
   }
 
   type RiskThresholds {
@@ -388,15 +428,22 @@ const typeDefinitions = /* GraphQL */ `
     ) {
     id: ID!
     email: String!
-    password: String!
+    password: String! @hidden(value: true)
     name: String!
-    roles: [UserRole!]!
+    role: UserRole!
     organizationId: ID!
     organization: Organization
     locationId: ID
     location: Location
     courseId: ID
     course: Course
+
+    # ✨ NUEVO: Campos de contacto
+    phone: String
+    emergencyContact: String
+
+    # ✨ NUEVO: Preferencias de usuario
+    preferences: UserPreferences
 
     # Datos específicos por rol
     studentData: StudentData
@@ -407,11 +454,21 @@ const typeDefinitions = /* GraphQL */ `
     # Configuración de notificaciones
     notifications: NotificationSettings
 
-    # Metadatos
+    # ✨ NUEVO: Metadatos de sesión
     lastLoginAt: DateTime
+    lastActiveAt: DateTime
+    deviceIds: [String!] # Para notificaciones push
     isActive: Boolean! @default(value: true)
     createdAt: DateTime!
     updatedAt: DateTime
+  }
+
+  type UserPreferences {
+    language: String! @default(value: "es")
+    timezone: String! @default(value: "America/Santiago")
+    theme: String! @default(value: "light")
+    dashboardLayout: String
+    notificationFrequency: String! @default(value: "real_time")
   }
 
   type StudentData {
@@ -462,12 +519,46 @@ const typeDefinitions = /* GraphQL */ `
     id: ID!
     name: String!
     description: String
+
+    # ✨ NUEVO: Versionado
+    version: String! @default(value: "1.0")
+    previousVersionId: ID
+
+    # Configuración de aplicación
     frequency: SurveyFrequency!
     weight: Float! @default(value: 1.0)
-    isActive: Boolean! @default(value: true)
+
+    # ✨ NUEVO: Restricciones por plan
+    requiredPlanTypes: [PlanType!] @default(value: [BASIC])
+
+    # ✨ NUEVO: Configuración de ventana temporal
+    timeWindow: SurveyTimeWindow
+
+    # Condiciones mejoradas
     conditions: [SurveyCondition!]
+
+    # ✨ NUEVO: Metadatos de configuración
+    configuration: SurveyConfiguration
+
+    isActive: Boolean! @default(value: true)
     createdAt: DateTime!
     updatedAt: DateTime
+  }
+
+  type SurveyTimeWindow {
+    startTime: String # "08:00"
+    endTime: String # "18:00"
+    allowWeekends: Boolean! @default(value: true)
+    allowHolidays: Boolean! @default(value: false)
+    reminderTimes: [String!] # ["09:00", "15:00"]
+  }
+
+  type SurveyConfiguration {
+    maxAttempts: Int! @default(value: 1)
+    timeoutMinutes: Int! @default(value: 30)
+    randomizeQuestions: Boolean! @default(value: false)
+    showProgress: Boolean! @default(value: true)
+    allowSkip: Boolean! @default(value: false)
   }
 
   type SurveyCondition {
@@ -552,12 +643,47 @@ const typeDefinitions = /* GraphQL */ `
     student: Profile
     surveyId: ID!
     survey: Survey
+
+    # ✨ NUEVO: Versionado de encuesta
+    surveyVersion: String!
+
     questionResponses: [QuestionResponse!]
+
+    # Metadatos enriquecidos
     completedAt: DateTime!
+    startedAt: DateTime! # ✨ NUEVO
     responseTime: Int # segundos
+    # ✨ NUEVO: Contexto geográfico y temporal
+    contextData: ResponseContext
+
     deviceInfo: DeviceInfo
     createdAt: DateTime!
     updatedAt: DateTime
+  }
+
+  type ResponseContext {
+    # Contexto temporal
+    timeOfDay: String! # "morning", "afternoon", "evening", "night"
+    dayOfWeek: String!
+    isWeekend: Boolean!
+    isHoliday: Boolean!
+
+    # Contexto geográfico (si está disponible)
+    location: GeolocationData
+
+    # Contexto académico
+    daysSinceLastResponse: Int
+    consecutiveResponseDays: Int
+    weekOfAcademicYear: Int
+  }
+
+  type GeolocationData {
+    latitude: Float
+    longitude: Float
+    accuracy: Float
+    city: String
+    country: String
+    timestamp: DateTime
   }
 
   type QuestionResponse {
@@ -632,19 +758,77 @@ const typeDefinitions = /* GraphQL */ `
     student: Profile
     organizationId: ID!
     organization: Organization
-    type: String! # "risk_detected", "survey_missed", "help_requested"
+
+    # Clasificación mejorada
+    type: AlertType! # ✨ Usar enum en lugar de String
     severity: RiskLevel!
+    priority: AlertPriority! # ✨ NUEVO
     title: String!
     description: String!
+
+    # ✨ NUEVO: Workflow de procesamiento
+    workflow: AlertWorkflow!
+
     metadata: AlertMetadata
     status: AlertStatus! @default(value: ACTIVE)
+
+    # Asignación y seguimiento
+    assignedTo: ID
+    assignedToUser: Profile
+    assignedAt: DateTime
+
     acknowledgedBy: ID
     acknowledgedByUser: Profile
     acknowledgedAt: DateTime
     resolvedAt: DateTime
+
+    # ✨ NUEVO: Escalamiento automático
+    escalationRules: AlertEscalationRules
+    escalatedAt: DateTime
+    escalatedTo: ID
+
     notificationsSent: NotificationStatus
+
     createdAt: DateTime!
     updatedAt: DateTime
+  }
+
+  enum AlertType {
+    RISK_DETECTED
+    SURVEY_MISSED
+    HELP_REQUESTED
+    PATTERN_ANOMALY
+    CONSECUTIVE_ABSENCE
+    DECLINING_TREND
+  }
+
+  enum AlertPriority {
+    LOW
+    NORMAL
+    HIGH
+    URGENT
+    CRITICAL
+  }
+
+  type AlertWorkflow {
+    currentStep: String!
+    steps: [WorkflowStep!]
+    autoAssignmentEnabled: Boolean! @default(value: true)
+    escalationEnabled: Boolean! @default(value: true)
+  }
+
+  type WorkflowStep {
+    name: String!
+    status: String! # "pending", "active", "completed", "skipped"
+    assignedTo: ID
+    completedAt: DateTime
+    notes: String
+  }
+
+  type AlertEscalationRules {
+    timeToEscalate: Int! # minutos
+    escalateTo: [ID!] # IDs de usuarios
+    escalationMessage: String
   }
 
   type AlertMetadata {
@@ -714,6 +898,26 @@ const typeDefinitions = /* GraphQL */ `
     size: Int!
   }
 
+  # ===== CONEXIÓN PLAN-ENCUESTA =====
+
+  # ✨ NUEVO: Conexión explícita Plan-Survey
+  type PlanSurveyAccess
+    @model
+    @auth(
+      create: ["role:super_admin"]
+      read: ["role:admin"]
+      update: ["role:super_admin"]
+      delete: ["role:super_admin"]
+    ) {
+    id: ID!
+    planType: PlanType!
+    surveyId: ID!
+    survey: Survey
+    isIncluded: Boolean!
+    maxResponsesPerMonth: Int
+    createdAt: DateTime!
+  }
+
   # ===== CONSENTIMIENTOS =====
 
   type ConsentLog
@@ -771,6 +975,59 @@ const typeDefinitions = /* GraphQL */ `
     updatedAt: DateTime
   }
 
+  # ✨ NUEVO: Para el sistema de indicadores mencionado
+  type StudentRelationship
+    @model
+    @auth(
+      create: ["public"]
+      read: ["owner", "collaborator", "role:admin"]
+      update: ["owner", "role:admin"]
+      delete: ["role:admin"]
+    ) {
+    id: ID!
+    studentId: ID!
+    student: Profile
+    relatedStudentId: ID
+    relatedStudent: Profile
+    relatedTeacherId: ID
+    relatedTeacher: Profile
+
+    relationshipType: RelationshipType!
+    intensity: RelationshipIntensity!
+    isPositive: Boolean!
+
+    # Contexto de la relación
+    context: String # "classroom", "playground", "sports", etc.
+    reportedBy: ID!
+    reportedByUser: Profile
+
+    # Validación y seguimiento
+    isVerified: Boolean! @default(value: false)
+    verifiedBy: ID
+    verifiedAt: DateTime
+
+    isActive: Boolean! @default(value: true)
+    createdAt: DateTime!
+    updatedAt: DateTime
+  }
+
+  enum RelationshipType {
+    FRIEND
+    CLOSE_FRIEND
+    BULLY
+    VICTIM
+    MENTOR
+    RIVAL
+    NEUTRAL
+  }
+
+  enum RelationshipIntensity {
+    LOW
+    MEDIUM
+    HIGH
+    VERY_HIGH
+  }
+
   # ===== ANALÍTICAS Y REPORTES =====
 
   type Analytics
@@ -820,6 +1077,241 @@ const typeDefinitions = /* GraphQL */ `
     riskLevel: RiskLevel!
   }
 
+  # ✨ NUEVO: Analytics optimizado para dashboards
+  type DailyAnalytics @model @auth(
+    create: ["public"]
+    read: ["role:admin"]
+    update: ["role:admin"]
+    delete: ["role:admin"]
+  ) {
+    id: ID!
+    date: DateTime!  # YYYY-MM-DD
+    organizationId: ID!
+    locationId: ID
+    courseId: ID
+    
+    # ✨ NUEVO: Agregaciones por nivel
+    scope: AnalyticsScope!  # ORGANIZATION, LOCATION, COURSE
+    
+    # Métricas de participación
+    participation: ParticipationMetrics!
+    
+    # Métricas de bienestar por dimensión
+    wellbeingMetrics: [DimensionMetrics!]
+    
+    # Métricas de riesgo
+    riskMetrics: RiskMetrics!
+    
+    # Métricas de intervención
+    interventionMetrics: InterventionMetrics!
+    
+    # ✨ NUEVO: Comparación con períodos anteriores
+    trends: TrendMetrics!
+    
+    createdAt: DateTime!
+  }
+
+  enum AnalyticsScope {
+    ORGANIZATION
+    LOCATION
+    COURSE
+  }
+
+  type ParticipationMetrics {
+    totalStudents: Int!
+    activeStudents: Int!
+    responseRate: Float!
+    averageResponseTime: Float!
+    
+    # ✨ NUEVO: Patrones temporales
+    peakResponseHour: String!
+    responseDistribution: [HourlyDistribution!]
+  }
+
+  type HourlyDistribution {
+    hour: String!
+    responseCount: Int!
+    percentage: Float!
+  }
+
+  type DimensionMetrics {
+    dimensionId: ID!
+    dimensionName: String!
+    averageScore: Float!
+    studentsAtRisk: Int!
+    trend: String!  # "improving", "stable", "declining"
+    
+    # ✨ NUEVO: Distribución de scores
+    scoreDistribution: ScoreDistribution!
+  }
+
+  type ScoreDistribution {
+    low: Int!     # < 0.3
+    medium: Int!  # 0.3 - 0.6  
+    high: Int!    # 0.6 - 0.8
+    critical: Int! # > 0.8
+  }
+
+  type RiskMetrics {
+    totalAtRisk: Int!
+    newAlerts: Int!
+    resolvedAlerts: Int!
+    averageRiskScore: Float!
+    riskTrend: String!
+  }
+
+  type InterventionMetrics {
+    planned: Int!
+    inProgress: Int!
+    completed: Int!
+    averageResponseTime: Float!
+    successRate: Float!
+  }
+
+    type TrendMetrics {
+    weekOverWeek: Float!
+    monthOverMonth: Float!
+    quarterOverQuarter: Float!
+    trendDirection: String!  # "up", "down", "stable"
+  }
+    dimensionId: ID!
+    dimension: Dimension
+    averageScore: Float!
+    riskLevel: RiskLevel!
+  }
+
+  # ===== COLECCIONES DE APOYO PARA CONSULTAS FRECUENTES =====
+
+  # ✨ NUEVO: Timeline de riesgo para análisis temporal
+  type StudentRiskTimeline @model @auth(
+    create: ["public"]
+    read: ["owner", "collaborator", "role:admin"]
+    update: ["role:admin"]
+    delete: ["role:admin"]
+  ) {
+    id: ID!
+    studentId: ID!
+    
+    # Desnormalización para consultas eficientes
+    organizationId: ID!
+    locationId: ID!
+    courseId: ID!
+    
+    # Timeline compacto (últimos 30 días)
+    timeline: [DailyRiskEntry!]
+    
+    # ✨ NUEVO: Métricas de ventana móvil
+    rolling7Days: RollingMetrics!
+    rolling30Days: RollingMetrics!
+    
+    # Alertas activas
+    activeAlerts: [AlertSummary!]
+    
+    lastUpdated: DateTime!
+    createdAt: DateTime!
+  }
+
+  type DailyRiskEntry {
+    date: DateTime!
+    compositeScore: Float
+    riskLevel: RiskLevel
+    responsesCompleted: Int!
+    missedSurveys: Int!
+    
+    # Scores por dimensión (compacto)
+    dimensionScores: [Float!]  # Array ordenado por dimensionId
+  }
+
+  type RollingMetrics {
+    averageScore: Float!
+    trend: String!
+    volatility: Float!  # Desviación estándar
+    gapRatio: Float!   # % de días sin respuesta
+  }
+
+  type AlertSummary {
+    alertId: ID!
+    type: AlertType!
+    severity: RiskLevel!
+    status: AlertStatus!
+    createdAt: DateTime!
+  }
+
+  # ✨ NUEVO: Cola de alertas para procesamiento eficiente
+  type AlertQueue @model @auth(
+    create: ["public"]
+    read: ["role:admin"]
+    update: ["role:admin"]
+    delete: ["role:admin"]
+  ) {
+    id: ID!
+    
+    # Particionado por organización para escalabilidad
+    organizationId: ID!
+    processingDate: DateTime!  # Para particionado temporal
+    
+    # Alertas agrupadas por prioridad
+    criticalAlerts: [AlertQueueEntry!]
+    highAlerts: [AlertQueueEntry!]
+    mediumAlerts: [AlertQueueEntry!]
+    
+    # ✨ NUEVO: Métricas de cola
+    queueMetrics: QueueMetrics!
+    
+    # Estado de procesamiento
+    status: QueueStatus!
+    processedAt: DateTime
+    
+    createdAt: DateTime!
+  }
+
+  type AlertQueueEntry {
+    alertId: ID!
+    studentId: ID!
+    studentName: String!
+    courseGrade: String!
+    severity: RiskLevel!
+    type: AlertType!
+    
+    # Contexto inmediato para toma de decisiones
+    context: AlertContext!
+    
+    # Assignación automática basada en reglas
+    suggestedAssignee: ID
+    assignedTo: ID
+    acknowledgedAt: DateTime
+  }
+
+  type AlertContext {
+    lastResponse: DateTime
+    missedDays: Int!
+    previousAlerts: Int!
+    parentContactInfo: ContactInfo!
+    teacherContactInfo: ContactInfo!
+  }
+
+  type ContactInfo {
+    name: String!
+    phone: String
+    email: String
+    relationship: String
+  }
+
+  type QueueMetrics {
+    totalAlerts: Int!
+    criticalCount: Int!
+    highCount: Int!
+    mediumCount: Int!
+    averageProcessingTime: Float!
+  }
+
+  enum QueueStatus {
+    PENDING
+    PROCESSING
+    COMPLETED
+    FAILED
+  }
+
   # ===== AUDITORÍA =====
 
   type AuditLog
@@ -865,6 +1357,89 @@ const typeDefinitions = /* GraphQL */ `
     form(type: String): Form
   }
 
+  # ✨ NUEVO: Tipos adicionales para optimizaciones
+
+  # Métricas pre-calculadas para perfiles
+  type ProfileMetrics @model @auth(
+    create: ["public"]
+    read: ["owner", "collaborator", "role:admin"]
+    update: ["role:admin"]
+    delete: ["role:admin"]
+  ) {
+    id: ID!
+    profileId: ID!
+    profile: Profile
+    
+    # Para estudiantes
+    currentRiskLevel: RiskLevel
+    lastAssessmentScore: Float
+    responseRate: Float  # % de encuestas completadas
+    consecutiveMissedDays: Int
+    
+    # Para profesores
+    studentsAtRisk: Int
+    activeAlerts: Int
+    
+    # Para padres
+    childrenCount: Int
+    pendingConsents: Int
+    
+    # Actualizadas diariamente a las 05:00
+    lastCalculated: DateTime
+    createdAt: DateTime!
+  }
+
+  # Cache de relaciones frecuentes
+  type ProfileQuickAccess @model @auth(
+    create: ["public"]
+    read: ["owner", "collaborator", "role:admin"]
+    update: ["role:admin"]
+    delete: ["role:admin"]
+  ) {
+    id: ID!
+    profileId: ID!
+    profile: Profile
+    
+    # Para estudiantes
+    parentNames: [String!]
+    teacherNames: [String!]
+    counselorName: String
+    
+    # Para padres
+    childrenNames: [String!]
+    
+    # Para profesores
+    courseNames: [String!]
+    
+    lastUpdated: DateTime!
+    createdAt: DateTime!
+  }
+
+  # ✨ NUEVO: Tipos para mutación de cálculo de RiskAssessments
+  type RiskAssessmentCalculationResult {
+    success: Boolean!
+    results: [RiskAssessmentCalculationItem!]
+    errors: [String!]
+  }
+
+  type RiskAssessmentCalculationItem {
+    studentId: ID!
+    assessmentDate: DateTime!
+    dimensionAssessments: [DimensionAssessmentCalculation!]
+    compositeScore: Float!
+    overallRiskLevel: RiskLevel!
+    trend: String!
+    timeWindow: Int!
+  }
+
+  type DimensionAssessmentCalculation {
+    dimensionId: ID!
+    score: Float!
+    riskLevel: RiskLevel!
+    trend: String!
+    threshold: Float!
+  }
+
   type Mutation {
     _: Boolean
     readTextFile(file: File!): String!
@@ -878,12 +1453,25 @@ const typeDefinitions = /* GraphQL */ `
       country: String
     ): AuthPayload
     updateMe(id: String, profile: ProfileInputType2): Profile
+    
+    # ✨ NUEVO: Mutación para calcular RiskAssessments
+    calculateRiskAssessments(
+      organizationId: ID
+      studentId: ID
+      timeWindows: [Int!]
+      forceRecalculate: Boolean
+    ): RiskAssessmentCalculationResult!
   }
 `;
+
+import { calculateRiskAssessmentsResolver } from "./resolvers/calculateRiskAssessments";
 
 export const schema = makeSchema({
   typeDefs: typeDefinitions,
   formTypes: {},
   queries: {},
-  mutations: {},
+  mutations: {
+    calculateRiskAssessments: () =>
+      calculateRiskAssessmentsResolver.Mutation.calculateRiskAssessments,
+  },
 });

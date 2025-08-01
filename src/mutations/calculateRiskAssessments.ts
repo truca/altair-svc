@@ -8,12 +8,12 @@ interface CalculateRiskAssessmentsArgs {
   forceRecalculate?: boolean;
 }
 
-interface DimensionScore {
-  dimensionId: string;
-  score: number;
-  weightedScore: number;
-  responseCount: number;
-}
+// interface DimensionScore {
+//   dimensionId: string;
+//   score: number;
+//   weightedScore: number;
+//   responseCount: number;
+// }
 
 interface RiskAssessmentResult {
   studentId: string;
@@ -275,7 +275,8 @@ export class RiskAssessmentCalculator {
       overallRiskLevel,
       trend,
       timeWindow: days,
-    };
+      riskAssessment,
+    } as any;
   }
 
   /**
@@ -323,6 +324,7 @@ export class RiskAssessmentCalculator {
       responseCount: number;
     }>
   > {
+    console.log({ days });
     const dimensionScores: { [key: string]: any[] } = {};
 
     // Agrupar scores por dimensión

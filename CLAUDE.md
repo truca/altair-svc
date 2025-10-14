@@ -4,13 +4,15 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Development Commands
 
-The following commands are available for development:
-
-- `yarn dev` - Start development server with hot reload using ts-node-dev
-- `yarn start` - Run production server using ts-node  
-- `yarn build` - Compile TypeScript to JavaScript
+- `yarn dev` - Start development server with hot reload (runs on port from `PORT` env var, default 4000)
+- `yarn start` - Run production server using ts-node
+- `yarn build` - Compile TypeScript to JavaScript (outputs to `./dist`)
 - `yarn lint` - Run ESLint on TypeScript files
 - `yarn lint:fix` - Run ESLint with auto-fix
+
+### Testing Locally with Docker
+- `docker build -t altair-svc-local .` - Build Docker image locally
+- `docker run -p 4000:4000 altair-svc-local` - Run container locally
 
 ## Architecture Overview
 
@@ -20,9 +22,10 @@ This is the **Altair Service**, a GraphQL-based service that automatically gener
 
 1. **Directive-Driven System**: Uses GraphQL directives to define behavior and automatically generate CRUD operations
 2. **Database Abstraction Layer**: Database-agnostic store interface supporting Firestore and PostgreSQL
-3. **Dynamic Form Generation**: Automatically creates form schemas from GraphQL type definitions
-4. **Authentication & Authorization**: JWT-based auth with role-based access control
-5. **File Upload Support**: Built-in file handling with validation
+3. **Dynamic Form Generation**: Automatically creates form schemas from GraphQL type definitions with multi-step layouts
+4. **Authentication & Authorization**: JWT-based auth with role-based access control and cookie-based sessions
+5. **File Upload Support**: Built-in file handling with validation and static file serving
+6. **Server Framework**: GraphQL Yoga with custom HTTP server for health checks and static file serving
 
 ### Key Directories
 
@@ -39,6 +42,20 @@ This is the **Altair Service**, a GraphQL-based service that automatically gener
   - `stores/` - Database abstraction layer (Firestore, PostgreSQL)
   - `utils/` - Core utilities and form generation
   - `GraphQL/` - GraphQL utilities and types
+
+## How Automatic Generation Works
+
+When you add a `@model` directive to a GraphQL type, the system automatically generates:
+
+1. **Input Types**: Creates `[TypeName]Input` with all fields as optional for queries/mutations
+2. **List Types**: Creates `[TypeName]List` with `items` and `maxPages` for pagination
+3. **CRUD Mutations**: Generates `create[TypeName]`, `update[TypeName]`, `remove[TypeName]`
+4. **Query Operations**: Generates `findOne[TypeName]`, `find[TypeName]List`
+5. **Resolvers**: Implements all operations with database store integration
+6. **Authorization**: Applies `@auth` rules to filter and validate operations
+7. **Form Schema**: Generates complete form with fields, validation, steps, and layout
+
+This happens at schema build time in `lib/ModelDirective/index.ts` using GraphQL schema transformations. The `makeSchema()` function orchestrates the entire process.
 
 ## Key Directives System
 
@@ -64,35 +81,52 @@ Defines select fields with options from database or static values.
 - Dynamic: `table`, `labelAttribute`, `valueAttribute`, `dependentField`
 
 ### Form Layout Directives
-- `@position(step, row)` - Multi-step form positioning
-- `@meta(label, placeholder)` - Form metadata
-- `@hidden(value, cond)` - Conditional visibility
-- `@default(value)` - Default values
-- `@subform(layout)` - Nested form objects
-- `@polymorphicSubform(types, layout)` - Polymorphic nested forms
+- `@position(step, row)` - Multi-step form positioning (step and row numbers for CSS Grid layout)
+- `@meta(label, placeholder)` - Form metadata (user-facing labels and placeholders)
+- `@hidden(value, cond)` - Conditional visibility (static or condition-based hiding)
+- `@default(value)` - Default values (static values or "now" for DateTime)
+- `@from(parentAttribute, queryParam)` - Inherit values from parent objects or query params
+- `@subform(layout)` - Nested form objects (layout: CARDS or TABS)
+- `@polymorphicSubform(types, optionTypes, layout)` - Polymorphic nested forms with type selection
+- `@polymorphicArray(types, optionTypes, addButtonText, layout)` - Arrays of polymorphic objects
+- `@type(value)` - Override field type (e.g., TEXT, TEXTAREA, NUMBER, DATE, etc.)
 
-## Database Configuration
+## Configuration
 
-The service supports multiple database engines through environment variables:
+### Required Environment Variables
 
 ```bash
-# Database
-DB_ENGINE=firestore  # or "postgres"
+# Server
+PORT=4000
+ENVIRONMENT=staging  # or "production"
+UPLOAD_PATH=uploads
+
+# JWT Authentication
+JWT_SECRET=your-jwt-secret
+ACCESS_TOKEN_DURATION_SECONDS=3600  # 1 hour
+REFRESH_TOKEN_DURATION_SECONDS=86400  # 1 day
+
+# Database - Firestore
+DB_ENGINE=firestore
 DB_INTERNAL_NAME=store
 FIRESTORE_DB_NAME=your-firestore-db
 
-# PostgreSQL (if using postgres)
+# Database - PostgreSQL (alternative to Firestore)
+DB_ENGINE=postgres
 DB_HOST=localhost
 DB_PORT=5432
 DB_NAME=your-db
 DB_USER=your-user
 DB_PASSWORD=your-password
 
-# JWT Authentication
-JWT_SECRET=your-jwt-secret
-ACCESS_TOKEN_DURATION_SECONDS=3600
-REFRESH_TOKEN_DURATION_SECONDS=604800
+# Optional: Kafka (if using event streaming)
+KAFKA_CLIENT_ID=altair-svc
+KAFKA_HOST=localhost:9092
+KAFKA_GROUP_ID=altair-svc-group
 ```
+
+### Schema Configuration (src/schema.ts)
+Form types are mapped to GraphQL type names for the `form(type: String)` query. Add new types to the `formTypes` object in `makeSchema()` call.
 
 ## Domain Context: Educational Wellbeing System
 
@@ -110,32 +144,69 @@ The system processes daily survey responses from students to calculate risk scor
 ## Development Patterns
 
 ### Adding New Models
-1. Define GraphQL type in `src/schema.ts` with appropriate directives
-2. Add entity mapper in `src/mapper/` if custom transformation needed
-3. Register mapper in `src/mapper/index.ts`
+1. Define GraphQL type in `src/schema.ts` with appropriate directives (`@model`, `@auth`, etc.)
+2. Add entity mapper in `src/mapper/` if custom transformation needed (e.g., for computed fields)
+3. Register mapper in `src/mapper/index.ts` in the `entityMapperHash` object
+4. The system automatically generates: input types, CRUD operations, resolvers, and form schemas
 
-### Custom Resolvers
-- Add to `src/resolvers/` directory
-- Import and register in schema's `mutations` or `queries` object
-- Follow existing pattern like `calculateRiskAssessments`
+### Custom Resolvers & Mutations
+- Add resolver functions to `src/resolvers/` directory
+- Add mutation implementations to `src/mutations/` directory
+- Import and register in `src/schema.ts` in the `queries` or `mutations` objects passed to `makeSchema()`
+- Resolvers receive `(parent, args, context, info)` - access authenticated user via `context.profile`
+- Example: `calculateRiskAssessments` resolver processes survey responses to generate risk scores
 
 ### Form Generation
-Forms are automatically generated from GraphQL types using directives. The `form(type: String)` query returns complete form schemas with fields, validation, steps, and layout information.
+- Forms are automatically generated from GraphQL types using directives
+- Query `form(type: String)` returns complete form schema with fields, validation, steps, and CSS Grid layout
+- Multi-step forms use `@position(step, row)` to define layout
+- Form fields support validation, conditional visibility, dependent selects, and nested subforms
 
-### Authentication Context
-The service provides user context through JWT tokens. Access `context.profile` in resolvers to get current user information and permissions.
+### Authentication & Authorization
+- JWT tokens stored in cookies (`accessToken`, `refreshToken`)
+- Access user context via `context.profile` in resolvers
+- Permission checking happens automatically via `@auth` directive
+- Permission types: `"public"`, `"owner"`, `"collaborator"`, `"role:admin"`, `"owner|entity:entityId"`
+- Use `getHasPermissionThroughRoles()` for custom permission checks
 
-## TypeScript Configuration
+### Database Abstraction
+- All database operations go through the Store interface in `lib/stores/`
+- Stores provide: `find()`, `findOne()`, `create()`, `update()`, `remove()`
+- Switch databases by changing `DB_ENGINE` environment variable
+- Entity mappers handle bidirectional transformation between GraphQL and database formats
 
-- Target: `esnext`
+## Important Technical Details
+
+### Server Endpoints
+- **GraphQL**: `http://localhost:4000/graphql` (or configured PORT)
+- **Health Check**: `/health` or `/healthcheck` (returns JSON with status and timestamp)
+- **Static Files**: `/uploads/*` (serves uploaded files)
+- **CORS**: Enabled for all origins with credentials support
+
+### TypeScript Configuration
+- Target: `esnext`, Module: `commonjs`
 - Strict mode enabled
 - Output directory: `./dist`
 - Includes: `src/**/*.ts`, `lib/**/*.ts`
 
-## File Structure Notes
+### Package Manager
+- Uses **Yarn** (v1.22.22+) as package manager
+- Husky configured for git hooks (via `yarn prepare`)
 
-- The `lib/` directory contains the reusable GraphQL directive framework
-- Entity mappers in `src/mapper/` handle domain-specific data transformations
-- The service uses Yarn as package manager
-- Health check endpoint available at `/health` or `/healthcheck`
-- Static file serving available for `/uploads` path
+### Key Libraries
+- **graphql-yoga**: GraphQL server framework (v5.x)
+- **@graphql-tools/schema**: Schema building and transformations
+- **@google-cloud/firestore**: Firestore database client
+- **pg**: PostgreSQL client
+- **jsonwebtoken**: JWT token generation and verification
+- **kafkajs**: Kafka event streaming (optional)
+
+### File Structure Notes
+- `lib/` - Reusable GraphQL directive framework (can be extracted as separate package)
+- `src/schema.ts` - All GraphQL type definitions and schema configuration
+- `src/main.ts` - Server entry point with GraphQL Yoga and custom HTTP handling
+- `src/mapper/` - Entity mappers for domain-specific data transformations
+- `lib/ModelDirective/` - Core logic for automatic CRUD generation
+- `lib/AuthDirective/` - Permission system implementation
+- `lib/stores/` - Database abstraction layer
+- `lib/utils/` - Form generation, JWT utilities, file serving
